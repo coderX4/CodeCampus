@@ -23,10 +23,13 @@ public class User {
 
     private Role role;
 
-    public User(String uname, String email, String encode, Role role) {
+    private Provider provider;
+
+    public User(String uname, String email, String encode, Role role,Provider provider) {
         this.uname = uname;
         this.email = email;
         this.password = encode;
         this.role = role;
+        this.provider = provider;
     }
 }
