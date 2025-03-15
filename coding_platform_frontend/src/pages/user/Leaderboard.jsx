@@ -1,13 +1,13 @@
 import { useState } from "react"
-import { Button } from "../components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
+import { Button } from "../../components/ui/button.jsx"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card.jsx"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs.jsx"
+import { Badge } from "@/components/ui/badge.jsx"
+import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar.jsx"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select.jsx"
 import { Trophy } from "lucide-react"
-import Header from "../components/layout/header"
-import Footer from "../components/layout/footer"
+import Header from "../../components/layout/header.jsx"
+import Footer from "../../components/layout/footer.jsx"
 
 export default function Leaderboard() {
   const [contestFilter, setContestFilter] = useState("weekly42")

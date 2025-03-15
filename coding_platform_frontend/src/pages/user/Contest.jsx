@@ -1,12 +1,12 @@
 import { useState } from "react"
 import { Link, useParams } from "react-router-dom"
-import { Button } from "../components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "../../components/ui/button.jsx"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card.jsx"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs.jsx"
+import { Badge } from "@/components/ui/badge.jsx"
 import { ArrowLeft, CheckCircle, Clock, Trophy, Users } from "lucide-react"
-import Header from "../components/layout/header"
-import Footer from "../components/layout/footer"
+import Header from "../../components/layout/header.jsx"
+import Footer from "../../components/layout/footer.jsx"
 
 export default function Contest() {
   const { id } = useParams()

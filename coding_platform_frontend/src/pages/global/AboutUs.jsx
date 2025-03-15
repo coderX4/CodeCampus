@@ -1,5 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Card, CardContent } from "@/components/ui/card.jsx"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx"
 
 export default function AboutUs() {
     // Mock team data

@@ -1,19 +1,19 @@
-import {Routes, Route, Navigate, useNavigate, useParams} from "react-router-dom"
-import Home from "@/pages/Home"
-import Practice from "@/pages/Practice"
-import Contests from "@/pages/Contests"
-import Contest from "@/pages/Contest"
-import Problem from "@/pages/Problem"
-import Leaderboard from "@/pages/Leaderboard"
-import UserDashboard from "@/components/layout/user-dashboard.jsx"
-import MainSection from "@/pages/MainSection.jsx"
+import {Routes, Route} from "react-router-dom"
+import Home from "@/pages/global/Home.jsx"
+import Practice from "@/pages/user/Practice.jsx"
+import Contests from "@/pages/user/Contests.jsx"
+import Contest from "@/pages/user/Contest.jsx"
+import Problem from "@/pages/user/Problem.jsx"
+import Leaderboard from "@/pages/user/Leaderboard.jsx"
+import MainSection from "@/pages/user/MainSection.jsx"
 import EditorLayout from "@/components/layout/editor-layout.jsx"
-import AboutUs from "@/pages/AboutUs"
-import ContactUs from "@/pages/ContactUs"
-import SignUp from "@/pages/Sign-up.jsx"
+import AboutUs from "@/pages/global/AboutUs.jsx"
+import ContactUs from "@/pages/global/ContactUs.jsx"
+import SignUp from "@/pages/global/Sign-up.jsx"
 import HomeLayout from "@/components/layout/home-layout.jsx";
 import ProtectedRoute from "@/ProtectedRoute.jsx";
 import OauthCallback from "@/OauthCallback.jsx";
+import DashboardLayout from "@/components/layout/dashboard-layout.jsx";
 
 
 function App() {
@@ -34,7 +34,7 @@ function App() {
             {/* Nested Routes for User Dashboard */}
             <Route path="/dashboard" element={
                 <ProtectedRoute>
-                    <UserDashboard />
+                    <DashboardLayout />
                 </ProtectedRoute>
             }>
                 <Route index element={<MainSection />} />
@@ -48,7 +48,7 @@ function App() {
             {/* Nested Routes for Admin Dashboard */}
             <Route path="/admin-dashboard" element={
                 <ProtectedRoute>
-                    <UserDashboard />
+                    <DashboardLayout />
                 </ProtectedRoute>
             }>
                 <Route index element={<MainSection />} />

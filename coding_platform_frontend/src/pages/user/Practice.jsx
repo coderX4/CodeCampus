@@ -1,9 +1,9 @@
-import { Input } from "../components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
+import { Input } from "../../components/ui/input.jsx"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs.jsx"
 import { Search } from "lucide-react"
-import { Badge } from "../components/ui/badge"
-import { Button } from "../components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/card"
+import { Badge } from "../../components/ui/badge.jsx"
+import { Button } from "../../components/ui/button.jsx"
+import { Card, CardContent, CardFooter, CardHeader } from "../../components/ui/card.jsx"
 import { Link } from "react-router-dom"
 
 export default function Practice() {

@@ -1,9 +1,9 @@
 import { useState } from "react"
 import {Link, useNavigate} from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button.jsx"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.jsx"
+import { Input } from "@/components/ui/input.jsx"
+import { Checkbox } from "@/components/ui/checkbox.jsx"
 import { Github } from "lucide-react"
 import {useAuth} from "@/AuthContext.jsx";
 export default function SignUp() {
