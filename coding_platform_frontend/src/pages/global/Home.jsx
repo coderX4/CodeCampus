@@ -127,6 +127,10 @@ export default function Home() {
     window.open("http://localhost:8083/oauth2/authorization/google", "_self");
   };
 
+  const handleGithubLogin = async () => {
+    window.open("http://localhost:8083/oauth2/authorization/github", "_self");
+  };
+
   return (
         <main className="flex-1">
           {/* Hero Section with Login Form */}
@@ -230,7 +234,7 @@ export default function Home() {
                             </svg>
                             Google
                           </Button>
-                          <Button variant="outline" type="button" className="flex items-center justify-center gap-2">
+                          <Button onClick={handleGithubLogin} variant="outline" type="button" className="flex items-center justify-center gap-2">
                             <Github className="h-5 w-5" />
                             GitHub
                           </Button>

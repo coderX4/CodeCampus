@@ -1,5 +1,6 @@
 package com.coding_contest_platform.security;
 
+import com.coding_contest_platform.entity.Provider;
 import com.coding_contest_platform.entity.Role;
 import com.coding_contest_platform.entity.User;
 import com.coding_contest_platform.repository.UserRepository;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -25,15 +28,35 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
 
-        String email = (String) oauthUser.getAttributes().get("email");
-        String name = (String) oauthUser.getAttributes().get("name");
+        Map<String, Object> attributes = oauthUser.getAttributes();
 
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
-            user = new User(name, email, "GOOGLE_AUTH", Role.USER);
-            userRepository.save(user);
+        String email = null;
+        String name = null;
+
+        if (attributes.containsKey("sub")) {
+            email = (String) oauthUser.getAttributes().get("email");
+            name = (String) oauthUser.getAttributes().get("name");
+
+            User user = userRepository.findByEmail(email);
+            if (user == null) {
+                user = new User(name, email, "GOOGLE_AUTH", Role.USER, Provider.GOOGLE);
+                userRepository.save(user);
+            }
+            // Redirect to frontend, where it will call /oauth-success
+            response.sendRedirect("http://localhost:5173/oauth-callback/"+user.getEmail());
         }
-        // Redirect to frontend, where it will call /oauth-success
-        response.sendRedirect("http://localhost:5173/oauth-callback/"+user.getEmail());
+        else if (attributes.containsKey("login") && attributes.containsKey("id")) {
+            email = oauthUser.getAttribute("email") != null ? oauthUser.getAttribute("email").toString()
+                    : oauthUser.getAttribute("login").toString() + "@github.com";
+            name = oauthUser.getAttribute("name") != null ? oauthUser.getAttribute("name").toString() : oauthUser.getAttribute("login").toString();
+
+            User user = userRepository.findByEmail(email);
+            if (user == null) {
+                user = new User(name, email, "GITHUB_AUTH", Role.USER,Provider.GITHUB);
+                userRepository.save(user);
+            }
+            // Redirect to frontend, where it will call /oauth-success
+            response.sendRedirect("http://localhost:5173/oauth-callback/"+user.getEmail());
+        }
     }
 }

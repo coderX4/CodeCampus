@@ -2,6 +2,7 @@ package com.coding_contest_platform.controller;
 
 
 import com.coding_contest_platform.dto.AdminRegisterRequest;
+import com.coding_contest_platform.entity.Provider;
 import com.coding_contest_platform.entity.Role;
 import com.coding_contest_platform.entity.User;
 import com.coding_contest_platform.repository.UserRepository;
@@ -41,7 +42,7 @@ public class AuthController {
 
         String uname = request.getFirstName() + " " + request.getLastName();
         User user = new User(uname, request.getEmail(),
-                passwordEncoder.encode(request.getPassword()), Role.ADMIN);
+                passwordEncoder.encode(request.getPassword()), Role.ADMIN, Provider.SYSTEM);
         userRepository.save(user);
 
         // Generate JWT token and store it in an HTTP-only cookie
@@ -60,7 +61,7 @@ public class AuthController {
 
         String uname = request.getFirstName() + " " + request.getLastName();
         User user = new User(uname, request.getEmail(),
-                passwordEncoder.encode(request.getPassword()), Role.USER);
+                passwordEncoder.encode(request.getPassword()), Role.USER, Provider.SYSTEM);
         userRepository.save(user);
 
         // Generate JWT token and store it in an HTTP-only cookie
