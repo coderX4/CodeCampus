@@ -2,7 +2,7 @@ import Sidebar from "@/components/layout/sidebar.jsx";
 import Footer from "@/components/layout/footer.jsx";
 import { Outlet } from "react-router-dom";
 
-export default function UserDashboard() {
+export default function DashboardLayout() {
     return (
         <div className="flex min-h-screen">
             <Sidebar />

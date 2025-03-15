@@ -1,5 +1,5 @@
 import {Link, useLocation, useNavigate} from "react-router-dom"
-import { BarChart, Code, FileCode, LayoutDashboard, LogOut, Settings, Trophy, Sun, Moon } from "lucide-react"
+import { Mail, User, BarChart, Code, FileCode, LayoutDashboard, LogOut, Settings, Trophy, Sun, Moon } from "lucide-react"
 import { useTheme } from "@/components/theme-provider.jsx" ;
 import { Button } from "@/components/ui/button";
 import {useAuth} from "@/AuthContext.jsx";
@@ -19,7 +19,9 @@ export default function Sidebar() {
 
     const isActive = (path) => location.pathname === path
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const { logout } = useAuth();
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const navigate = useNavigate();
 
     const logoutUser = () => {
@@ -52,6 +54,30 @@ export default function Sidebar() {
           {/* Navigation Links */}
           <div className="flex-1 overflow-auto py-2">
               <nav className="grid items-start px-2 text-sm font-medium">
+                  {user.role === "ADMIN" && (
+                      <div>
+                          <Link
+                              to={`/admin-dashboard`}
+                              className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
+                                  isActive("/admin-dashboard") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"
+                              }`}
+                          >
+                              <LayoutDashboard className="h-4 w-4"/>
+                              Dashboard
+                          </Link>
+
+                          <Link
+                              to={`/dashboard/users`}
+                              className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
+                                  isActive("/dashboard/users") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"
+                              }`}
+                          >
+                              <User className="h-4 w-4"/>
+                              Users
+                          </Link>
+                          <hr className="my-2"/>
+                      </div>
+                  )}
                   <Link
                       to={`/dashboard`}
                       className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
@@ -59,7 +85,7 @@ export default function Sidebar() {
                       }`}
                   >
                       <LayoutDashboard className="h-4 w-4"/>
-                      Dashboard
+                      User Dashboard
                   </Link>
                   <Link
                       to={`/dashboard/contests`}
@@ -88,26 +114,27 @@ export default function Sidebar() {
                       <BarChart className="h-4 w-4"/>
                       Leaderboard
                   </Link>
-                  <Link
-                      to="/settings"
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
-                          isActive("/settings") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"
-                      }`}
-                  >
-                      <Settings className="h-4 w-4"/>
-                      Settings
-                  </Link>
               </nav>
           </div>
 
           {/* User & Logout Section */}
           <div className="border-t p-4 flex flex-col gap-2">
-              <Button variant="ghost" size="sm" className="w-full">
-                  {user.uname}
-              </Button>
 
-              <Button variant="ghost" size="sm" className="w-full">
+              <label className="flex items-center gap-3 rounded-lg w-full">
+                  <User className="h-5 w-5"/>
+                  {user.uname}
+              </label>
+
+              <label className="flex items-center gap-2 rounded-lg w-full">
+                  <Mail className="h-5 w-5"/>
                   {user.email}
+              </label>
+
+              <Button variant="outline" size="sm" className="w-full">
+                  <Link to="/settings" className={`flex items-center gap-3 rounded-lg px-3 py-2`}>
+                      <Settings className="h-4 w-4"/>
+                      Settings
+                  </Link>
               </Button>
 
               <Button variant="outline" size="sm" className="w-full"
