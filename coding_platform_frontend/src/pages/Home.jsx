@@ -1,17 +1,19 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import {Link, useNavigate} from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Clock, Code, Trophy, Users, CheckCircle, ArrowRight, Github } from "lucide-react"
-import Header from "@/components/layout/header"
-import Footer from "@/components/layout/footer"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import {useAuth} from "@/AuthContext.jsx";
 
 export default function Home() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const { login } = useAuth();
 
   // Mock upcoming contests data
   const upcomingContests = [
@@ -83,11 +85,47 @@ export default function Home() {
     },
   ]
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // Authentication logic will be implemented later
-    console.log("Login attempted with:", email)
-  }
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    const loginData = { email, password };
+
+    try {
+      const response = await fetch(`http://localhost:8083/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(loginData),
+      });
+
+      if (response.ok) {
+        let role;
+        try {
+          const user = await response.json();
+          sessionStorage.setItem("user", JSON.stringify(user));
+          role = user.role;
+        } catch {
+          console.warn("User data not returned as JSON");
+        }
+        await login();
+        if (role === "ADMIN") {
+          navigate("/admin-dashboard");
+        }
+        else{
+          navigate("/dashboard");
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({ message: "Login failed!" }));
+        setError(errorData.message || "Login Failed, Please retry!");
+      }
+    } catch {
+      setError("An error occurred. Please try again later.");
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    window.open("http://localhost:8083/oauth2/authorization/google", "_self");
+  };
 
   return (
         <main className="flex-1">
@@ -114,12 +152,13 @@ export default function Home() {
                     </div>
                   </div>
                   <Card className="w-full max-w-md mx-auto">
+                    {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
                     <CardHeader>
                       <CardTitle>Sign In</CardTitle>
                       <CardDescription>Enter your credentials to access your account</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <form onSubmit={handleSubmit} className="space-y-4">
+                      <form onSubmit={handleLogin} className="space-y-4">
                         <div className="space-y-2">
                           <label
                               htmlFor="email"
@@ -170,7 +209,7 @@ export default function Home() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                          <Button variant="outline" type="button" className="flex items-center justify-center gap-2">
+                          <Button onClick={handleGoogleLogin} variant="outline" type="button" className="flex items-center justify-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5">
                               <path
                                   fill="#EA4335"

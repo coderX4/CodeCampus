@@ -1,15 +1,37 @@
-import { Link, useLocation } from "react-router-dom"
+import {Link, useLocation, useNavigate} from "react-router-dom"
 import { BarChart, Code, FileCode, LayoutDashboard, LogOut, Settings, Trophy, Sun, Moon } from "lucide-react"
-import { useTheme } from "@/components/theme-provider.jsx" // Import theme context
-import { Button } from "@/components/ui/button"
+import { useTheme } from "@/components/theme-provider.jsx" ;
+import { Button } from "@/components/ui/button";
+import {useAuth} from "@/AuthContext.jsx";
+
 
 export default function Sidebar() {
-  const location = useLocation()
-  const { theme, setTheme } = useTheme() // Get theme state and setter
+    const location = useLocation()
+    const { theme, setTheme } = useTheme() // Get theme state and setter
 
-  const isActive = (path) => location.pathname === path
+    const storedUser = sessionStorage.getItem("user")
+    const user = storedUser ? JSON.parse(storedUser) : null
 
-  return (
+    if (!user) {
+        console.error("User not found in sessionStorage.")
+        return null
+    }
+
+    const isActive = (path) => location.pathname === path
+
+    const { logout } = useAuth();
+    const navigate = useNavigate();
+
+    const logoutUser = () => {
+        logout();
+        fetch('http://localhost:8083/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include' // Ensures cookies are sent with the request
+        })
+            .then(() => navigate("/home"))
+    };
+
+    return (
       <div className="hidden w-64 flex-col border-r bg-muted/40 md:flex">
           {/* Top Section with Logo & Theme Toggle */}
           <div className="flex h-14 items-center justify-between border-b px-4">
@@ -80,11 +102,16 @@ export default function Sidebar() {
 
           {/* User & Logout Section */}
           <div className="border-t p-4 flex flex-col gap-2">
-              <Button variant="outline" size="sm" className="w-full">
-                  John Doe
+              <Button variant="ghost" size="sm" className="w-full">
+                  {user.uname}
               </Button>
 
-              <Button variant="outline" size="sm" className="w-full">
+              <Button variant="ghost" size="sm" className="w-full">
+                  {user.email}
+              </Button>
+
+              <Button variant="outline" size="sm" className="w-full"
+              onClick={logoutUser}>
                   <LogOut className="h-4 w-4"/>
                   <span>Logout</span>
               </Button>
