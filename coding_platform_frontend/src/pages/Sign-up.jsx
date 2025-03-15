@@ -1,20 +1,23 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import {Link, useNavigate} from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Github } from "lucide-react"
+import {useAuth} from "@/AuthContext.jsx";
 export default function SignUp() {
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
         email: "",
         password: "",
-        confirmPassword: "",
         agreeToTerms: false,
     })
-
+    const [successMessage, setSuccessMessage] = useState("");
+    const [errorMessage, setErrorMessage] = useState("");
+    const { login } = useAuth();
+    const navigate = useNavigate();
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target
         setFormData((prev) => ({
@@ -23,16 +26,99 @@ export default function SignUp() {
         }))
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
-        // Registration logic will be implemented later
-        console.log("Registration attempted with:", formData)
+        setSuccessMessage("");
+        setErrorMessage("");
+
+        // Trim inputs
+        const trimmedfirstname = formData.firstName.trim();
+        const trimmedlastname = formData.lastName.trim();
+        const trimmedEmail = formData.email.trim();
+        const trimmedPassword = formData.password.trim();
+
+        if (!trimmedfirstname || !trimmedlastname || !trimmedEmail || !trimmedPassword) {
+            setErrorMessage("All fields are required!");
+            return;
+        }
+
+        if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
+            setErrorMessage("Invalid email format.");
+            return;
+        }
+
+        if (trimmedPassword.length < 6) {
+            setErrorMessage("Password must be at least 6 characters long.");
+            return;
+        }
+
+        setFormData({
+            firstName: trimmedfirstname ,
+            lastName: trimmedlastname,
+            email: trimmedEmail,
+            password: trimmedPassword,
+            agreeToTerms: true,
+        })
+
+        try {
+            const response = await fetch(`http://localhost:8083/api/auth/register`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+            });
+
+            if (!response.ok) {
+                throw new Error("Registration failed. Please try again.");
+            }
+            else{
+                setFormData({
+                    firstName: "",
+                    lastName: "",
+                    email: "",
+                    password: "",
+                    agreeToTerms: false,
+                });
+                setSuccessMessage("Registration Successful!");
+
+                setTimeout(async () => {
+                    setSuccessMessage(""); // Clear success message
+                    try {
+                        const user = await response.json();
+                        sessionStorage.setItem("user", JSON.stringify(user));
+                    } catch {
+                        console.warn("User data not returned as JSON");
+                    }
+                    await login();
+                    navigate("/dashboard");
+                }, 2000); // Delay of 3 seconds before navigating
+            }
+        } catch (error) {
+            setErrorMessage(error.message || "Something went wrong. Please try again.");
+        }
     }
+
+    const handleGoogleLogin = async () => {
+        window.open("http://localhost:8083/oauth2/authorization/google", "_self");
+    }
+
 
     return (
             <main className="flex-1 py-6 md:py-12 lg:py-6">
                 <div className="container px-4 md:px-6">
                     <Card className="mx-auto max-w-md">
+                        {successMessage && (
+                            <div className="mr-2 ml-2 mt-3 mb-2 p-3 text-sm text-green-700 bg-green-50 border border-green-300 rounded-lg shadow-md">
+                                {successMessage}
+                            </div>
+                        )}
+
+                        {/* Error Message */}
+                        {errorMessage && (
+                            <div className="mr-2 ml-2 mt-3 mb-2 p-3 text-sm text-red-700 bg-red-50 border border-red-300 rounded-lg shadow-md">
+                                {errorMessage}
+                            </div>
+                        )}
                         <CardHeader className="space-y-1">
                             <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
                             <CardDescription>Enter your information to get started with CodeCampus</CardDescription>
@@ -94,19 +180,6 @@ export default function SignUp() {
                                         required
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="confirmPassword" className="text-sm font-medium leading-none">
-                                        Confirm Password
-                                    </label>
-                                    <Input
-                                        id="confirmPassword"
-                                        name="confirmPassword"
-                                        type="password"
-                                        value={formData.confirmPassword}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="agreeToTerms"
@@ -144,7 +217,7 @@ export default function SignUp() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <Button variant="outline" type="button" className="flex items-center justify-center gap-2">
+                                <Button onClick={handleGoogleLogin} variant="outline" type="button" className="flex items-center justify-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5">
                                         <path
                                             fill="#EA4335"

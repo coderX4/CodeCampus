@@ -1,6 +1,7 @@
 package com.coding_contest_platform.controller;
 
 
+import com.coding_contest_platform.dto.AdminRegisterRequest;
 import com.coding_contest_platform.entity.Role;
 import com.coding_contest_platform.entity.User;
 import com.coding_contest_platform.repository.UserRepository;
@@ -15,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -31,14 +31,35 @@ public class AuthController {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    /** 🔹 REGISTER NEW USER */
+
+    /** REGISTER NEW USER */
+    @PostMapping("/admin-register")
+    public ResponseEntity<?> adminRegistration(@RequestBody AdminRegisterRequest request, HttpServletResponse response) {
+        if (userRepository.findByEmail(request.getEmail()) != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email already exists"));
+        }
+
+        String uname = request.getFirstName() + " " + request.getLastName();
+        User user = new User(uname, request.getEmail(),
+                passwordEncoder.encode(request.getPassword()), Role.ADMIN);
+        userRepository.save(user);
+
+        // Generate JWT token and store it in an HTTP-only cookie
+        String token = jwtService.generateToken(user);
+        setCookie(response, token);
+
+        return ResponseEntity.ok(new AuthResponse(token, uname, request.getEmail(),user.getRole()));
+    }
+
+    /** REGISTER NEW USER */
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request, HttpServletResponse response) {
         if (userRepository.findByEmail(request.getEmail()) != null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Email already exists"));
         }
 
-        User user = new User(request.getUname(), request.getEmail(),
+        String uname = request.getFirstName() + " " + request.getLastName();
+        User user = new User(uname, request.getEmail(),
                 passwordEncoder.encode(request.getPassword()), Role.USER);
         userRepository.save(user);
 
@@ -46,10 +67,10 @@ public class AuthController {
         String token = jwtService.generateToken(user);
         setCookie(response, token);
 
-        return ResponseEntity.ok(new AuthResponse(token));
+        return ResponseEntity.ok(new AuthResponse(token, uname, request.getEmail(),user.getRole()));
     }
 
-    /** 🔹 LOGIN USER */
+    /** LOGIN USER */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request, HttpServletResponse response) {
         authenticationManager.authenticate(
@@ -59,29 +80,34 @@ public class AuthController {
         String token = jwtService.generateToken(user);
         setCookie(response, token);
 
-        return ResponseEntity.ok(new AuthResponse(token));
+        return ResponseEntity.ok(new AuthResponse(token,user.getUname(), user.getEmail(),user.getRole()));
     }
 
-    /** 🔹 GOOGLE OAUTH2 SUCCESS */
-    @GetMapping("/oauth-success")
-    public ResponseEntity<?> googleOAuthSuccess(@RequestParam Map<String, String> params, HttpServletResponse response) {
-        String email = params.get("email");
-        String name = params.get("name");
+    /** OAuth2 SUCCESS HANDLER */
+    @GetMapping("/oauth-success/{email}")
+    public ResponseEntity<?> oauthSuccess(@PathVariable("email") String email, HttpServletResponse response) {
+
+        if (email == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "OAuth login failed"));
+        }
 
         User user = userRepository.findByEmail(email);
         if (user == null) {
-            user = new User(null, name, email, "GOOGLE_AUTH", Role.USER);
-            userRepository.save(user);
+            return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
         }
 
-        // Generate JWT token and store it in HTTP-only cookie
+        // Generate JWT token
         String token = jwtService.generateToken(user);
+
+        // Set the JWT as an HTTP-only cookie
         setCookie(response, token);
 
-        return ResponseEntity.ok(Map.of("message", "Google login successful"));
+        // Return user details in the response
+        return ResponseEntity.ok(new AuthResponse(token, user.getUname(), user.getEmail(),user.getRole()));
     }
 
-    /** 🔹 LOGOUT USER (Clears cookie) */
+
+    /** LOGOUT USER (Clears cookie) */
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
         Cookie cookie = new Cookie("jwt", null);
@@ -94,7 +120,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 
-    /** 🔹 HELPER METHOD TO SET JWT IN HTTP-ONLY COOKIE */
+    /** HELPER METHOD TO SET JWT IN HTTP-ONLY COOKIE */
     private void setCookie(HttpServletResponse response, String token) {
         Cookie cookie = new Cookie("jwt", token);
         cookie.setHttpOnly(true);
