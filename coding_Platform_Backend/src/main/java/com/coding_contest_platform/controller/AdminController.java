@@ -1,22 +1,74 @@
 package com.coding_contest_platform.controller;
 
+import com.coding_contest_platform.dto.AdminRegisterRequest;
+import com.coding_contest_platform.entity.Provider;
+import com.coding_contest_platform.entity.Role;
+import com.coding_contest_platform.entity.User;
+import com.coding_contest_platform.repository.UserRepository;
 import com.coding_contest_platform.services.UserServices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @CrossOrigin
 @RestController
 @RequestMapping({"/api/admin"})
 @RequiredArgsConstructor
 public class AdminController {
+    private final UserRepository userRepository;
     private final UserServices usersService;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @GetMapping({"/getallusers"})
     public ResponseEntity<?> getAllUsers() {
         return ResponseEntity.ok(usersService.getAllUsers());
+    }
+
+    @PostMapping({"/createuser"})
+    public ResponseEntity<User> saveUsers(@RequestBody AdminRegisterRequest request) {
+
+        String uname = request.getFirstName() + " " + request.getLastName();
+        Role role;
+        if (request.getRole().equals("ADMIN")) {
+            role = Role.ADMIN;
+        }
+        else {
+            role = Role.USER;
+        }
+
+        LocalDate date = LocalDate.now(); // Get current date
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy"); // Define format
+        String formattedDate = date.format(dateFormatter);
+
+        User user = new User(uname, request.getEmail(),
+                passwordEncoder.encode(request.getPassword()), role, Provider.SYSTEM,"active",formattedDate,formattedDate);
+
+        return ResponseEntity.ok(userRepository.save(user));
+    }
+
+    @PutMapping({"/updateuser/{email}"})
+    public ResponseEntity<User> updateUser(@PathVariable("email") String email,@RequestBody AdminRegisterRequest request){
+        User user = userRepository.findByEmail(email);
+
+        String uname = request.getFirstName() + " " + request.getLastName();
+        Role role;
+        if (request.getRole().equals("ADMIN")) {
+            role = Role.ADMIN;
+        }
+        else {
+            role = Role.USER;
+        }
+        user.setUname(uname);
+        user.setRole(role);
+        String password = request.getPassword();
+        if(password != null){
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        userRepository.save(user);
+        return ResponseEntity.ok(user);
     }
 }

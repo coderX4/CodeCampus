@@ -1,13 +1,12 @@
-import {useEffect, useState} from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button.jsx"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx"
-import { Input } from "@/components/ui/input.jsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx"
-import { Badge } from "@/components/ui/badge.jsx"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx"
-import { Checkbox } from "@/components/ui/checkbox.jsx"
-import { UserPlus2,Search, Plus, Mail, Shield, UserMinus, Edit, Trash2, Download, Filter } from "lucide-react"
+import { Download } from "lucide-react"
+import UserForm from "../../components/admin/UserForm.jsx"
+import UserFilters from "../../components/admin/UserFilters.jsx"
+import UserTable from "../../components/admin/UserTable.jsx"
+import UserBulkActions from "../../components/admin/UserBulkActions.jsx"
+import { AlertTriangle, RefreshCw } from "lucide-react"
 
 export default function AdminUsers() {
     const [activeTab, setActiveTab] = useState("all")
@@ -16,55 +15,71 @@ export default function AdminUsers() {
     const [selectedUsers, setSelectedUsers] = useState([])
     const [roleFilter, setRoleFilter] = useState("all")
     const [statusFilter, setStatusFilter] = useState("all")
-    const avatar= "/placeholder.svg?height=40&width=40";
-
-
-    const [users,setUsers] = useState([])
+    const [users, setUsers] = useState([])
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState("")
+    const [successMessage, setSuccessMessage] = useState("")
+    const [editingUser, setEditingUser] = useState(null)
 
     const fetchUsers = async () => {
-        console.log("fetching users")
-        const storedUser = sessionStorage.getItem("user");
-        const loggeduser = storedUser ? JSON.parse(storedUser) : null;
+        console.log("Fetching users...")
+        setIsLoading(true)
+        const storedUser = sessionStorage.getItem("user")
+        const loggeduser = storedUser ? JSON.parse(storedUser) : null
 
         try {
             const response = await fetch("http://localhost:8083/api/admin/getallusers", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${loggeduser.token}`, // Ensure token is correct
+                    Authorization: `Bearer ${loggeduser.token}`,
                 },
-            });
+            })
 
             if (response.status === 403) {
-                console.error("Access denied: You do not have permission to access this resource.");
-                return;
+                setError("Access denied: You do not have permission to access this resource.")
+                return
             }
 
-            if (!response.ok) throw new Error("Failed to fetch users");
+            if (!response.ok) throw new Error("Failed to fetch users")
 
-            const data = await response.json();
-            setUsers(data); // Ensure `data` is an array
-
+            const data = await response.json()
+            setUsers(data)
         } catch (err) {
-            console.error("Error fetching users:", err);
+            console.error("Error fetching users:", err)
+            setError(err.message || "Failed to fetch users")
+        } finally {
+            setIsLoading(false)
         }
-    };
+    }
 
     useEffect(() => {
         fetchUsers()
-    },[roleFilter, statusFilter])
+    }, [])
 
-    // Filter users based on search query, role, and status
-    const filteredUsers = users.filter((user) => {
-        const matchesSearch =
-            user.uname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    // Filter users based on search query, role, status, and active tab
+    const getFilteredUsers = (tab) => {
+        return users.filter((user) => {
+            const matchesSearch =
+                user.uname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                user.email?.toLowerCase().includes(searchQuery.toLowerCase())
 
-        const matchesRole = roleFilter === "all" || user.role === roleFilter
-        const matchesStatus = statusFilter === "all" || user.status === statusFilter
+            const matchesRole = roleFilter === "all" || user.role === roleFilter
+            const matchesStatus = statusFilter === "all" || user.status === statusFilter
 
-        return matchesSearch && matchesRole && matchesStatus
-    })
+            // Provider filtering based on tab
+            let matchesTab = true
+            if (tab === "active") {
+                matchesTab = user.status === "active"
+            } else if (tab === "inactive") {
+                matchesTab = user.status === "inactive"
+            } else if (["SYSTEM", "GOOGLE", "GITHUB"].includes(tab)) {
+                matchesTab = user.provider === tab
+            }
+
+            return matchesSearch && matchesRole && matchesStatus && matchesTab
+        })
+    }
 
     // Handle user selection for bulk actions
     const handleUserSelection = (userId) => {
@@ -76,7 +91,7 @@ export default function AdminUsers() {
     }
 
     // Handle select all users
-    const handleSelectAll = () => {
+    const handleSelectAll = (filteredUsers) => {
         if (selectedUsers.length === filteredUsers.length) {
             setSelectedUsers([])
         } else {
@@ -84,126 +99,183 @@ export default function AdminUsers() {
         }
     }
 
+    const handleAddUser = () => {
+        setEditingUser(null)
+        setShowAddUserForm(true)
+    }
+
+    // Handle editing a user
+    const handleEditUser = (user) => {
+        setEditingUser(user)
+        setShowAddUserForm(true)
+    }
+
+    // Handle sending email to user(s)
+    const handleSendEmail = (userId) => {
+        console.log(`Sending email to user ${userId}`)
+        alert(`Email functionality would be implemented here for user ${userId}`)
+    }
+
+    // Handle bulk actions
+    const handleBulkAction = async (action) => {
+        if (selectedUsers.length === 0) {
+            setError("No users selected")
+            return
+        }
+
+        setIsLoading(true)
+        setError("")
+
+        const storedUser = sessionStorage.getItem("user")
+        const loggeduser = storedUser ? JSON.parse(storedUser) : null
+
+        try {
+            const response = await fetch(`http://localhost:8083/api/admin/${action}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${loggeduser.token}`,
+                },
+                body: JSON.stringify({ userIds: selectedUsers }),
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(errorData.message || `Failed to ${action} users`)
+            }
+
+            setSuccessMessage(`Successfully performed ${action} on ${selectedUsers.length} users`)
+            setSelectedUsers([])
+
+            // Refresh the user list
+            fetchUsers()
+
+            // Clear success message after 3 seconds
+            setTimeout(() => {
+                setSuccessMessage("")
+            }, 3000)
+        } catch (err) {
+            setError(err.message || `Failed to ${action} users`)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    // Handle tab changes
+    const handleTabChange = (tab) => {
+        setActiveTab(tab)
+        setSelectedUsers([]) // Clear selections when changing tabs
+    }
+
+    // Render loading state
+    const renderLoading = () => (
+        <div className="flex justify-center items-center p-8">
+            <div className="flex flex-col items-center">
+                <svg
+                    className="animate-spin h-8 w-8 text-primary mb-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                </svg>
+                <p className="text-muted-foreground">Loading users...</p>
+            </div>
+        </div>
+    )
+
+    // Render error state
+    const renderError = () => (
+        <div className="p-6 text-center">
+            <AlertTriangle className="h-10 w-10 text-destructive mx-auto mb-4" />
+            <p className="text-destructive font-medium mb-2">Error Loading Users</p>
+            <p className="text-muted-foreground">{error}</p>
+            <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => {
+                    setError("")
+                    fetchUsers()
+                }}
+            >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try Again
+            </Button>
+        </div>
+    )
+
     return (
         <div className="flex-1 overflow-auto">
             <main className="grid flex-1 items-start gap-4 p-4 md:gap-8 md:p-6">
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold">User Management</h1>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setShowAddUserForm(!showAddUserForm)}>
-                            {showAddUserForm ? (
-                                "Cancel"
-                            ) : (
-                                <>
-                                    <Plus className="mr-1 h-4 w-4" /> Add User
-                                </>
-                            )}
-                        </Button>
+                        {!showAddUserForm ? (
+                            <Button variant="outline" size="sm" onClick={handleAddUser}>
+                                Add User
+                            </Button>
+                        ): (
+                            <Button variant="outline" size="sm" onClick={() => {
+                                setShowAddUserForm(false)
+                                setEditingUser(null)
+                            }}>
+                                Cancel
+                            </Button>
+                        )}
+
                         <Button variant="outline" size="sm">
                             <Download className="mr-1 h-4 w-4" /> Export
                         </Button>
                     </div>
                 </div>
 
+                {/* User Form Component */}
                 {showAddUserForm && (
-                    <Card className="mb-6">
-                        <CardHeader>
-                            <CardTitle>Add New User</CardTitle>
-                            <CardDescription>Create a new user account</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form className="space-y-4">
-                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <label htmlFor="firstName" className="text-sm font-medium">
-                                            First Name
-                                        </label>
-                                        <Input id="firstName" placeholder="Enter first name" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label htmlFor="lastName" className="text-sm font-medium">
-                                            Last Name
-                                        </label>
-                                        <Input id="lastName" placeholder="Enter last name" />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="email" className="text-sm font-medium">
-                                        Email
-                                    </label>
-                                    <Input id="email" type="email" placeholder="Enter email address" />
-                                </div>
-                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <label htmlFor="password" className="text-sm font-medium">
-                                            Password
-                                        </label>
-                                        <Input id="password" type="password" placeholder="Create password" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label htmlFor="role" className="text-sm font-medium">
-                                            Role
-                                        </label>
-                                        <Select defaultValue="USER">
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select role" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="USER">User</SelectItem>
-                                                <SelectItem value="ADMIN">Admin</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-end gap-2">
-                                    <Button variant="outline" type="button" onClick={() => setShowAddUserForm(false)}>
-                                        Cancel
-                                    </Button>
-                                    <Button type="submit">Create User</Button>
-                                </div>
-                            </form>
-                        </CardContent>
-                    </Card>
+                    <UserForm
+                        editingUser={editingUser}
+                        onCancel={() => {
+                            setShowAddUserForm(false)
+                            setEditingUser(null)
+                        }}
+                        onSuccess={(message) => {
+                            setSuccessMessage(message)
+                            setShowAddUserForm(false)
+                            setEditingUser(null)
+                            fetchUsers()
+                            setTimeout(() => setSuccessMessage(""), 3000)
+                        }}
+                        onError={setError}
+                    />
                 )}
 
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex w-full max-w-sm items-center space-x-2">
-                        <Search className="h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search users..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="h-9"
-                        />
+                {/* Success Message */}
+                {successMessage && (
+                    <div className="p-3 text-sm text-green-700 bg-green-100 border border-green-300 rounded-lg">
+                        {successMessage}
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Select value={roleFilter} onValueChange={setRoleFilter}>
-                            <SelectTrigger className="h-9 w-[130px]">
-                                <SelectValue placeholder="Filter by role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Roles</SelectItem>
-                                <SelectItem value="ADMIN">Admin</SelectItem>
-                                <SelectItem value="USER">User</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="h-9 w-[130px]">
-                                <SelectValue placeholder="Filter by status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Status</SelectItem>
-                                <SelectItem value="active">Active</SelectItem>
-                                <SelectItem value="inactive">Inactive</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button variant="outline" size="sm" className="h-9">
-                            <Filter className="mr-1 h-4 w-4" /> More Filters
-                        </Button>
-                    </div>
-                </div>
+                )}
 
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                {/* Error Message */}
+                {error && !isLoading && (
+                    <div className="p-3 text-sm text-red-700 bg-red-100 border border-red-300 rounded-lg">{error}</div>
+                )}
+
+                {/* User Filters Component */}
+                <UserFilters
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    roleFilter={roleFilter}
+                    setRoleFilter={setRoleFilter}
+                    statusFilter={statusFilter}
+                    setStatusFilter={setStatusFilter}
+                />
+
+                <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
                     <TabsList>
                         <TabsTrigger value="all">All Users</TabsTrigger>
                         <TabsTrigger value="active">Active</TabsTrigger>
@@ -213,146 +285,125 @@ export default function AdminUsers() {
                         <TabsTrigger value="GITHUB">Github</TabsTrigger>
                     </TabsList>
 
+                    {/* All Users Tab */}
                     <TabsContent value="all" className="space-y-4">
-                        <Card>
-                            <CardContent className="p-0">
-                                <div className="relative w-full overflow-auto">
-                                    <table className="w-full caption-bottom text-sm">
-                                        <thead className="border-b">
-                                        <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                            <th className="h-12 px-4 text-left align-middle font-medium">User</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Role</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Provider</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Join Date</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Last Active</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">
-                                                <div className="flex items-center justify-center gap-7">
-                                                    <span>Action</span>
-                                                    <Checkbox
-                                                        checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
-                                                        onCheckedChange={handleSelectAll}
-                                                    />
-                                                </div>
-                                            </th>
-                                        </tr>
-                                        </thead>
-
-                                        <tbody>
-                                        {filteredUsers.map((user) => (
-                                            <tr
-                                                key={user.id}
-                                                className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                                            >
-                                                <td className="p-4 align-middle">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="flex items-center gap-3">
-                                                            <Avatar>
-                                                                <AvatarImage src={avatar} alt={user.uname} />
-                                                                <AvatarFallback>{user.uname.charAt(0)}</AvatarFallback>
-                                                            </Avatar>
-                                                            <div>
-                                                                <div className="font-medium">{user.uname}</div>
-                                                                <div className="text-sm text-muted-foreground">{user.email}</div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 align-middle">
-                                                    <Badge
-                                                        variant={
-                                                            user.role === "ADMIN" ? "default" : "secondary"
-                                                    }
-                                                    >
-                                                        {user.role}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-4 align-middle">
-                                                    <Badge
-                                                        variant={
-                                                            user.provider === "SYSTEM" ? "default" : user.provider === "GOOGLE" ? "secondary" : "outline"
-                                                        }
-                                                    >
-                                                        {user.provider}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-4 align-middle">
-                                                    <Badge
-                                                        variant={user.status === "active" ? "outline" : "secondary"}
-                                                        className={
-                                                            user.status === "active"
-                                                                ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                                                : "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                                                        }
-                                                    >
-                                                        {user.status}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-4 align-middle">{user.joinDate}</td>
-                                                <td className="p-4 align-middle">{user.lastActive}</td>
-                                                <td className="p-4 align-middle text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <Button variant="ghost" size="icon">
-                                                            <Mail className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon">
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                        <Checkbox
-                                                            checked={selectedUsers.includes(user.id)}
-                                                            onCheckedChange={() => handleUserSelection(user.id)}
-                                                        />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        {isLoading && users.length === 0 ? (
+                            renderLoading()
+                        ) : error && users.length === 0 ? (
+                            renderError()
+                        ) : (
+                            <UserTable
+                                users={getFilteredUsers("all")}
+                                selectedUsers={selectedUsers}
+                                onSelectUser={handleUserSelection}
+                                onSelectAll={handleSelectAll}
+                                onEditUser={handleEditUser}
+                                onSendEmail={handleSendEmail}
+                            />
+                        )}
                     </TabsContent>
 
+                    {/* Active Users Tab */}
                     <TabsContent value="active" className="space-y-4">
-                        {/* Similar content as "all" tab but filtered for active users */}
+                        {isLoading && users.length === 0 ? (
+                            renderLoading()
+                        ) : error && users.length === 0 ? (
+                            renderError()
+                        ) : (
+                            <UserTable
+                                users={getFilteredUsers("active")}
+                                selectedUsers={selectedUsers}
+                                onSelectUser={handleUserSelection}
+                                onSelectAll={handleSelectAll}
+                                onEditUser={handleEditUser}
+                                onSendEmail={handleSendEmail}
+                            />
+                        )}
                     </TabsContent>
 
+                    {/* Inactive Users Tab */}
                     <TabsContent value="inactive" className="space-y-4">
-                        {/* Similar content as "all" tab but filtered for inactive users */}
+                        {isLoading && users.length === 0 ? (
+                            renderLoading()
+                        ) : error && users.length === 0 ? (
+                            renderError()
+                        ) : (
+                            <UserTable
+                                users={getFilteredUsers("inactive")}
+                                selectedUsers={selectedUsers}
+                                onSelectUser={handleUserSelection}
+                                onSelectAll={handleSelectAll}
+                                onEditUser={handleEditUser}
+                                onSendEmail={handleSendEmail}
+                            />
+                        )}
                     </TabsContent>
 
+                    {/* System Users Tab */}
                     <TabsContent value="SYSTEM" className="space-y-4">
-                        {/* Similar content as "all" tab but filtered for System users */}
+                        {isLoading && users.length === 0 ? (
+                            renderLoading()
+                        ) : error && users.length === 0 ? (
+                            renderError()
+                        ) : (
+                            <UserTable
+                                users={getFilteredUsers("SYSTEM")}
+                                selectedUsers={selectedUsers}
+                                onSelectUser={handleUserSelection}
+                                onSelectAll={handleSelectAll}
+                                onEditUser={handleEditUser}
+                                onSendEmail={handleSendEmail}
+                            />
+                        )}
                     </TabsContent>
 
+                    {/* Google Users Tab */}
                     <TabsContent value="GOOGLE" className="space-y-4">
-                        {/* Similar content as "all" tab but filtered for google users */}
+                        {isLoading && users.length === 0 ? (
+                            renderLoading()
+                        ) : error && users.length === 0 ? (
+                            renderError()
+                        ) : (
+                            <UserTable
+                                users={getFilteredUsers("GOOGLE")}
+                                selectedUsers={selectedUsers}
+                                onSelectUser={handleUserSelection}
+                                onSelectAll={handleSelectAll}
+                                onEditUser={handleEditUser}
+                                onSendEmail={handleSendEmail}
+                            />
+                        )}
                     </TabsContent>
 
+                    {/* Github Users Tab */}
                     <TabsContent value="GITHUB" className="space-y-4">
-                        {/* Similar content as "all" tab but filtered for Github users */}
+                        {isLoading && users.length === 0 ? (
+                            renderLoading()
+                        ) : error && users.length === 0 ? (
+                            renderError()
+                        ) : (
+                            <UserTable
+                                users={getFilteredUsers("GITHUB")}
+                                selectedUsers={selectedUsers}
+                                onSelectUser={handleUserSelection}
+                                onSelectAll={handleSelectAll}
+                                onEditUser={handleEditUser}
+                                onSendEmail={handleSendEmail}
+                            />
+                        )}
                     </TabsContent>
                 </Tabs>
 
+                {/* Bulk Actions Component */}
                 {selectedUsers.length > 0 && (
-                    <div className="fixed bottom-4 right-4 flex items-center gap-2 rounded-lg bg-background p-4 shadow-lg border">
-                        <span className="text-sm font-medium">{selectedUsers.length} users selected</span>
-                        <Button size="sm" variant="outline">
-                            <Mail className="mr-1 h-4 w-4" /> Email
-                        </Button>
-                        <Button size="sm" variant="outline">
-                            <Shield className="mr-1 h-4 w-4" /> Change Role
-                        </Button>
-                        <Button size="sm" variant="outline">
-                            <UserPlus2 className="mr-1 h-4 w-4" /> Activate
-                        </Button>
-                        <Button size="sm" variant="outline">
-                            <UserMinus className="mr-1 h-4 w-4" /> Deactivate
-                        </Button>
-                        <Button size="sm" variant="destructive">
-                            <Trash2 className="mr-1 h-4 w-4" /> Delete
-                        </Button>
-                    </div>
+                    <UserBulkActions
+                        selectedCount={selectedUsers.length}
+                        onSendEmail={() => handleSendEmail(selectedUsers)}
+                        onChangeRole={() => handleBulkAction("changerole")}
+                        onActivate={() => handleBulkAction("activate")}
+                        onDeactivate={() => handleBulkAction("deactivate")}
+                        onDelete={() => handleBulkAction("deleteusers")}
+                    />
                 )}
             </main>
         </div>
