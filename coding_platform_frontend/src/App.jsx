@@ -15,6 +15,12 @@ import ProtectedRoute from "@/ProtectedRoute.jsx";
 import OauthCallback from "@/OauthCallback.jsx";
 import DashboardLayout from "@/components/layout/dashboard-layout.jsx";
 
+// Admin pages
+import AdminMainSection from "@/pages/admin/MainSection.jsx"
+import AdminUsers from "@/pages/admin/Users.jsx"
+import AdminProblems from "@/pages/admin/Problems.jsx"
+import AdminContests from "@/pages/admin/Contests.jsx"
+import AdminLeaderboard from "@/pages/admin/Leaderboard.jsx"
 
 function App() {
     return (
@@ -51,11 +57,12 @@ function App() {
                     <DashboardLayout />
                 </ProtectedRoute>
             }>
-                <Route index element={<MainSection />} />
-                <Route path="mainsection" element={<MainSection />} />
-                <Route path="practice" element={<Practice />} />
-                <Route path="contests" element={<Contests />} />
-                <Route path="leaderboard" element={<Leaderboard />} />
+                <Route index element={<AdminMainSection />} />
+                <Route path="mainsection" element={<AdminMainSection />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="problems" element={<AdminProblems />} />
+                <Route path="contests" element={<AdminContests />} />
+                <Route path="leaderboard" element={<AdminLeaderboard />} />
                 <Route path="contest/:id" element={<Contest />} />
             </Route>
 

@@ -1,0 +1,135 @@
+/* Editor theme styles */
+.editor-container {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 0.5rem;
+}
+
+.editor-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem;
+    background-color: hsl(var(--muted));
+    border-bottom: 1px solid hsl(var(--border));
+}
+
+.editor-content {
+    height: 100%;
+    overflow: auto;
+    font-family: "Menlo", "Monaco", "Courier New", monospace;
+    line-height: 1.5;
+}
+
+.editor-statusbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.25rem 0.5rem;
+    background-color: hsl(var(--muted));
+    border-top: 1px solid hsl(var(--border));
+    font-size: 0.75rem;
+    color: hsl(var(--muted-foreground));
+}
+
+.editor-line-numbers {
+    padding: 0.5rem;
+    text-align: right;
+    color: hsl(var(--muted-foreground));
+    user-select: none;
+    border-right: 1px solid hsl(var(--border));
+}
+
+/* Syntax highlighting */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+    color: hsl(var(--muted-foreground));
+}
+
+.token.punctuation {
+    color: hsl(var(--foreground));
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol {
+    color: hsl(var(--primary));
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin {
+    color: hsl(130, 60%, 50%);
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+    color: hsl(40, 90%, 60%);
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+    color: hsl(210, 90%, 60%);
+}
+
+.token.function,
+.token.class-name {
+    color: hsl(330, 70%, 60%);
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+    color: hsl(30, 90%, 60%);
+}
+
+.token.important,
+.token.bold {
+    font-weight: bold;
+}
+
+.token.italic {
+    font-style: italic;
+}
+
+/* Console output styling */
+.console-output {
+    font-family: "Menlo", "Monaco", "Courier New", monospace;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    padding: 0.5rem;
+    max-height: 10rem;
+    overflow-y: auto;
+    background-color: hsl(var(--background));
+    border-top: 1px solid hsl(var(--border));
+}
+
+.console-info {
+    color: hsl(var(--foreground));
+}
+
+.console-success {
+    color: hsl(142, 76%, 36%);
+}
+
+.console-error {
+    color: hsl(0, 84%, 60%);
+}
+
+.console-warning {
+    color: hsl(38, 92%, 50%);
+}
+
