@@ -5,6 +5,8 @@ import com.coding_contest_platform.repository.UserRepository;
 import com.coding_contest_platform.services.UserServices;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UserServiceImpl implements UserServices {
 
@@ -21,5 +23,10 @@ public class UserServiceImpl implements UserServices {
         newUser.setEmail(user.getEmail());
         newUser.setPassword(user.getPassword());
         return userRepository.save(newUser); // Collection is created automatically if it doesn't exist
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 }

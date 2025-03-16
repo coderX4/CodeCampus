@@ -1,4 +1,4 @@
-import { useState } from "react"
+import {useEffect, useState} from "react"
 import { Button } from "@/components/ui/button.jsx"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx"
 import { Input } from "@/components/ui/input.jsx"
@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge.jsx"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx"
 import { Checkbox } from "@/components/ui/checkbox.jsx"
-import { Search, Plus, MoreHorizontal, Mail, Shield, UserMinus, Edit, Trash2, Download, Filter } from "lucide-react"
+import { UserPlus2,Search, Plus, Mail, Shield, UserMinus, Edit, Trash2, Download, Filter } from "lucide-react"
 
 export default function AdminUsers() {
     const [activeTab, setActiveTab] = useState("all")
@@ -16,79 +16,52 @@ export default function AdminUsers() {
     const [selectedUsers, setSelectedUsers] = useState([])
     const [roleFilter, setRoleFilter] = useState("all")
     const [statusFilter, setStatusFilter] = useState("all")
+    const avatar= "/placeholder.svg?height=40&width=40";
 
-    // Mock users data
-    const users = [
-        {
-            id: 1,
-            name: "Alex Johnson",
-            email: "alex.johnson@example.com",
-            role: "USER",
-            status: "active",
-            joinDate: "2023-01-15",
-            lastActive: "2023-03-28",
-            avatar: "/placeholder.svg?height=40&width=40",
-        },
-        {
-            id: 2,
-            name: "Samantha Lee",
-            email: "samantha.lee@example.com",
-            role: "USER",
-            status: "active",
-            joinDate: "2023-02-10",
-            lastActive: "2023-03-27",
-            avatar: "/placeholder.svg?height=40&width=40",
-        },
-        {
-            id: 3,
-            name: "Michael Chen",
-            email: "michael.chen@example.com",
-            role: "ADMIN",
-            status: "active",
-            joinDate: "2022-11-05",
-            lastActive: "2023-03-28",
-            avatar: "/placeholder.svg?height=40&width=40",
-        },
-        {
-            id: 4,
-            name: "Emily Rodriguez",
-            email: "emily.rodriguez@example.com",
-            role: "USER",
-            status: "inactive",
-            joinDate: "2023-01-20",
-            lastActive: "2023-02-15",
-            avatar: "/placeholder.svg?height=40&width=40",
-        },
-        {
-            id: 5,
-            name: "David Kim",
-            email: "david.kim@example.com",
-            role: "USER",
-            status: "active",
-            joinDate: "2023-03-01",
-            lastActive: "2023-03-26",
-            avatar: "/placeholder.svg?height=40&width=40",
-        },
-        {
-            id: 6,
-            name: "Jessica Wang",
-            email: "jessica.wang@example.com",
-            role: "MODERATOR",
-            status: "active",
-            joinDate: "2022-12-15",
-            lastActive: "2023-03-25",
-            avatar: "/placeholder.svg?height=40&width=40",
-        },
-    ]
+
+    const [users,setUsers] = useState([])
+
+    const fetchUsers = async () => {
+        console.log("fetching users")
+        const storedUser = sessionStorage.getItem("user");
+        const loggeduser = storedUser ? JSON.parse(storedUser) : null;
+
+        try {
+            const response = await fetch("http://localhost:8083/api/admin/getallusers", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${loggeduser.token}`, // Ensure token is correct
+                },
+            });
+
+            if (response.status === 403) {
+                console.error("Access denied: You do not have permission to access this resource.");
+                return;
+            }
+
+            if (!response.ok) throw new Error("Failed to fetch users");
+
+            const data = await response.json();
+            setUsers(data); // Ensure `data` is an array
+
+        } catch (err) {
+            console.error("Error fetching users:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsers()
+    },[roleFilter, statusFilter])
 
     // Filter users based on search query, role, and status
     const filteredUsers = users.filter((user) => {
         const matchesSearch =
-            user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            user.uname.toLowerCase().includes(searchQuery.toLowerCase()) ||
             user.email.toLowerCase().includes(searchQuery.toLowerCase())
 
-        const matchesRole = roleFilter === "all" || user.role.toLowerCase() === roleFilter.toLowerCase()
-        const matchesStatus = statusFilter === "all" || user.status.toLowerCase() === statusFilter.toLowerCase()
+        const matchesRole = roleFilter === "all" || user.role === roleFilter
+        const matchesStatus = statusFilter === "all" || user.status === statusFilter
 
         return matchesSearch && matchesRole && matchesStatus
     })
@@ -171,14 +144,13 @@ export default function AdminUsers() {
                                         <label htmlFor="role" className="text-sm font-medium">
                                             Role
                                         </label>
-                                        <Select defaultValue="user">
+                                        <Select defaultValue="USER">
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select role" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="user">User</SelectItem>
-                                                <SelectItem value="moderator">Moderator</SelectItem>
-                                                <SelectItem value="admin">Admin</SelectItem>
+                                                <SelectItem value="USER">User</SelectItem>
+                                                <SelectItem value="ADMIN">Admin</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -211,9 +183,8 @@ export default function AdminUsers() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Roles</SelectItem>
-                                <SelectItem value="admin">Admin</SelectItem>
-                                <SelectItem value="moderator">Moderator</SelectItem>
-                                <SelectItem value="user">User</SelectItem>
+                                <SelectItem value="ADMIN">Admin</SelectItem>
+                                <SelectItem value="USER">User</SelectItem>
                             </SelectContent>
                         </Select>
                         <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -237,6 +208,9 @@ export default function AdminUsers() {
                         <TabsTrigger value="all">All Users</TabsTrigger>
                         <TabsTrigger value="active">Active</TabsTrigger>
                         <TabsTrigger value="inactive">Inactive</TabsTrigger>
+                        <TabsTrigger value="SYSTEM">System</TabsTrigger>
+                        <TabsTrigger value="GOOGLE">Google</TabsTrigger>
+                        <TabsTrigger value="GITHUB">Github</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="all" className="space-y-4">
@@ -246,22 +220,24 @@ export default function AdminUsers() {
                                     <table className="w-full caption-bottom text-sm">
                                         <thead className="border-b">
                                         <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                            <th className="h-12 px-4 text-left align-middle font-medium">User</th>
+                                            <th className="h-12 px-4 text-left align-middle font-medium">Role</th>
+                                            <th className="h-12 px-4 text-left align-middle font-medium">Provider</th>
+                                            <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
+                                            <th className="h-12 px-4 text-left align-middle font-medium">Join Date</th>
+                                            <th className="h-12 px-4 text-left align-middle font-medium">Last Active</th>
                                             <th className="h-12 px-4 text-left align-middle font-medium">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center justify-center gap-7">
+                                                    <span>Action</span>
                                                     <Checkbox
                                                         checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
                                                         onCheckedChange={handleSelectAll}
                                                     />
-                                                    <span>User</span>
                                                 </div>
                                             </th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Role</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Join Date</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Last Active</th>
-                                            <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
                                         </tr>
                                         </thead>
+
                                         <tbody>
                                         {filteredUsers.map((user) => (
                                             <tr
@@ -270,17 +246,13 @@ export default function AdminUsers() {
                                             >
                                                 <td className="p-4 align-middle">
                                                     <div className="flex items-center gap-3">
-                                                        <Checkbox
-                                                            checked={selectedUsers.includes(user.id)}
-                                                            onCheckedChange={() => handleUserSelection(user.id)}
-                                                        />
                                                         <div className="flex items-center gap-3">
                                                             <Avatar>
-                                                                <AvatarImage src={user.avatar} alt={user.name} />
-                                                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                                                <AvatarImage src={avatar} alt={user.uname} />
+                                                                <AvatarFallback>{user.uname.charAt(0)}</AvatarFallback>
                                                             </Avatar>
                                                             <div>
-                                                                <div className="font-medium">{user.name}</div>
+                                                                <div className="font-medium">{user.uname}</div>
                                                                 <div className="text-sm text-muted-foreground">{user.email}</div>
                                                             </div>
                                                         </div>
@@ -289,10 +261,19 @@ export default function AdminUsers() {
                                                 <td className="p-4 align-middle">
                                                     <Badge
                                                         variant={
-                                                            user.role === "ADMIN" ? "default" : user.role === "MODERATOR" ? "secondary" : "outline"
-                                                        }
+                                                            user.role === "ADMIN" ? "default" : "secondary"
+                                                    }
                                                     >
                                                         {user.role}
+                                                    </Badge>
+                                                </td>
+                                                <td className="p-4 align-middle">
+                                                    <Badge
+                                                        variant={
+                                                            user.provider === "SYSTEM" ? "default" : user.provider === "GOOGLE" ? "secondary" : "outline"
+                                                        }
+                                                    >
+                                                        {user.provider}
                                                     </Badge>
                                                 </td>
                                                 <td className="p-4 align-middle">
@@ -317,9 +298,10 @@ export default function AdminUsers() {
                                                         <Button variant="ghost" size="icon">
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
-                                                        <Button variant="ghost" size="icon">
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
+                                                        <Checkbox
+                                                            checked={selectedUsers.includes(user.id)}
+                                                            onCheckedChange={() => handleUserSelection(user.id)}
+                                                        />
                                                     </div>
                                                 </td>
                                             </tr>
@@ -338,6 +320,18 @@ export default function AdminUsers() {
                     <TabsContent value="inactive" className="space-y-4">
                         {/* Similar content as "all" tab but filtered for inactive users */}
                     </TabsContent>
+
+                    <TabsContent value="SYSTEM" className="space-y-4">
+                        {/* Similar content as "all" tab but filtered for System users */}
+                    </TabsContent>
+
+                    <TabsContent value="GOOGLE" className="space-y-4">
+                        {/* Similar content as "all" tab but filtered for google users */}
+                    </TabsContent>
+
+                    <TabsContent value="GITHUB" className="space-y-4">
+                        {/* Similar content as "all" tab but filtered for Github users */}
+                    </TabsContent>
                 </Tabs>
 
                 {selectedUsers.length > 0 && (
@@ -348,6 +342,9 @@ export default function AdminUsers() {
                         </Button>
                         <Button size="sm" variant="outline">
                             <Shield className="mr-1 h-4 w-4" /> Change Role
+                        </Button>
+                        <Button size="sm" variant="outline">
+                            <UserPlus2 className="mr-1 h-4 w-4" /> Activate
                         </Button>
                         <Button size="sm" variant="outline">
                             <UserMinus className="mr-1 h-4 w-4" /> Deactivate

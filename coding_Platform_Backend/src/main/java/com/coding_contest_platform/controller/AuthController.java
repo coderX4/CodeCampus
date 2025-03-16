@@ -19,6 +19,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @CrossOrigin
@@ -41,8 +43,13 @@ public class AuthController {
         }
 
         String uname = request.getFirstName() + " " + request.getLastName();
+
+        LocalDate date = LocalDate.now(); // Get current date
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy"); // Define format
+        String formattedDate = date.format(dateFormatter);
+
         User user = new User(uname, request.getEmail(),
-                passwordEncoder.encode(request.getPassword()), Role.ADMIN, Provider.SYSTEM);
+                passwordEncoder.encode(request.getPassword()), Role.ADMIN, Provider.SYSTEM,"active",formattedDate,formattedDate);
         userRepository.save(user);
 
         // Generate JWT token and store it in an HTTP-only cookie
@@ -60,8 +67,13 @@ public class AuthController {
         }
 
         String uname = request.getFirstName() + " " + request.getLastName();
+
+        LocalDate date = LocalDate.now(); // Get current date
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy"); // Define format
+        String formattedDate = date.format(dateFormatter);
+
         User user = new User(uname, request.getEmail(),
-                passwordEncoder.encode(request.getPassword()), Role.USER, Provider.SYSTEM);
+                passwordEncoder.encode(request.getPassword()), Role.USER, Provider.SYSTEM, "active", formattedDate, formattedDate);
         userRepository.save(user);
 
         // Generate JWT token and store it in an HTTP-only cookie
@@ -77,7 +89,17 @@ public class AuthController {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
+        LocalDate date = LocalDate.now(); // Get current date
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy"); // Define format
+        String formattedDate = date.format(dateFormatter);
+
         User user = userRepository.findByEmail(request.getEmail());
+
+        user.setStatus("active");
+        user.setLastActive(formattedDate);
+
+        userRepository.save(user);
+
         String token = jwtService.generateToken(user);
         setCookie(response, token);
 
@@ -92,7 +114,17 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", "OAuth login failed"));
         }
 
+        LocalDate date = LocalDate.now(); // Get current date
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy"); // Define format
+        String formattedDate = date.format(dateFormatter);
+
         User user = userRepository.findByEmail(email);
+
+        user.setStatus("active");
+        user.setLastActive(formattedDate);
+
+        userRepository.save(user);
+
         if (user == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
         }

@@ -14,8 +14,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
-import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -37,9 +38,13 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             email = (String) oauthUser.getAttributes().get("email");
             name = (String) oauthUser.getAttributes().get("name");
 
+            LocalDate date = LocalDate.now(); // Get current date
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy"); // Define format
+            String formattedDate = date.format(dateFormatter);
+
             User user = userRepository.findByEmail(email);
             if (user == null) {
-                user = new User(name, email, "GOOGLE_AUTH", Role.USER, Provider.GOOGLE);
+                user = new User(name, email, "GOOGLE_AUTH", Role.USER, Provider.GOOGLE, "active", formattedDate, formattedDate);
                 userRepository.save(user);
             }
             // Redirect to frontend, where it will call /oauth-success
@@ -50,9 +55,13 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     : oauthUser.getAttribute("login").toString() + "@github.com";
             name = oauthUser.getAttribute("name") != null ? oauthUser.getAttribute("name").toString() : oauthUser.getAttribute("login").toString();
 
+            LocalDate date = LocalDate.now(); // Get current date
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy"); // Define format
+            String formattedDate = date.format(dateFormatter);
+
             User user = userRepository.findByEmail(email);
             if (user == null) {
-                user = new User(name, email, "GITHUB_AUTH", Role.USER,Provider.GITHUB);
+                user = new User(name, email, "GITHUB_AUTH", Role.USER,Provider.GITHUB, "active", formattedDate, formattedDate);
                 userRepository.save(user);
             }
             // Redirect to frontend, where it will call /oauth-success
