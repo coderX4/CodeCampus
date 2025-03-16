@@ -14,59 +14,59 @@ export default function Header() {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center gap-2">
-              <Code className="h-6 w-6" />
+              <Code className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold">CodeCampus</span>
             </Link>
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <Link
                 to="/home"
-                className={`text-sm font-medium ${isActive("/home") ? "text-primary" : ""} hover:underline underline-offset-4`}
+                className={`text-sm font-medium ${isActive("/home") ? "text-primary" : ""} hover:text-primary transition-colors`}
             >
               Home
             </Link>
             <Link
                 to="/contests"
-                className={`text-sm font-medium ${isActive("/contests") ? "text-primary" : ""} hover:underline underline-offset-4`}
+                className={`text-sm font-medium ${isActive("/contests") ? "text-primary" : ""} hover:text-primary transition-colors`}
             >
               Contests
             </Link>
             <Link
                 to="/problems"
-                className={`text-sm font-medium ${isActive("/problems") ? "text-primary" : ""} hover:underline underline-offset-4`}
+                className={`text-sm font-medium ${isActive("/problems") ? "text-primary" : ""} hover:text-primary transition-colors`}
             >
               Problems
             </Link>
             <Link
                 to="/leaderboard"
-                className={`text-sm font-medium ${isActive("/leaderboard") ? "text-primary" : ""} hover:underline underline-offset-4`}
+                className={`text-sm font-medium ${isActive("/leaderboard") ? "text-primary" : ""} hover:text-primary transition-colors`}
             >
               Leaderboard
             </Link>
             <Link
                 to="/about"
-                className={`text-sm font-medium ${isActive("/about") ? "text-primary" : ""} hover:underline underline-offset-4`}
+                className={`text-sm font-medium ${isActive("/about") ? "text-primary" : ""} hover:text-primary transition-colors`}
             >
               About Us
             </Link>
             <Link
                 to="/contact"
-                className={`text-sm font-medium ${isActive("/contact") ? "text-primary" : ""} hover:underline underline-offset-4`}
+                className={`text-sm font-medium ${isActive("/contact") ? "text-primary" : ""} hover:text-primary transition-colors`}
             >
               Contact Us
             </Link>
           </nav>
           <div className="flex items-center gap-4">
             {/* Theme Toggle Button */}
-            <Button variant="outline" size="icon" onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
+            <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
               {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
             </Button>
 
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="btn-hover" asChild>
               <Link to="/signup">Sign Up</Link>
             </Button>
 
-            <Button size="sm" asChild>
+            <Button size="sm" className="btn-hover" asChild>
               <Link to="/">Sign In</Link>
             </Button>
           </div>
