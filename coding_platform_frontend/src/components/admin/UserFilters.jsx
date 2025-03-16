@@ -1,7 +1,6 @@
 import { Input } from "@/components/ui/input.jsx"
-import { Button } from "@/components/ui/button.jsx"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx"
-import { Search, Filter } from "lucide-react"
+import { Search} from "lucide-react"
 
 export default function UserFilters({
                                         searchQuery,
