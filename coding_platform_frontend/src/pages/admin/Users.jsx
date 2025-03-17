@@ -6,6 +6,7 @@ import UserForm from "../../components/admin/UserForm.jsx"
 import UserFilters from "../../components/admin/UserFilters.jsx"
 import UserTable from "../../components/admin/UserTable.jsx"
 import UserBulkActions from "../../components/admin/UserBulkActions.jsx"
+import SendEmailForm from "../../components/admin/SendEmailForm.jsx"
 import { AlertTriangle, RefreshCw } from "lucide-react"
 
 export default function AdminUsers() {
@@ -20,6 +21,8 @@ export default function AdminUsers() {
     const [error, setError] = useState("")
     const [successMessage, setSuccessMessage] = useState("")
     const [editingUser, setEditingUser] = useState(null)
+    const [showEmailForm, setShowEmailForm] = useState(false)
+    const [selectedUserDetails, setSelectedUserDetails] = useState([])
 
     const fetchUsers = async () => {
         console.log("Fetching users...")
@@ -112,8 +115,21 @@ export default function AdminUsers() {
 
     // Handle sending email to user(s)
     const handleSendEmail = (userId) => {
-        console.log(`Sending email to user ${userId}`)
-        alert(`Email functionality would be implemented here for user ${userId}`)
+        // If a single user ID is provided, find that user
+        if (userId && !Array.isArray(userId)) {
+            const user = users.find((u) => u.id === userId)
+            if (user) {
+                setSelectedUserDetails([user])
+                setShowEmailForm(true)
+            }
+        }
+        // If it's an array of IDs or we're using the selectedUsers array
+        else {
+            const userIds = userId || selectedUsers
+            const selectedDetails = users.filter((user) => userIds.includes(user.id))
+            setSelectedUserDetails(selectedDetails)
+            setShowEmailForm(true)
+        }
     }
 
     // Handle bulk actions
@@ -130,13 +146,19 @@ export default function AdminUsers() {
         const loggeduser = storedUser ? JSON.parse(storedUser) : null
 
         try {
-            const response = await fetch(`http://localhost:8083/api/admin/${action}`, {
+            // Get the selected user details including emails
+            const selectedDetails = users.filter((user) => selectedUsers.includes(user.id))
+            const selectedEmails = selectedDetails.map((user) => user.email)
+
+            const response = await fetch(`http://localhost:8083/api/admin/action/${action}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${loggeduser.token}`,
                 },
-                body: JSON.stringify({ userIds: selectedUsers }),
+                body: JSON.stringify({
+                    emails: selectedEmails, // Only send emails, not userIds
+                }),
             })
 
             if (!response.ok) {
@@ -155,7 +177,9 @@ export default function AdminUsers() {
                 setSuccessMessage("")
             }, 3000)
         } catch (err) {
-            setError(err.message || `Failed to ${action} users`)
+            setTimeout(() => {
+                setError(err.message || `Failed to ${action} users`)
+            }, 5000)
         } finally {
             setIsLoading(false)
         }
@@ -219,11 +243,15 @@ export default function AdminUsers() {
                             <Button variant="outline" size="sm" onClick={handleAddUser}>
                                 Add User
                             </Button>
-                        ): (
-                            <Button variant="outline" size="sm" onClick={() => {
-                                setShowAddUserForm(false)
-                                setEditingUser(null)
-                            }}>
+                        ) : (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    setShowAddUserForm(false)
+                                    setEditingUser(null)
+                                }}
+                            >
                                 Cancel
                             </Button>
                         )}
@@ -247,6 +275,24 @@ export default function AdminUsers() {
                             setShowAddUserForm(false)
                             setEditingUser(null)
                             fetchUsers()
+                            setTimeout(() => setSuccessMessage(""), 3000)
+                        }}
+                        onError={setError}
+                    />
+                )}
+
+                {/* Email Form Component */}
+                {showEmailForm && (
+                    <SendEmailForm
+                        recipients={selectedUserDetails}
+                        onCancel={() => {
+                            setShowEmailForm(false)
+                            setSelectedUserDetails([])
+                        }}
+                        onSuccess={(message) => {
+                            setSuccessMessage(message)
+                            setShowEmailForm(false)
+                            setSelectedUserDetails([])
                             setTimeout(() => setSuccessMessage(""), 3000)
                         }}
                         onError={setError}
