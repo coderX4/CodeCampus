@@ -13,7 +13,7 @@ export default function UserBulkActions({
         <div className="fixed bottom-4 right-4 flex items-center gap-2 rounded-lg bg-background p-4 shadow-lg border">
             <span className="text-sm font-medium">{selectedCount} users selected</span>
             <Button size="sm" variant="outline" onClick={onSendEmail}>
-                <Mail className="mr-1 h-4 w-4" /> Email
+                <Mail className="mr-1 h-4 w-4" /> Send Email
             </Button>
             <Button size="sm" variant="outline" onClick={onChangeRole}>
                 <Shield className="mr-1 h-4 w-4" /> Change Role
