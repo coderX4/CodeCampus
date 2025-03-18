@@ -35,8 +35,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         Map<String, Object> attributes = oauthUser.getAttributes();
 
-        String email = null;
-        String name = null;
+        String email;
+        String name;
 
         if (attributes.containsKey("sub")) {
             email = (String) oauthUser.getAttributes().get("email");
