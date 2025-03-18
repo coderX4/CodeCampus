@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button.jsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx"
-import { Download } from "lucide-react"
+import { Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import UserForm from "../../components/admin/UserForm.jsx"
 import UserFilters from "../../components/admin/UserFilters.jsx"
 import UserTable from "../../components/admin/UserTable.jsx"
@@ -23,6 +23,10 @@ export default function AdminUsers() {
     const [editingUser, setEditingUser] = useState(null)
     const [showEmailForm, setShowEmailForm] = useState(false)
     const [selectedUserDetails, setSelectedUserDetails] = useState([])
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1)
+    const usersPerPage = 10
 
     const fetchUsers = async () => {
         console.log("Fetching users...")
@@ -60,6 +64,11 @@ export default function AdminUsers() {
         fetchUsers()
     }, [])
 
+    // Reset to first page when filters change
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [searchQuery, roleFilter, statusFilter, activeTab])
+
     // Filter users based on search query, role, status, and active tab
     const getFilteredUsers = (tab) => {
         return users.filter((user) => {
@@ -84,6 +93,13 @@ export default function AdminUsers() {
         })
     }
 
+    // Get paginated users
+    const getPaginatedUsers = (filteredUsers) => {
+        const indexOfLastUser = currentPage * usersPerPage
+        const indexOfFirstUser = indexOfLastUser - usersPerPage
+        return filteredUsers.slice(indexOfFirstUser, indexOfLastUser)
+    }
+
     // Handle user selection for bulk actions
     const handleUserSelection = (userId) => {
         if (selectedUsers.includes(userId)) {
@@ -95,10 +111,20 @@ export default function AdminUsers() {
 
     // Handle select all users
     const handleSelectAll = (filteredUsers) => {
-        if (selectedUsers.length === filteredUsers.length) {
-            setSelectedUsers([])
+        // Only select users on the current page
+        const paginatedUsers = getPaginatedUsers(filteredUsers)
+        const paginatedUserIds = paginatedUsers.map((user) => user.id)
+
+        if (paginatedUserIds.every((id) => selectedUsers.includes(id))) {
+            setSelectedUsers(selectedUsers.filter((id) => !paginatedUserIds.includes(id)))
         } else {
-            setSelectedUsers(filteredUsers.map((user) => user.id))
+            const newSelectedUsers = [...selectedUsers]
+            paginatedUserIds.forEach((id) => {
+                if (!newSelectedUsers.includes(id)) {
+                    newSelectedUsers.push(id)
+                }
+            })
+            setSelectedUsers(newSelectedUsers)
         }
     }
 
@@ -189,6 +215,12 @@ export default function AdminUsers() {
     const handleTabChange = (tab) => {
         setActiveTab(tab)
         setSelectedUsers([]) // Clear selections when changing tabs
+        setCurrentPage(1) // Reset to first page when changing tabs
+    }
+
+    // Pagination controls
+    const handlePageChange = (page) => {
+        setCurrentPage(page)
     }
 
     // Render loading state
@@ -232,6 +264,91 @@ export default function AdminUsers() {
             </Button>
         </div>
     )
+
+    // Render pagination controls
+    const renderPagination = (filteredUsers) => {
+        const totalUsers = filteredUsers.length
+        const totalPages = Math.ceil(totalUsers / usersPerPage)
+
+        if (totalPages <= 1) return null
+
+        return (
+            <div className="flex items-center justify-between py-4">
+                <div className="text-sm text-muted-foreground">
+                    Showing {Math.min((currentPage - 1) * usersPerPage + 1, totalUsers)} to{" "}
+                    {Math.min(currentPage * usersPerPage, totalUsers)} of {totalUsers} users
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(1)}
+                        disabled={currentPage === 1}
+                        aria-label="First page"
+                    >
+                        <ChevronsLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        aria-label="Previous page"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+
+                    <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            // Show pages around current page
+                            let pageNum
+                            if (totalPages <= 5) {
+                                pageNum = i + 1
+                            } else if (currentPage <= 3) {
+                                pageNum = i + 1
+                            } else if (currentPage >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i
+                            } else {
+                                pageNum = currentPage - 2 + i
+                            }
+
+                            return (
+                                <Button
+                                    key={pageNum}
+                                    variant={currentPage === pageNum ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => handlePageChange(pageNum)}
+                                    aria-label={`Page ${pageNum}`}
+                                    aria-current={currentPage === pageNum ? "page" : undefined}
+                                >
+                                    {pageNum}
+                                </Button>
+                            )
+                        })}
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        aria-label="Next page"
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(totalPages)}
+                        disabled={currentPage === totalPages}
+                        aria-label="Last page"
+                    >
+                        <ChevronsRight className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="flex-1 overflow-auto">
@@ -338,14 +455,17 @@ export default function AdminUsers() {
                         ) : error && users.length === 0 ? (
                             renderError()
                         ) : (
-                            <UserTable
-                                users={getFilteredUsers("all")}
-                                selectedUsers={selectedUsers}
-                                onSelectUser={handleUserSelection}
-                                onSelectAll={handleSelectAll}
-                                onEditUser={handleEditUser}
-                                onSendEmail={handleSendEmail}
-                            />
+                            <>
+                                <UserTable
+                                    users={getPaginatedUsers(getFilteredUsers("all"))}
+                                    selectedUsers={selectedUsers}
+                                    onSelectUser={handleUserSelection}
+                                    onSelectAll={() => handleSelectAll(getFilteredUsers("all"))}
+                                    onEditUser={handleEditUser}
+                                    onSendEmail={handleSendEmail}
+                                />
+                                {renderPagination(getFilteredUsers("all"))}
+                            </>
                         )}
                     </TabsContent>
 
@@ -356,14 +476,17 @@ export default function AdminUsers() {
                         ) : error && users.length === 0 ? (
                             renderError()
                         ) : (
-                            <UserTable
-                                users={getFilteredUsers("active")}
-                                selectedUsers={selectedUsers}
-                                onSelectUser={handleUserSelection}
-                                onSelectAll={handleSelectAll}
-                                onEditUser={handleEditUser}
-                                onSendEmail={handleSendEmail}
-                            />
+                            <>
+                                <UserTable
+                                    users={getPaginatedUsers(getFilteredUsers("active"))}
+                                    selectedUsers={selectedUsers}
+                                    onSelectUser={handleUserSelection}
+                                    onSelectAll={() => handleSelectAll(getFilteredUsers("active"))}
+                                    onEditUser={handleEditUser}
+                                    onSendEmail={handleSendEmail}
+                                />
+                                {renderPagination(getFilteredUsers("active"))}
+                            </>
                         )}
                     </TabsContent>
 
@@ -374,14 +497,17 @@ export default function AdminUsers() {
                         ) : error && users.length === 0 ? (
                             renderError()
                         ) : (
-                            <UserTable
-                                users={getFilteredUsers("inactive")}
-                                selectedUsers={selectedUsers}
-                                onSelectUser={handleUserSelection}
-                                onSelectAll={handleSelectAll}
-                                onEditUser={handleEditUser}
-                                onSendEmail={handleSendEmail}
-                            />
+                            <>
+                                <UserTable
+                                    users={getPaginatedUsers(getFilteredUsers("inactive"))}
+                                    selectedUsers={selectedUsers}
+                                    onSelectUser={handleUserSelection}
+                                    onSelectAll={() => handleSelectAll(getFilteredUsers("inactive"))}
+                                    onEditUser={handleEditUser}
+                                    onSendEmail={handleSendEmail}
+                                />
+                                {renderPagination(getFilteredUsers("inactive"))}
+                            </>
                         )}
                     </TabsContent>
 
@@ -392,14 +518,17 @@ export default function AdminUsers() {
                         ) : error && users.length === 0 ? (
                             renderError()
                         ) : (
-                            <UserTable
-                                users={getFilteredUsers("SYSTEM")}
-                                selectedUsers={selectedUsers}
-                                onSelectUser={handleUserSelection}
-                                onSelectAll={handleSelectAll}
-                                onEditUser={handleEditUser}
-                                onSendEmail={handleSendEmail}
-                            />
+                            <>
+                                <UserTable
+                                    users={getPaginatedUsers(getFilteredUsers("SYSTEM"))}
+                                    selectedUsers={selectedUsers}
+                                    onSelectUser={handleUserSelection}
+                                    onSelectAll={() => handleSelectAll(getFilteredUsers("SYSTEM"))}
+                                    onEditUser={handleEditUser}
+                                    onSendEmail={handleSendEmail}
+                                />
+                                {renderPagination(getFilteredUsers("SYSTEM"))}
+                            </>
                         )}
                     </TabsContent>
 
@@ -410,14 +539,17 @@ export default function AdminUsers() {
                         ) : error && users.length === 0 ? (
                             renderError()
                         ) : (
-                            <UserTable
-                                users={getFilteredUsers("GOOGLE")}
-                                selectedUsers={selectedUsers}
-                                onSelectUser={handleUserSelection}
-                                onSelectAll={handleSelectAll}
-                                onEditUser={handleEditUser}
-                                onSendEmail={handleSendEmail}
-                            />
+                            <>
+                                <UserTable
+                                    users={getPaginatedUsers(getFilteredUsers("GOOGLE"))}
+                                    selectedUsers={selectedUsers}
+                                    onSelectUser={handleUserSelection}
+                                    onSelectAll={() => handleSelectAll(getFilteredUsers("GOOGLE"))}
+                                    onEditUser={handleEditUser}
+                                    onSendEmail={handleSendEmail}
+                                />
+                                {renderPagination(getFilteredUsers("GOOGLE"))}
+                            </>
                         )}
                     </TabsContent>
 
@@ -428,14 +560,17 @@ export default function AdminUsers() {
                         ) : error && users.length === 0 ? (
                             renderError()
                         ) : (
-                            <UserTable
-                                users={getFilteredUsers("GITHUB")}
-                                selectedUsers={selectedUsers}
-                                onSelectUser={handleUserSelection}
-                                onSelectAll={handleSelectAll}
-                                onEditUser={handleEditUser}
-                                onSendEmail={handleSendEmail}
-                            />
+                            <>
+                                <UserTable
+                                    users={getPaginatedUsers(getFilteredUsers("GITHUB"))}
+                                    selectedUsers={selectedUsers}
+                                    onSelectUser={handleUserSelection}
+                                    onSelectAll={() => handleSelectAll(getFilteredUsers("GITHUB"))}
+                                    onEditUser={handleEditUser}
+                                    onSendEmail={handleSendEmail}
+                                />
+                                {renderPagination(getFilteredUsers("GITHUB"))}
+                            </>
                         )}
                     </TabsContent>
                 </Tabs>
