@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Link, useParams } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.jsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx"
@@ -18,11 +18,24 @@ import {
   Terminal,
   Info,
   AlertTriangle,
+  Layout,
+  Settings,
+  X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button.jsx"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog.jsx"
+import { Switch } from "@/components/ui/switch.jsx"
+import { Label } from "@/components/ui/label.jsx"
 
-export default function Problem() {
+export default function Editor() {
   const { id } = useParams()
   const [activeTab, setActiveTab] = useState("description")
   const [code, setCode] = useState("")
@@ -36,12 +49,19 @@ export default function Problem() {
   const [theme, setTheme] = useState("vs-dark") // vs-dark or vs-light
   const [showConsole, setShowConsole] = useState(false)
   const [consoleOutput, setConsoleOutput] = useState([])
+  const [showSettings, setShowSettings] = useState(false)
+  const [autoSave, setAutoSave] = useState(true)
+  const [wordWrap, setWordWrap] = useState(true)
+  const [lineNumbers, setLineNumbers] = useState(true)
+  const [tabSize, setTabSize] = useState("2")
 
   const resizeRef = useRef(null)
   const startYRef = useRef(0)
   const startHeightRef = useRef(0)
   const isDraggingRef = useRef(false)
   const editorRef = useRef(null)
+  const editorContainerRef = useRef(null)
+  const fullScreenRef = useRef(null)
 
   // Define problem data based on id
   const problemData = {
@@ -107,16 +127,56 @@ export default function Problem() {
   // Get the problem based on the id from URL params
   const problem = problemData[id] || {
     id: "not-found",
-    title: "Problem Not Found",
+    title: "Editor Not Found",
     difficulty: "Unknown",
     description: "The requested problem could not be found.",
-    initialCode: "// Problem not found",
+    initialCode: "// Editor not found",
   }
 
   // Initialize code with problem's initial code when component loads
   useEffect(() => {
     setCode(problem.initialCode)
   }, [problem.initialCode])
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl/Cmd + S to save
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault()
+        // Save code logic here
+        setResult({ status: "Saved", message: "Code saved successfully" })
+        setTimeout(() => {
+          if (result?.status === "Saved") {
+            setResult(null)
+          }
+        }, 2000)
+      }
+
+      // Ctrl/Cmd + Enter to run code
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault()
+        handleExecuteCode(false)
+      }
+
+      // F11 or Ctrl/Cmd + Shift + F to toggle fullscreen
+      if (e.key === "F11" || ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "f")) {
+        e.preventDefault()
+        toggleFullScreen()
+      }
+
+      // Escape to exit fullscreen
+      if (e.key === "Escape" && isFullScreen) {
+        e.preventDefault()
+        setIsFullScreen(false)
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isFullScreen, result])
 
   // Handle resize events
   useEffect(() => {
@@ -147,16 +207,45 @@ export default function Problem() {
     }
   }, [])
 
+  // Handle fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && isFullScreen) {
+        setIsFullScreen(false)
+      }
+    }
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange)
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange)
+    }
+  }, [isFullScreen])
+
+  // Handle fullscreen toggle
+  const toggleFullScreen = useCallback(() => {
+    if (!isFullScreen) {
+      if (fullScreenRef.current && fullScreenRef.current.requestFullscreen) {
+        fullScreenRef.current.requestFullscreen().catch((err) => {
+          console.error(`Error attempting to enable fullscreen: ${err.message}`)
+        })
+      }
+      setIsFullScreen(true)
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch((err) => {
+          console.error(`Error attempting to exit fullscreen: ${err.message}`)
+        })
+      }
+      setIsFullScreen(false)
+    }
+  }, [isFullScreen])
+
   const startResizing = (e) => {
     isDraggingRef.current = true
     startYRef.current = e.clientY
     startHeightRef.current = editorHeight
     document.body.style.cursor = "row-resize"
     e.preventDefault()
-  }
-
-  const toggleFullScreen = () => {
-    setIsFullScreen(!isFullScreen)
   }
 
   const toggleLayout = () => {
@@ -246,13 +335,14 @@ export default function Problem() {
   const gridClasses = layout === "horizontal" ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : "grid grid-cols-1 gap-6"
 
   return (
-      <main className="flex-1 min-h-screen">
+      <main className="flex-1 min-h-screen" ref={fullScreenRef}>
         <div className={containerClasses}>
           {!isFullScreen && (
               <>
                 <Link
                     to={`/dashboard/practice`}
                     className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
+                    aria-label="Back to Problems"
                 >
                   <ArrowLeft className="mr-1 h-4 w-4" /> Back to Problems
                 </Link>
@@ -268,16 +358,93 @@ export default function Problem() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-4 md:mt-0">
-                    <Button variant="outline" size="sm" onClick={toggleLayout} className="btn-hover">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={toggleLayout}
+                        className="btn-hover"
+                        aria-label={layout === "horizontal" ? "Switch to vertical layout" : "Switch to horizontal layout"}
+                    >
+                      <Layout className="mr-1 h-4 w-4" />
                       {layout === "horizontal" ? "Vertical Layout" : "Horizontal Layout"}
                     </Button>
+                    <Dialog open={showSettings} onOpenChange={setShowSettings}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="btn-hover" aria-label="Editor settings">
+                          <Settings className="mr-1 h-4 w-4" />
+                          Settings
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Editor Settings</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="auto-save">Auto Save</Label>
+                            <Switch
+                                id="auto-save"
+                                checked={autoSave}
+                                onCheckedChange={setAutoSave}
+                                aria-label="Toggle auto save"
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="word-wrap">Word Wrap</Label>
+                            <Switch
+                                id="word-wrap"
+                                checked={wordWrap}
+                                onCheckedChange={setWordWrap}
+                                aria-label="Toggle word wrap"
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="line-numbers">Line Numbers</Label>
+                            <Switch
+                                id="line-numbers"
+                                checked={lineNumbers}
+                                onCheckedChange={setLineNumbers}
+                                aria-label="Toggle line numbers"
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="tab-size">Tab Size</Label>
+                            <Select value={tabSize} onValueChange={setTabSize}>
+                              <SelectTrigger id="tab-size" className="w-24">
+                                <SelectValue placeholder="Tab Size" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="2">2 spaces</SelectItem>
+                                <SelectItem value="4">4 spaces</SelectItem>
+                                <SelectItem value="8">8 spaces</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="theme">Theme</Label>
+                            <Select value={theme} onValueChange={setTheme}>
+                              <SelectTrigger id="theme" className="w-24">
+                                <SelectValue placeholder="Theme" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="vs-dark">Dark</SelectItem>
+                                <SelectItem value="vs-light">Light</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <DialogClose asChild>
+                          <Button type="button">Apply Settings</Button>
+                        </DialogClose>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               </>
           )}
 
           <div className={gridClasses}>
-            {/* Problem Description Section */}
+            {/* Editor Description Section */}
             {(!isFullScreen || layout === "vertical") && (
                 <Card className="overflow-hidden shadow-sm rounded-lg border-primary/20">
                   <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -414,13 +581,13 @@ export default function Problem() {
             )}
 
             {/* Code Editor Section */}
-            <Card className="shadow-sm flex flex-col rounded-lg border-primary/20">
+            <Card className="shadow-sm flex flex-col rounded-lg border-primary/20" ref={editorContainerRef}>
               <CardHeader className="bg-muted/50 p-4 border-b">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-medium">Code Editor</CardTitle>
                   <div className="flex items-center gap-2">
                     <Select value={language} onValueChange={setLanguage}>
-                      <SelectTrigger className="w-[140px] h-8">
+                      <SelectTrigger className="w-[140px] h-8" aria-label="Select programming language">
                         <SelectValue placeholder="Select Language" />
                       </SelectTrigger>
                       <SelectContent>
@@ -432,7 +599,7 @@ export default function Problem() {
                     </Select>
 
                     <Select value={fontSize} onValueChange={setFontSize}>
-                      <SelectTrigger className="w-[80px] h-8">
+                      <SelectTrigger className="w-[80px] h-8" aria-label="Select font size">
                         <SelectValue placeholder="Font Size" />
                       </SelectTrigger>
                       <SelectContent>
@@ -443,7 +610,13 @@ export default function Problem() {
                       </SelectContent>
                     </Select>
 
-                    <Button variant="ghost" size="icon" onClick={toggleFullScreen} className="h-8 w-8">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleFullScreen}
+                        className="h-8 w-8"
+                        aria-label={isFullScreen ? "Exit full screen" : "Enter full screen"}
+                    >
                       {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                     </Button>
                   </div>
@@ -458,6 +631,7 @@ export default function Problem() {
                         onClick={resetCode}
                         title="Reset Code"
                         className="h-8 w-8 bg-background/80 hover:bg-background"
+                        aria-label="Reset code to initial template"
                     >
                       <RotateCcw className="h-4 w-4" />
                     </Button>
@@ -467,6 +641,7 @@ export default function Problem() {
                         onClick={copyCode}
                         title="Copy Code"
                         className="h-8 w-8 bg-background/80 hover:bg-background"
+                        aria-label="Copy code to clipboard"
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -485,7 +660,13 @@ export default function Problem() {
                         lineHeight: "1.5",
                         resize: "none",
                         fontFamily: "Menlo, Monaco, 'Courier New', monospace",
+                        whiteSpace: wordWrap ? "pre-wrap" : "pre",
+                        tabSize: tabSize,
                       }}
+                      aria-label="Code editor"
+                      aria-multiline="true"
+                      role="textbox"
+                      aria-autocomplete="none"
                   />
                 </div>
 
@@ -495,6 +676,17 @@ export default function Problem() {
                         ref={resizeRef}
                         className="h-2 bg-muted hover:bg-muted/80 cursor-row-resize w-full flex justify-center items-center"
                         onMouseDown={startResizing}
+                        role="separator"
+                        aria-orientation="horizontal"
+                        aria-label="Resize editor"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "ArrowUp") {
+                            setEditorHeight((prev) => Math.max(200, prev - 20))
+                          } else if (e.key === "ArrowDown") {
+                            setEditorHeight((prev) => prev + 20)
+                          }
+                        }}
                     >
                       <div className="w-10 h-1 bg-muted-foreground/30 rounded-full"></div>
                     </div>
@@ -508,11 +700,22 @@ export default function Problem() {
                           <Terminal className="h-4 w-4 mr-2" />
                           <span className="text-sm font-medium">Console</span>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => setShowConsole(false)} className="h-6 w-6">
-                          <Minimize2 className="h-3 w-3" />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setShowConsole(false)}
+                            className="h-6 w-6"
+                            aria-label="Close console"
+                        >
+                          <X className="h-3 w-3" />
                         </Button>
                       </div>
-                      <div className="p-2 max-h-40 overflow-y-auto font-mono text-xs">
+                      <div
+                          className="p-2 max-h-40 overflow-y-auto font-mono text-xs"
+                          role="log"
+                          aria-live="polite"
+                          aria-label="Console output"
+                      >
                         {consoleOutput.map((output, index) => (
                             <div
                                 key={index}
@@ -575,6 +778,7 @@ export default function Problem() {
                         }}
                         disabled={loading}
                         className="btn-hover"
+                        aria-label="Run code"
                     >
                       {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Play className="mr-1 h-4 w-4" />}
                       Run
@@ -584,6 +788,7 @@ export default function Problem() {
                         onClick={() => handleExecuteCode(true)}
                         disabled={loading}
                         className="bg-primary hover:bg-primary/90 text-primary-foreground btn-hover"
+                        aria-label="Submit solution"
                     >
                       Submit
                     </Button>

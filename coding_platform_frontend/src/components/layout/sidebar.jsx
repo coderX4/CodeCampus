@@ -1,8 +1,10 @@
+"use client"
+
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
     FileQuestion,
     BrainCircuit,
-    ChartNoAxesCombined,
+    BarChartIcon as ChartNoAxesCombined,
     PanelsTopLeft,
     Mail,
     User,
@@ -21,7 +23,7 @@ import { useTheme } from "@/components/theme-provider.jsx"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/AuthContext.jsx"
 import { useEffect, useState } from "react"
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar.jsx";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx"
 
 export default function Sidebar() {
     const location = useLocation()
@@ -54,7 +56,7 @@ export default function Sidebar() {
     }
 
     return (
-        <div className="hidden w-64 flex-col bg-sidebar md:flex">
+        <div className="hidden w-64 flex-col bg-sidebar md:flex fixed top-0 h-screen overflow-y-auto scrollbar-hide">
             {/* Top Section with Logo & Theme Toggle */}
             <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
                 <Link to="/" className="flex items-center gap-2 font-semibold text-sidebar-foreground">
@@ -73,7 +75,7 @@ export default function Sidebar() {
             </div>
 
             {/* Navigation Links */}
-            <div className="flex-1 overflow-auto py-4 px-3">
+            <div className="flex-1 overflow-y-auto py-4 px-3">
                 <nav className="grid items-start gap-1 text-sm font-medium">
                     {user.role === "ADMIN" && (
                         <div className="space-y-1">
@@ -227,7 +229,7 @@ export default function Sidebar() {
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-row gap-2">
                     <Button
                         variant="ghost"
                         size="sm"

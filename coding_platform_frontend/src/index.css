@@ -10,6 +10,16 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Add these styles to hide scrollbars but maintain scrolling functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
 }
 
 @layer base {
@@ -182,5 +192,37 @@ body {
 
 .btn-hover:hover {
   @apply shadow-md transform -translate-y-0.5;
+}
+
+/* Add these styles to ensure proper sidebar behavior */
+@layer components {
+  /* Sticky sidebar styles */
+  .sticky-sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  /* Custom scrollbar for sidebar */
+  .sticky-sidebar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .sticky-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sticky-sidebar::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--sidebar-border));
+    border-radius: 20px;
+  }
+
+  /* Ensure main content scrolls independently */
+  .main-content {
+    overflow-y: auto;
+    height: 100vh;
+  }
 }
 

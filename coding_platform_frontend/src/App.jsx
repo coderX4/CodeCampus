@@ -3,7 +3,7 @@ import Home from "@/pages/global/Home.jsx"
 import Practice from "@/pages/user/Practice.jsx"
 import Contests from "@/pages/user/Contests.jsx"
 import Contest from "@/pages/user/Contest.jsx"
-import Problem from "@/pages/user/Problem.jsx"
+import Editor from "@/pages/user/Editor.jsx"
 import Leaderboard from "@/pages/user/Leaderboard.jsx"
 import MainSection from "@/pages/user/MainSection.jsx"
 import EditorLayout from "@/components/layout/editor-layout.jsx"
@@ -72,7 +72,7 @@ function App() {
                     <EditorLayout />
                 </ProtectedRoute>
             }>
-                <Route path="problem/:id" element={<Problem />} />
+                <Route path="problem/:id" element={<Editor />} />
             </Route>
         </Routes>
     )
