@@ -8,7 +8,6 @@ import com.coding_contest_platform.repository.UserRepository;
 import com.coding_contest_platform.services.EmailService;
 import com.coding_contest_platform.services.UserServices;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
