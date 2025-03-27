@@ -1,99 +1,265 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button.jsx"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx"
-import { Input } from "@/components/ui/input.jsx"
+import { Card } from "@/components/ui/card.jsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx"
-import { Badge } from "@/components/ui/badge.jsx"
-import { Textarea } from "@/components/ui/textarea.jsx"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx"
-import { Checkbox } from "@/components/ui/checkbox.jsx"
-import { Search, Plus, Edit, Trash2, Copy, Eye, Filter } from "lucide-react"
+import { Plus, AlertTriangle, RefreshCw } from "lucide-react"
+import ProblemFilters from "@/components/admin/problem/ProblemFilters.jsx"
+import ProblemTable from "@/components/admin/problem/ProblemTable.jsx"
+import ProblemForm from "@/components/admin/problem/ProblemForm.jsx"
+import ProblemViewDialog from "@/components/admin/problem/ProblemViewDialog.jsx"
+import { useToast } from "@/hooks/use-toast.ts"
 
 export default function AdminProblems() {
+    // State for UI controls
     const [activeTab, setActiveTab] = useState("all")
     const [searchQuery, setSearchQuery] = useState("")
     const [showAddProblemForm, setShowAddProblemForm] = useState(false)
     const [difficultyFilter, setDifficultyFilter] = useState("all")
     const [tagFilter, setTagFilter] = useState("all")
 
-    // Mock problems data
-    const problems = [
-        {
-            id: "1",
-            title: "Two Sum",
-            difficulty: "Easy",
-            tags: ["Arrays", "Hash Table"],
-            acceptance: "45%",
-            submissions: 12500,
-            dateAdded: "2023-01-15",
-            status: "active",
-        },
-        {
-            id: "2",
-            title: "Add Two Numbers",
-            difficulty: "Medium",
-            tags: ["Linked List", "Math"],
-            acceptance: "38%",
-            submissions: 9800,
-            dateAdded: "2023-02-10",
-            status: "active",
-        },
-        {
-            id: "3",
-            title: "Longest Substring Without Repeating Characters",
-            difficulty: "Medium",
-            tags: ["String", "Sliding Window"],
-            acceptance: "32%",
-            submissions: 8700,
-            dateAdded: "2023-01-20",
-            status: "active",
-        },
-        {
-            id: "4",
-            title: "Median of Two Sorted Arrays",
-            difficulty: "Hard",
-            tags: ["Array", "Binary Search"],
-            acceptance: "25%",
-            submissions: 5600,
-            dateAdded: "2023-03-05",
-            status: "active",
-        },
-        {
-            id: "5",
-            title: "Longest Palindromic Substring",
-            difficulty: "Medium",
-            tags: ["String", "Dynamic Programming"],
-            acceptance: "31%",
-            submissions: 7800,
-            dateAdded: "2023-02-25",
-            status: "draft",
-        },
-        {
-            id: "6",
-            title: "Zigzag Conversion",
-            difficulty: "Medium",
-            tags: ["String"],
-            acceptance: "40%",
-            submissions: 6200,
-            dateAdded: "2023-03-10",
-            status: "active",
-        },
-    ]
+    // State for data and operations
+    const [problems, setProblems] = useState([])
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState("")
+    const [editingProblem, setEditingProblem] = useState(null)
+    const [viewingProblem, setViewingProblem] = useState(null)
+    const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
 
-    // Filter problems based on search query, difficulty, and tag
-    const filteredProblems = problems.filter((problem) => {
-        const matchesSearch =
-            problem.title.toLowerCase().includes(searchQuery.toLowerCase()) || problem.id.includes(searchQuery)
+    // Toast notifications
+    const { toast } = useToast()
 
-        const matchesDifficulty =
-            difficultyFilter === "all" || problem.difficulty.toLowerCase() === difficultyFilter.toLowerCase()
-        const matchesTag = tagFilter === "all" || problem.tags.some((tag) => tag.toLowerCase() === tagFilter.toLowerCase())
+    // Fetch problems from API
+    const fetchProblems = async () => {
+        setIsLoading(true)
+        setError("")
 
-        return matchesSearch && matchesDifficulty && matchesTag
-    })
+        const storedUser = sessionStorage.getItem("user")
+        const loggedUser = storedUser ? JSON.parse(storedUser) : null
+
+        if (!loggedUser || !loggedUser.token) {
+            setError("Authentication required. Please log in again.")
+            setIsLoading(false)
+            return
+        }
+
+        try {
+            const response = await fetch("http://localhost:8083/api/problems/getproblems", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${loggedUser.token}`,
+                },
+            })
+
+            if (response.status === 403) {
+                setError("Access denied: You do not have permission to access this resource.")
+                setIsLoading(false)
+                return
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.message || "Failed to fetch problems")
+            }
+
+            const data = await response.json()
+            setProblems(data)
+        } catch (err) {
+            console.error("Error fetching problems:", err)
+            setError(err.message || "Failed to fetch problems")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    // Load problems on component mount
+    useEffect(() => {
+        fetchProblems()
+    }, [])
 
     // Get all unique tags from problems
-    const allTags = [...new Set(problems.flatMap((problem) => problem.tags))]
+    const allTags = [...new Set(problems.flatMap((problem) => problem.tags || []))]
+
+    // Filter problems based on search query, difficulty, and tag
+    const getFilteredProblems = (tab) => {
+        return problems.filter((problem) => {
+            const matchesSearch =
+                problem.title?.toLowerCase().includes(searchQuery.toLowerCase()) || problem.id?.toString().includes(searchQuery)
+
+            const matchesDifficulty =
+                difficultyFilter === "all" || problem.difficulty?.toLowerCase() === difficultyFilter.toLowerCase()
+
+            const matchesTag =
+                tagFilter === "all" || problem.tags?.some((tag) => tag.toLowerCase() === tagFilter.toLowerCase())
+
+            // Status filtering based on tab
+            const matchesTab = tab === "all" || problem.status?.toLowerCase() === tab.toLowerCase()
+
+            return matchesSearch && matchesDifficulty && matchesTag && matchesTab
+        })
+    }
+
+    // Handle problem creation/update
+    const handleSubmitProblem = async (problemData) => {
+        setIsLoading(true)
+        setError("")
+
+        const storedUser = sessionStorage.getItem("user")
+        const loggedUser = storedUser ? JSON.parse(storedUser) : null
+
+        if (!loggedUser || !loggedUser.token) {
+            setError("Authentication required. Please log in again.")
+            setIsLoading(false)
+            return
+        }
+
+        try {
+            // Determine if we're creating or updating a problem
+            const isEditing = !!editingProblem
+            const url = isEditing
+                ? `http://localhost:8083/api/problems/update/${editingProblem.id}`
+                : "http://localhost:8083/api/problems/addproblem"
+
+            const method = isEditing ? "PUT" : "POST"
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${loggedUser.token}`,
+                },
+                body: JSON.stringify(problemData),
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.message || `Failed to ${isEditing ? "update" : "create"} problem`)
+            }
+
+            // Success
+            toast({
+                title: isEditing ? "Problem Updated" : "Problem Created",
+                description: isEditing
+                    ? `Problem "${problemData.title}" has been updated successfully.`
+                    : `Problem "${problemData.title}" has been created successfully.`,
+            })
+
+            // Reset form and refresh problems
+            setShowAddProblemForm(false)
+            setEditingProblem(null)
+            fetchProblems()
+        } catch (err) {
+            console.error(`Error ${editingProblem ? "updating" : "creating"} problem:`, err)
+            setError(err.message || `Failed to ${editingProblem ? "update" : "create"} problem`)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    // Handle problem deletion
+    const handleDeleteProblem = async (problem) => {
+        if (!window.confirm(`Are you sure you want to delete the problem "${problem.title}"?`)) {
+            return
+        }
+
+        setIsLoading(true)
+        setError("")
+
+        const storedUser = sessionStorage.getItem("user")
+        const loggedUser = storedUser ? JSON.parse(storedUser) : null
+
+        try {
+            const response = await fetch(`http://localhost:8083/api/problems/delete/${problem.id}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${loggedUser.token}`,
+                },
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.message || "Failed to delete problem")
+            }
+
+            toast({
+                title: "Problem Deleted",
+                description: `Problem "${problem.title}" has been deleted successfully.`,
+            })
+
+            fetchProblems()
+        } catch (err) {
+            console.error("Error deleting problem:", err)
+            setError(err.message || "Failed to delete problem")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    // Handle problem duplication
+    const handleDuplicateProblem = (problem) => {
+        const duplicatedProblem = {
+            ...problem,
+            title: `Copy of ${problem.title}`,
+            id: null, // Remove ID so a new one is generated
+        }
+
+        setEditingProblem(duplicatedProblem)
+        setShowAddProblemForm(true)
+    }
+
+    // Handle viewing a problem
+    const handleViewProblem = (problem) => {
+        setViewingProblem(problem)
+        setIsViewDialogOpen(true)
+    }
+
+    // Handle editing a problem
+    const handleEditProblem = (problem) => {
+        setEditingProblem(problem)
+        setShowAddProblemForm(true)
+    }
+
+    // Render loading state
+    const renderLoading = () => (
+        <div className="flex justify-center items-center p-8">
+            <div className="flex flex-col items-center">
+                <svg
+                    className="animate-spin h-8 w-8 text-primary mb-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                </svg>
+                <p className="text-muted-foreground">Loading problems...</p>
+            </div>
+        </div>
+    )
+
+    // Render error state
+    const renderError = () => (
+        <Card className="p-6 text-center">
+            <AlertTriangle className="h-10 w-10 text-destructive mx-auto mb-4" />
+            <p className="text-destructive font-medium mb-2">Error Loading Problems</p>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button
+                variant="outline"
+                onClick={() => {
+                    setError("")
+                    fetchProblems()
+                }}
+            >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try Again
+            </Button>
+        </Card>
+    )
 
     return (
         <div className="flex-1 overflow-auto">
@@ -101,7 +267,14 @@ export default function AdminProblems() {
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold">Problem Management</h1>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setShowAddProblemForm(!showAddProblemForm)}>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                setShowAddProblemForm(!showAddProblemForm)
+                                setEditingProblem(null)
+                            }}
+                        >
                             {showAddProblemForm ? (
                                 "Cancel"
                             ) : (
@@ -113,157 +286,32 @@ export default function AdminProblems() {
                     </div>
                 </div>
 
+                {/* Problem Form */}
                 {showAddProblemForm && (
-                    <Card className="mb-6">
-                        <CardHeader>
-                            <CardTitle>Add New Problem</CardTitle>
-                            <CardDescription>Create a new coding problem</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form className="space-y-4">
-                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <label htmlFor="title" className="text-sm font-medium">
-                                            Problem Title
-                                        </label>
-                                        <Input id="title" placeholder="Enter problem title" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label htmlFor="difficulty" className="text-sm font-medium">
-                                            Difficulty
-                                        </label>
-                                        <Select defaultValue="medium">
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select difficulty" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="easy">Easy</SelectItem>
-                                                <SelectItem value="medium">Medium</SelectItem>
-                                                <SelectItem value="hard">Hard</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="description" className="text-sm font-medium">
-                                        Problem Description
-                                    </label>
-                                    <Textarea
-                                        id="description"
-                                        placeholder="Describe the problem in detail..."
-                                        className="min-h-[150px]"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="tags" className="text-sm font-medium">
-                                        Tags
-                                    </label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {[
-                                            "Arrays",
-                                            "Strings",
-                                            "Hash Table",
-                                            "Linked List",
-                                            "Math",
-                                            "Dynamic Programming",
-                                            "Sorting",
-                                            "Greedy",
-                                            "Binary Search",
-                                        ].map((tag) => (
-                                            <div key={tag} className="flex items-center space-x-2">
-                                                <Checkbox id={`tag-${tag}`} />
-                                                <label
-                                                    htmlFor={`tag-${tag}`}
-                                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                                >
-                                                    {tag}
-                                                </label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="sampleInput" className="text-sm font-medium">
-                                        Sample Input
-                                    </label>
-                                    <Textarea
-                                        id="sampleInput"
-                                        placeholder="Provide sample input..."
-                                        className="min-h-[100px] font-mono"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="sampleOutput" className="text-sm font-medium">
-                                        Sample Output
-                                    </label>
-                                    <Textarea
-                                        id="sampleOutput"
-                                        placeholder="Provide expected output..."
-                                        className="min-h-[100px] font-mono"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="solution" className="text-sm font-medium">
-                                        Solution Code
-                                    </label>
-                                    <Textarea
-                                        id="solution"
-                                        placeholder="Provide a reference solution..."
-                                        className="min-h-[200px] font-mono"
-                                    />
-                                </div>
-                                <div className="flex items-center justify-end gap-2">
-                                    <Button variant="outline" type="button" onClick={() => setShowAddProblemForm(false)}>
-                                        Cancel
-                                    </Button>
-                                    <Button type="submit">Create Problem</Button>
-                                </div>
-                            </form>
-                        </CardContent>
-                    </Card>
+                    <ProblemForm
+                        editingProblem={editingProblem}
+                        onCancel={() => {
+                            setShowAddProblemForm(false)
+                            setEditingProblem(null)
+                        }}
+                        onSubmit={handleSubmitProblem}
+                        isLoading={isLoading}
+                        error={error}
+                    />
                 )}
 
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex w-full max-w-sm items-center space-x-2">
-                        <Search className="h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search problems..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="h-9"
-                        />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                            <SelectTrigger className="h-9 w-[130px]">
-                                <SelectValue placeholder="Difficulty" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Difficulties</SelectItem>
-                                <SelectItem value="easy">Easy</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="hard">Hard</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select value={tagFilter} onValueChange={setTagFilter}>
-                            <SelectTrigger className="h-9 w-[130px]">
-                                <SelectValue placeholder="Tag" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Tags</SelectItem>
-                                {allTags.map((tag) => (
-                                    <SelectItem key={tag} value={tag.toLowerCase()}>
-                                        {tag}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Button variant="outline" size="sm" className="h-9">
-                            <Filter className="mr-1 h-4 w-4" /> More Filters
-                        </Button>
-                    </div>
-                </div>
+                {/* Problem Filters */}
+                <ProblemFilters
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    difficultyFilter={difficultyFilter}
+                    setDifficultyFilter={setDifficultyFilter}
+                    tagFilter={tagFilter}
+                    setTagFilter={setTagFilter}
+                    allTags={allTags}
+                />
 
+                {/* Problem Tabs and Table */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                     <TabsList>
                         <TabsTrigger value="all">All Problems</TabsTrigger>
@@ -272,105 +320,63 @@ export default function AdminProblems() {
                     </TabsList>
 
                     <TabsContent value="all" className="space-y-4">
-                        <Card>
-                            <CardContent className="p-0">
-                                <div className="relative w-full overflow-auto">
-                                    <table className="w-full caption-bottom text-sm">
-                                        <thead className="border-b">
-                                        <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                            <th className="h-12 px-4 text-left align-middle font-medium">ID</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Title</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Difficulty</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Tags</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Acceptance</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Submissions</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
-                                            <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        {filteredProblems.map((problem) => (
-                                            <tr
-                                                key={problem.id}
-                                                className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                                            >
-                                                <td className="p-4 align-middle font-medium">{problem.id}</td>
-                                                <td className="p-4 align-middle">
-                                                    <div className="font-medium">{problem.title}</div>
-                                                </td>
-                                                <td className="p-4 align-middle">
-                                                    <Badge
-                                                        className={
-                                                            problem.difficulty === "Easy"
-                                                                ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                                                : problem.difficulty === "Medium"
-                                                                    ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
-                                                                    : "bg-red-100 text-red-800 hover:bg-red-100"
-                                                        }
-                                                    >
-                                                        {problem.difficulty}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-4 align-middle">
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {problem.tags.map((tag, index) => (
-                                                            <Badge
-                                                                key={index}
-                                                                variant="outline"
-                                                                className="bg-blue-50 text-blue-700 hover:bg-blue-50"
-                                                            >
-                                                                {tag}
-                                                            </Badge>
-                                                        ))}
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 align-middle">{problem.acceptance}</td>
-                                                <td className="p-4 align-middle">{problem.submissions}</td>
-                                                <td className="p-4 align-middle">
-                                                    <Badge
-                                                        variant={problem.status === "active" ? "outline" : "secondary"}
-                                                        className={
-                                                            problem.status === "active"
-                                                                ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                                                : "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                                                        }
-                                                    >
-                                                        {problem.status}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-4 align-middle text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <Button variant="ghost" size="icon">
-                                                            <Eye className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon">
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon">
-                                                            <Copy className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon">
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        {isLoading && problems.length === 0 ? (
+                            renderLoading()
+                        ) : error && problems.length === 0 ? (
+                            renderError()
+                        ) : (
+                            <ProblemTable
+                                problems={getFilteredProblems("all")}
+                                onView={handleViewProblem}
+                                onEdit={handleEditProblem}
+                                onDuplicate={handleDuplicateProblem}
+                                onDelete={handleDeleteProblem}
+                            />
+                        )}
                     </TabsContent>
 
                     <TabsContent value="active" className="space-y-4">
-                        {/* Similar content as "all" tab but filtered for active problems */}
+                        {isLoading && problems.length === 0 ? (
+                            renderLoading()
+                        ) : error && problems.length === 0 ? (
+                            renderError()
+                        ) : (
+                            <ProblemTable
+                                problems={getFilteredProblems("active")}
+                                onView={handleViewProblem}
+                                onEdit={handleEditProblem}
+                                onDuplicate={handleDuplicateProblem}
+                                onDelete={handleDeleteProblem}
+                            />
+                        )}
                     </TabsContent>
 
                     <TabsContent value="draft" className="space-y-4">
-                        {/* Similar content as "all" tab but filtered for draft problems */}
+                        {isLoading && problems.length === 0 ? (
+                            renderLoading()
+                        ) : error && problems.length === 0 ? (
+                            renderError()
+                        ) : (
+                            <ProblemTable
+                                problems={getFilteredProblems("draft")}
+                                onView={handleViewProblem}
+                                onEdit={handleEditProblem}
+                                onDuplicate={handleDuplicateProblem}
+                                onDelete={handleDeleteProblem}
+                            />
+                        )}
                     </TabsContent>
                 </Tabs>
+
+                {/* Problem View Dialog */}
+                <ProblemViewDialog
+                    problem={viewingProblem}
+                    isOpen={isViewDialogOpen}
+                    onClose={() => {
+                        setIsViewDialogOpen(false)
+                        setViewingProblem(null)
+                    }}
+                />
             </main>
         </div>
     )

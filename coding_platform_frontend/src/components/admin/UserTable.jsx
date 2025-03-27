@@ -31,7 +31,7 @@ export default function UserTable({ users, selectedUsers, onSelectUser, onSelect
                             <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
                             <th className="h-12 px-4 text-left align-middle font-medium">Join Date</th>
                             <th className="h-12 px-4 text-left align-middle font-medium">Last Active</th>
-                            <th className="h-12 px-4 text-left align-middle font-medium">
+                            <th className="h-12 px-4 text-right align-middle font-medium">
                                 <div className="flex items-center justify-center gap-7">
                                     <span>Action</span>
                                     <Checkbox
