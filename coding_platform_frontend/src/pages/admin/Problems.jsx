@@ -2,12 +2,12 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button.jsx"
 import { Card } from "@/components/ui/card.jsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx"
-import { Plus, AlertTriangle, RefreshCw } from "lucide-react"
+import { Plus, AlertTriangle, RefreshCw, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import ProblemFilters from "@/components/admin/problem/ProblemFilters.jsx"
 import ProblemTable from "@/components/admin/problem/ProblemTable.jsx"
 import ProblemForm from "@/components/admin/problem/ProblemForm.jsx"
 import ProblemViewDialog from "@/components/admin/problem/ProblemViewDialog.jsx"
-import { useToast } from "@/hooks/use-toast.ts"
+import { useToast } from "@/hooks/use-toast.js"
 
 export default function AdminProblems() {
     // State for UI controls
@@ -22,8 +22,13 @@ export default function AdminProblems() {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [editingProblem, setEditingProblem] = useState(null)
+    const [isDuplicteProblem, setIsDuplicateProblem] = useState(false)
     const [viewingProblem, setViewingProblem] = useState(null)
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1)
+    const problemsPerPage = 10
 
     // Toast notifications
     const { toast } = useToast()
@@ -72,10 +77,91 @@ export default function AdminProblems() {
         }
     }
 
+    // Fetch problem data for a specific problem
+    const fetchProblemData = async (id) => {
+        setIsLoading(true)
+        setError("")
+
+        const storedUser = sessionStorage.getItem("user")
+        const loggedUser = storedUser ? JSON.parse(storedUser) : null
+
+        if (!loggedUser || !loggedUser.token) {
+            setError("Authentication required. Please log in again.")
+            setIsLoading(false)
+            return null
+        }
+
+        try {
+            const response = await fetch(`http://localhost:8083/api/problems/getproblemsdata/${id}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${loggedUser.token}`,
+                },
+            })
+
+            if (response.status === 403) {
+                setError("Access denied: You do not have permission to access this resource.")
+                setIsLoading(false)
+                return null
+            }
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch problem data: ${response.status} ${response.statusText}`)
+            }
+
+            // Check if response is empty
+            const text = await response.text()
+            if (!text || text.trim() === "") {
+                // Handle empty response
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Received empty response from server",
+                })
+                setIsLoading(false)
+                return null
+            }
+
+            // Try to parse JSON
+            let data
+            try {
+                data = JSON.parse(text)
+            } catch (parseError) {
+                console.error("Error parsing JSON:", parseError, "Response text:", text)
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Invalid response format from server",
+                })
+                setIsLoading(false)
+                return null
+            }
+
+            return data
+        } catch (err) {
+            console.error("Error fetching problem data:", err)
+            setError(err.message || "Failed to fetch problem data")
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: err.message || "Failed to fetch problem data",
+            })
+            return null
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     // Load problems on component mount
     useEffect(() => {
         fetchProblems()
     }, [])
+
+    // Reset to first page when filters change
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [searchQuery, difficultyFilter, tagFilter, activeTab])
 
     // Get all unique tags from problems
     const allTags = [...new Set(problems.flatMap((problem) => problem.tags || []))]
@@ -99,6 +185,18 @@ export default function AdminProblems() {
         })
     }
 
+    // Get paginated problems
+    const getPaginatedProblems = (filteredProblems) => {
+        const indexOfLastProblem = currentPage * problemsPerPage
+        const indexOfFirstProblem = indexOfLastProblem - problemsPerPage
+        return filteredProblems.slice(indexOfFirstProblem, indexOfLastProblem)
+    }
+
+    // Handle page change
+    const handlePageChange = (page) => {
+        setCurrentPage(page)
+    }
+
     // Handle problem creation/update
     const handleSubmitProblem = async (problemData) => {
         setIsLoading(true)
@@ -114,8 +212,11 @@ export default function AdminProblems() {
         }
 
         try {
-            // Determine if we're creating or updating a problem
-            const isEditing = !!editingProblem
+            // Determine if we're creating or updating a problem or duplicating it
+            let isEditing = !!editingProblem
+            if(isDuplicteProblem){
+                isEditing = false
+            }
             const url = isEditing
                 ? `http://localhost:8083/api/problems/update/${editingProblem.id}`
                 : "http://localhost:8083/api/problems/addproblem"
@@ -151,6 +252,11 @@ export default function AdminProblems() {
         } catch (err) {
             console.error(`Error ${editingProblem ? "updating" : "creating"} problem:`, err)
             setError(err.message || `Failed to ${editingProblem ? "update" : "create"} problem`)
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: err.message || `Failed to ${editingProblem ? "update" : "create"} problem`,
+            })
         } finally {
             setIsLoading(false)
         }
@@ -158,7 +264,10 @@ export default function AdminProblems() {
 
     // Handle problem deletion
     const handleDeleteProblem = async (problem) => {
-        if (!window.confirm(`Are you sure you want to delete the problem "${problem.title}"?`)) {
+        if (
+            !window.confirm(`Are you sure you want to delete the problem "${problem.title}"?\`)) {  => {
+        if (!window.confirm(\`Are you sure you want to delete the problem "${problem.title}"?`)
+        ) {
             return
         }
 
@@ -191,33 +300,221 @@ export default function AdminProblems() {
         } catch (err) {
             console.error("Error deleting problem:", err)
             setError(err.message || "Failed to delete problem")
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: err.message || "Failed to delete problem",
+            })
         } finally {
             setIsLoading(false)
         }
     }
 
     // Handle problem duplication
-    const handleDuplicateProblem = (problem) => {
-        const duplicatedProblem = {
-            ...problem,
-            title: `Copy of ${problem.title}`,
-            id: null, // Remove ID so a new one is generated
-        }
+    const handleDuplicateProblem = async (problem) => {
+        setIsLoading(true)
+        try {
+            // First fetch the complete problem data
+            const data = await fetchProblemData(problem.id)
+            setIsDuplicateProblem(true)
 
-        setEditingProblem(duplicatedProblem)
-        setShowAddProblemForm(true)
+            const duplicatedProblem = {
+                ...problem,
+                title: `Copy of ${problem.title}`,
+                id: null, // Remove ID so a new one is generated
+            }
+
+            // Add description and approach if available
+            if (data) {
+                duplicatedProblem.description = data.description || ""
+                duplicatedProblem.approach = data.approach || ""
+            }
+
+            setEditingProblem(duplicatedProblem)
+            setShowAddProblemForm(true)
+        } catch (error) {
+            console.error("Error in handleDuplicateProblem:", error)
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to duplicate problem",
+            })
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     // Handle viewing a problem
-    const handleViewProblem = (problem) => {
-        setViewingProblem(problem)
-        setIsViewDialogOpen(true)
+    const handleViewProblem = async (problem) => {
+        setIsLoading(true)
+        try {
+            const data = await fetchProblemData(problem.id)
+            if (data) {
+                setViewingProblem({
+                    ...problem,
+                    description: data.description || "No description available",
+                    approach: data.approach || "No approach available",
+                })
+                setIsViewDialogOpen(true)
+            } else {
+                // If no data is returned, create a basic view with available information
+                setViewingProblem({
+                    ...problem,
+                    description: "Description could not be loaded. Please try again later.",
+                    approach: "Approach could not be loaded. Please try again later.",
+                })
+                setIsViewDialogOpen(true)
+                toast({
+                    variant: "warning",
+                    title: "Warning",
+                    description: "Could not load complete problem details. Showing limited information.",
+                })
+            }
+        } catch (error) {
+            console.error("Error in handleViewProblem:", error)
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to view problem details",
+            })
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     // Handle editing a problem
-    const handleEditProblem = (problem) => {
-        setEditingProblem(problem)
-        setShowAddProblemForm(true)
+    const handleEditProblem = async (problem) => {
+        setIsLoading(true)
+        try {
+            const data = await fetchProblemData(problem.id)
+
+            // Log the original values for debugging
+            console.log("Editing problem with original values:", {
+                id: problem.id,
+                title: problem.title,
+                difficulty: problem.difficulty,
+                status: problem.status,
+            })
+
+            if (data) {
+                // Create a clean problem object with the original values
+                const problemToEdit = {
+                    ...problem,
+                    description: data.description || "",
+                    approach: data.approach || "",
+                }
+
+                setEditingProblem(problemToEdit)
+                setShowAddProblemForm(true)
+            } else {
+                // If no data is returned, create a basic edit form with available information
+                setEditingProblem({
+                    ...problem,
+                    description: "",
+                    approach: "",
+                })
+                setShowAddProblemForm(true)
+                toast({
+                    variant: "warning",
+                    title: "Warning",
+                    description: "Could not load complete problem details. Some fields may be empty.",
+                })
+            }
+        } catch (error) {
+            console.error("Error in handleEditProblem:", error)
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to load problem for editing",
+            })
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    // Render pagination controls
+    const renderPagination = (filteredProblems) => {
+        const totalProblems = filteredProblems.length
+        const totalPages = Math.ceil(totalProblems / problemsPerPage)
+
+        if (totalPages <= 1) return null
+
+        return (
+            <div className="flex items-center justify-between py-4">
+                <div className="text-sm text-muted-foreground">
+                    Showing {Math.min((currentPage - 1) * problemsPerPage + 1, totalProblems)} to{" "}
+                    {Math.min(currentPage * problemsPerPage, totalProblems)} of {totalProblems} problems
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(1)}
+                        disabled={currentPage === 1}
+                        aria-label="First page"
+                    >
+                        <ChevronsLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        aria-label="Previous page"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+
+                    <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            // Show pages around current page
+                            let pageNum
+                            if (totalPages <= 5) {
+                                pageNum = i + 1
+                            } else if (currentPage <= 3) {
+                                pageNum = i + 1
+                            } else if (currentPage >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i
+                            } else {
+                                pageNum = currentPage - 2 + i
+                            }
+
+                            return (
+                                <Button
+                                    key={pageNum}
+                                    variant={currentPage === pageNum ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => handlePageChange(pageNum)}
+                                    aria-label={`Page ${pageNum}`}
+                                    aria-current={currentPage === pageNum ? "page" : undefined}
+                                >
+                                    {pageNum}
+                                </Button>
+                            )
+                        })}
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        aria-label="Next page"
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(totalPages)}
+                        disabled={currentPage === totalPages}
+                        aria-label="Last page"
+                    >
+                        <ChevronsRight className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+        )
     }
 
     // Render loading state
@@ -297,6 +594,8 @@ export default function AdminProblems() {
                         onSubmit={handleSubmitProblem}
                         isLoading={isLoading}
                         error={error}
+                        onError={setError}
+                        isDuplicateProblem={isDuplicteProblem}
                     />
                 )}
 
@@ -325,13 +624,16 @@ export default function AdminProblems() {
                         ) : error && problems.length === 0 ? (
                             renderError()
                         ) : (
-                            <ProblemTable
-                                problems={getFilteredProblems("all")}
-                                onView={handleViewProblem}
-                                onEdit={handleEditProblem}
-                                onDuplicate={handleDuplicateProblem}
-                                onDelete={handleDeleteProblem}
-                            />
+                            <>
+                                <ProblemTable
+                                    problems={getPaginatedProblems(getFilteredProblems("all"))}
+                                    onView={handleViewProblem}
+                                    onEdit={handleEditProblem}
+                                    onDuplicate={handleDuplicateProblem}
+                                    onDelete={handleDeleteProblem}
+                                />
+                                {renderPagination(getFilteredProblems("all"))}
+                            </>
                         )}
                     </TabsContent>
 
@@ -341,13 +643,16 @@ export default function AdminProblems() {
                         ) : error && problems.length === 0 ? (
                             renderError()
                         ) : (
-                            <ProblemTable
-                                problems={getFilteredProblems("active")}
-                                onView={handleViewProblem}
-                                onEdit={handleEditProblem}
-                                onDuplicate={handleDuplicateProblem}
-                                onDelete={handleDeleteProblem}
-                            />
+                            <>
+                                <ProblemTable
+                                    problems={getPaginatedProblems(getFilteredProblems("active"))}
+                                    onView={handleViewProblem}
+                                    onEdit={handleEditProblem}
+                                    onDuplicate={handleDuplicateProblem}
+                                    onDelete={handleDeleteProblem}
+                                />
+                                {renderPagination(getFilteredProblems("active"))}
+                            </>
                         )}
                     </TabsContent>
 
@@ -357,20 +662,23 @@ export default function AdminProblems() {
                         ) : error && problems.length === 0 ? (
                             renderError()
                         ) : (
-                            <ProblemTable
-                                problems={getFilteredProblems("draft")}
-                                onView={handleViewProblem}
-                                onEdit={handleEditProblem}
-                                onDuplicate={handleDuplicateProblem}
-                                onDelete={handleDeleteProblem}
-                            />
+                            <>
+                                <ProblemTable
+                                    problems={getPaginatedProblems(getFilteredProblems("draft"))}
+                                    onView={handleViewProblem}
+                                    onEdit={handleEditProblem}
+                                    onDuplicate={handleDuplicateProblem}
+                                    onDelete={handleDeleteProblem}
+                                />
+                                {renderPagination(getFilteredProblems("draft"))}
+                            </>
                         )}
                     </TabsContent>
                 </Tabs>
 
                 {/* Problem View Dialog */}
                 <ProblemViewDialog
-                    problem={viewingProblem}
+                    viewProblem={viewingProblem}
                     isOpen={isViewDialogOpen}
                     onClose={() => {
                         setIsViewDialogOpen(false)

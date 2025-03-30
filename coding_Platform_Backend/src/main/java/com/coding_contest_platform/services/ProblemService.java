@@ -2,6 +2,7 @@ package com.coding_contest_platform.services;
 
 import com.coding_contest_platform.dto.ProblemRequest;
 import com.coding_contest_platform.entity.Problem;
+import com.coding_contest_platform.entity.ProblemData;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -21,4 +22,6 @@ public interface ProblemService {
 
     @Transactional
     ProblemRequest updateProblem(String id, ProblemRequest problemRequest);
+
+    ProblemData getProblemData(String id);
 }

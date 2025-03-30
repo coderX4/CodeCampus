@@ -44,9 +44,9 @@ export default function ProblemTable({ problems, onView, onEdit, onDuplicate, on
                                 <td className="p-4 align-middle">
                                     <Badge
                                         className={
-                                            problem.difficulty === "Easy"
+                                            problem.difficulty === "easy"
                                                 ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                                : problem.difficulty === "Medium"
+                                                : problem.difficulty === "medium"
                                                     ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
                                                     : "bg-red-100 text-red-800 hover:bg-red-100"
                                         }

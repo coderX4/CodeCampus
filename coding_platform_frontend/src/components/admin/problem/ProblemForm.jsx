@@ -8,7 +8,11 @@ import { Checkbox } from "@/components/ui/checkbox.jsx"
 import { Label } from "@/components/ui/label.jsx"
 import { AlertCircle } from "lucide-react"
 
-export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoading, error }) {
+export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoading, error, onError ,isDuplicateProblem}) {
+    const [diff, setDiff] = useState("")
+    const [stat, setStat] = useState("")
+    const capitalizedDifficulty = diff.charAt(0).toUpperCase() + diff.slice(1);
+    const capitalizedStatus = stat.charAt(0).toUpperCase() + stat.slice(1);
     const [formData, setFormData] = useState({
         title: "",
         difficulty: "medium",
@@ -16,11 +20,10 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
         about: "",
         examples: [{ input: "", output: "", explanation: "" }],
         constraints: "",
-        solution: "",
+        approach: "",
+        pseudocode: "",
         status: "active",
     })
-
-    const [description, setDescription] = useState("")
 
     // Available tags for selection
     const tagOptions = [
@@ -42,21 +45,50 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
     // Initialize form data when editing a problem
     useEffect(() => {
         if (editingProblem) {
-            // Parse the description to extract about, examples, and constraints
-            const parsedData = parseProblemDescription(editingProblem.description || "")
+            try {
+                console.log("Editing problem:", editingProblem)
 
-            setFormData({
-                title: editingProblem.title || "",
-                difficulty: editingProblem.difficulty?.toLowerCase() || "medium",
-                tags: editingProblem.tags || [],
-                about: parsedData.about || "",
-                examples: parsedData.examples.length > 0 ? parsedData.examples : [{ input: "", output: "", explanation: "" }],
-                constraints: parsedData.constraints || "",
-                solution: editingProblem.solution || "",
-                status: editingProblem.status || "active",
-            })
+                // Parse the description to extract about, examples, and constraints
+                const parsedData = parseProblemDescription(editingProblem.description || "")
+                const parsedData2 = parseProblemApproach(editingProblem.approach || "")
+
+                // Directly use the values from editingProblem without modification
+                setDiff(editingProblem.difficulty || "medium")
+                setStat(editingProblem.status || "active")
+
+                console.log("Setting form with difficulty:", diff, "status:", stat)
+
+                // Set the form data with all values
+                setFormData({
+                    title: editingProblem.title || "",
+                    difficulty: diff,
+                    tags: editingProblem.tags || [],
+                    about: parsedData.about || "",
+                    examples: parsedData.examples.length > 0 ? parsedData.examples : [{ input: "", output: "", explanation: "" }],
+                    constraints: parsedData.constraints || "",
+                    approach: parsedData2.approach || "",
+                    pseudocode: parsedData2.pseudocode || "",
+                    status: stat,
+                })
+            } catch (err) {
+                console.error("Error parsing problem data:", err)
+                onError("Error parsing problem data. Some fields may be incomplete.")
+
+                // Set basic data even if parsing fails
+                setFormData({
+                    title: editingProblem.title || "",
+                    difficulty: editingProblem.difficulty || "medium",
+                    tags: editingProblem.tags || [],
+                    about: "",
+                    examples: [{ input: "", output: "", explanation: "" }],
+                    constraints: "",
+                    approach: "",
+                    pseudocode: "",
+                    status: editingProblem.status || "active",
+                })
+            }
         }
-    }, [editingProblem])
+    }, [editingProblem, onError])
 
     // Parse problem description to extract about, examples, and constraints
     const parseProblemDescription = (description) => {
@@ -66,33 +98,85 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
             constraints: "",
         }
 
-        // Simple parsing logic - can be enhanced for more complex descriptions
-        const sections = description.split(/###\s+/g)
+        if (!description || description.trim() === "") {
+            return result
+        }
 
-        if (sections.length > 0) {
-            result.about = sections[0].trim()
+        try {
+            // Simple parsing logic - can be enhanced for more complex descriptions
+            const sections = description.split(/###\s+/g)
 
-            // Extract examples
-            const exampleRegex = /Example\s+\d+:\s*\n+Input:\s*(.+)\s*\n+Output:\s*(.+)(?:\s*\n+Explanation:\s*(.+))?/g
-            let match
+            if (sections.length > 0) {
+                result.about = sections[0].trim()
 
-            while ((match = exampleRegex.exec(description)) !== null) {
-                result.examples.push({
-                    input: match[1]?.trim() || "",
-                    output: match[2]?.trim() || "",
-                    explanation: match[3]?.trim() || "",
-                })
+                // Extract examples
+                const exampleRegex = /Example\s+\d+:\s*\n+Input:\s*(.+)\s*\n+Output:\s*(.+)(?:\s*\n+Explanation:\s*(.+))?/g
+                let match
+
+                while ((match = exampleRegex.exec(description)) !== null) {
+                    result.examples.push({
+                        input: match[1]?.trim() || "",
+                        output: match[2]?.trim() || "",
+                        explanation: match[3]?.trim() || "",
+                    })
+                }
+
+                // Extract constraints
+                const constraintsMatch = description.match(/Constraints:\s*\n+([\s\S]+?)(?:\n+###|$)/)
+                if (constraintsMatch) {
+                    result.constraints = constraintsMatch[1]
+                        .split("\n")
+                        .map((line) => line.trim().replace(/^-\s*/, ""))
+                        .filter((line) => line)
+                        .join("\n")
+                }
+            }
+        } catch (err) {
+            console.error("Error parsing problem description:", err)
+        }
+
+        return result
+    }
+
+    const parseProblemApproach = (approach) => {
+        const result = {
+            approach: "",
+            pseudocode: "",
+        }
+
+        if (!approach || approach.trim() === "") {
+            return result
+        }
+
+        try {
+            // Extract approach
+            const approachMatch = approach.match(/### Approach:\s*\n+([\s\S]+?)(?:\n+###|$)/)
+            if (approachMatch && approachMatch[1]) {
+                result.approach = approachMatch[1].trim()
+            } else {
+                // If no specific approach section, use everything before any pseudocode
+                const pseudocodeIndex = approach.indexOf("### Pseudocode:")
+                if (pseudocodeIndex > 0) {
+                    result.approach = approach.substring(0, pseudocodeIndex).trim()
+                } else {
+                    // If no pseudocode section either, use the whole approach
+                    result.approach = approach.trim()
+                }
             }
 
-            // Extract constraints
-            const constraintsMatch = description.match(/Constraints:\s*\n+([\s\S]+?)(?:\n+###|$)/)
-            if (constraintsMatch) {
-                result.constraints = constraintsMatch[1]
-                    .split("\n")
-                    .map((line) => line.trim().replace(/^-\s*/, ""))
-                    .filter((line) => line)
-                    .join("\n")
+            // Extract pseudocode
+            const pseudocodeMatch = approach.match(/### Pseudocode:\s*\n+```([\s\S]+?)```/)
+            if (pseudocodeMatch && pseudocodeMatch[1]) {
+                result.pseudocode = pseudocodeMatch[1].trim()
+            } else {
+                // Try alternative format without backticks
+                const altPseudocodeMatch = approach.match(/### Pseudocode:\s*\n+([\s\S]+?)(?:\n+###|$)/)
+                if (altPseudocodeMatch && altPseudocodeMatch[1]) {
+                    result.pseudocode = altPseudocodeMatch[1].trim()
+                }
             }
+        } catch (err) {
+            console.error("Error parsing problem approach:", err)
         }
 
         return result
@@ -113,6 +197,14 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
             }
         })
     }
+
+    const handleDifficultyChange = (difficulty) => {
+        setFormData((prev) => ({
+            ...prev,
+            difficulty: difficulty // Correctly updating difficulty
+        }));
+    };
+
 
     const handleExampleChange = (index, field, value) => {
         const newExamples = [...formData.examples]
@@ -139,56 +231,110 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
     }
 
     const formatDescription = () => {
-        // Format the problem description
-        const formattedAbout = formData.about.trim()
+        try {
+            // Format the problem description
+            const formattedAbout = formData.about.trim()
 
-        // Format the examples
-        const formattedExamples = formData.examples
-            .map(
-                (ex, index) =>
-                    `### Example ${index + 1}:\n\n` +
-                    `Input: ${ex.input.trim()}\n` +
-                    `Output: ${ex.output.trim()}` +
-                    (ex.explanation ? `\nExplanation: ${ex.explanation.trim()}` : ""),
-            )
-            .join("\n\n")
+            // Format the examples
+            const formattedExamples = formData.examples
+                .map(
+                    (ex, index) =>
+                        `### Example ${index + 1}:\n\n` +
+                        `Input: ${ex.input.trim()}\n` +
+                        `Output: ${ex.output.trim()}` +
+                        (ex.explanation ? `\nExplanation: ${ex.explanation.trim()}` : ""),
+                )
+                .join("\n\n")
 
-        // Format the constraints
-        const formattedConstraints = formData.constraints
-            .split("\n")
-            .filter((line) => line.trim() !== "") // Remove empty lines
-            .map((line) => `- ${line.trim()}`)
-            .join("\n")
+            // Format the constraints
+            const formattedConstraints = formData.constraints
+                .split("\n")
+                .filter((line) => line.trim() !== "") // Remove empty lines
+                .map((line) => `- ${line.trim()}`)
+                .join("\n")
 
-        // Combine everything into the final format
-        return `${formattedAbout}\n\n${formattedExamples}\n\n### Constraints:\n\n${formattedConstraints}`
+            // Combine everything into the final format
+            return `${formattedAbout}\n\n${formattedExamples}\n\n### Constraints:\n\n${formattedConstraints}`
+        } catch (err) {
+            console.error("Error formatting description:", err)
+            onError("Error formatting description. Please check your inputs.")
+            return ""
+        }
+    }
+
+    const formatApproach = () => {
+        try {
+            // Format the approach section
+            const formattedApproach = `### Approach:\n\n${formData.approach.trim()}`
+
+            // Format the pseudocode section
+            const formattedPseudocode = formData.pseudocode
+                ? `\n\n### Pseudocode:\n\`\`\`\n${formData.pseudocode.trim()}\n\`\`\``
+                : ""
+
+            // Combine and return the formatted approach
+            return `${formattedApproach}${formattedPseudocode}`
+        } catch (err) {
+            console.error("Error formatting approach:", err)
+            onError("Error formatting approach. Please check your inputs.")
+            return ""
+        }
     }
 
     const handleSubmit = (e) => {
         e.preventDefault()
 
-        // Format the description
-        const formattedDescription = formatDescription()
-
-        // Prepare the problem data
-        const problemData = {
-            title: formData.title,
-            difficulty: formData.difficulty,
-            tags: formData.tags,
-            description: formattedDescription,
-            approach: formData.solution,
-            status: formData.status,
+        // Validate form data
+        if (!formData.title.trim()) {
+            onError("Problem title is required")
+            return
         }
 
-        // Submit the form
-        onSubmit(problemData)
+        if (!formData.about.trim()) {
+            onError("Problem description is required")
+            return
+        }
+
+        if (formData.examples.some((ex) => !ex.input.trim() || !ex.output.trim())) {
+            onError("All examples must have input and output values")
+            return
+        }
+
+        if (!formData.constraints.trim()) {
+            onError("Constraints are required")
+            return
+        }
+
+        try {
+            // Format the description
+            const formattedDescription = formatDescription()
+            const formattedApproach = formatApproach()
+
+            // Prepare the problem data
+            const problemData = {
+                title: formData.title,
+                difficulty: formData.difficulty,
+                tags: formData.tags,
+                description: formattedDescription,
+                approach: formattedApproach,
+                status: formData.status,
+            }
+
+            console.log("Submitting problem with:", problemData)
+
+            // Submit the form
+            onSubmit(problemData)
+        } catch (err) {
+            console.error("Error submitting form:", err)
+            onError("An error occurred while submitting the form. Please try again.")
+        }
     }
 
     return (
         <Card className="mb-6">
             <CardHeader>
-                <CardTitle>{editingProblem ? "Edit Problem" : "Add New Problem"}</CardTitle>
-                <CardDescription>{editingProblem ? "Update problem details" : "Create a new coding problem"}</CardDescription>
+                <CardTitle>{editingProblem ? (isDuplicateProblem ? "Copy Problem" : "Edit Problem") : "Add New Problem"}</CardTitle>
+                <CardDescription>{editingProblem ? (isDuplicateProblem ? "Copy Problem details to create new Problem" : "Update problem details") : "Create a new coding problem"}</CardDescription>
             </CardHeader>
             <CardContent>
                 {error && (
@@ -214,11 +360,11 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
                         <div className="space-y-2">
                             <Label htmlFor="difficulty">Difficulty</Label>
                             <Select
-                                value={formData.difficulty}
-                                onValueChange={(value) => setFormData((prev) => ({ ...prev, difficulty: value }))}
+                                value={formData.difficulty || ""}
+                                onValueChange={handleDifficultyChange}
                             >
                                 <SelectTrigger id="difficulty">
-                                    <SelectValue placeholder="Select difficulty" />
+                                    <SelectValue placeholder={capitalizedDifficulty || "Select difficulty"} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="easy">Easy</SelectItem>
@@ -331,11 +477,11 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="solution">Solution Approach</Label>
+                        <Label htmlFor="approach">Solution Approach</Label>
                         <Textarea
-                            id="solution"
-                            name="solution"
-                            value={formData.solution}
+                            id="approach"
+                            name="approach"
+                            value={formData.approach}
                             onChange={handleChange}
                             placeholder="Provide a reference solution..."
                             className="min-h-[200px] font-mono"
@@ -343,13 +489,29 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
                     </div>
 
                     <div className="space-y-2">
+                        <Label htmlFor="pseudocode">Pseudocode</Label>
+                        <Textarea
+                            id="pseudocode"
+                            name="pseudocode"
+                            value={formData.pseudocode}
+                            onChange={handleChange}
+                            placeholder="Provide pseudocode for the solution..."
+                            className="min-h-[200px] font-mono"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
                         <Label htmlFor="status">Status</Label>
                         <Select
+                            defaultValue={formData.status}
                             value={formData.status}
-                            onValueChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}
+                            onValueChange={(value) => {
+                                console.log("Status changed to:", value)
+                                setFormData((prev) => ({ ...prev, status: value }))
+                            }}
                         >
                             <SelectTrigger id="status">
-                                <SelectValue placeholder="Select status" />
+                                <SelectValue placeholder={capitalizedStatus || "Select status"} />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="active">Active</SelectItem>
@@ -365,32 +527,32 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
                         <Button type="submit" disabled={isLoading}>
                             {isLoading ? (
                                 <>
-                  <span className="mr-2">
-                    <svg
-                        className="animate-spin h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                    >
-                      <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                      ></circle>
-                      <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                  </span>
+                                  <span className="mr-2">
+                                    <svg
+                                        className="animate-spin h-4 w-4 text-white"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                    >
+                                      <circle
+                                          className="opacity-25"
+                                          cx="12"
+                                          cy="12"
+                                          r="10"
+                                          stroke="currentColor"
+                                          strokeWidth="4"
+                                      ></circle>
+                                      <path
+                                          className="opacity-75"
+                                          fill="currentColor"
+                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                      ></path>
+                                    </svg>
+                                  </span>
                                     Processing...
                                 </>
                             ) : editingProblem ? (
-                                "Update Problem"
+                                isDuplicateProblem ? ("Copy Problem") : ("Update Problem")
                             ) : (
                                 "Create Problem"
                             )}
