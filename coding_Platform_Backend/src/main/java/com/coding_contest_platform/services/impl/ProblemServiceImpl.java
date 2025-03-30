@@ -106,4 +106,9 @@ public class ProblemServiceImpl implements ProblemService {
         problemDataRepository.save(problemData);
         return problemRequest;
     }
+
+    @Override
+    public ProblemData getProblemData(String id) {
+        return problemDataRepository.findOneById(id);
+    }
 }

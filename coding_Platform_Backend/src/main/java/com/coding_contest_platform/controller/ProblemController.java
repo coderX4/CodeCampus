@@ -35,4 +35,9 @@ public class ProblemController {
         problemService.updateProblem(id, problemRequest);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping({"/getproblemsdata/{id}"})
+    public ResponseEntity<?> getProblemsData(@PathVariable String id) {
+        return ResponseEntity.ok(problemService.getProblemData(id));
+    }
 }

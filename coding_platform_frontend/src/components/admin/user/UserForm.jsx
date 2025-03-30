@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card.jsx"
-import { Input } from "../../components/ui/input.jsx"
-import { Button } from "../../components/ui/button.jsx"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select.jsx"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../ui/card.jsx"
+import { Input } from "../../ui/input.jsx"
+import { Button } from "../../ui/button.jsx"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select.jsx"
 
 export default function UserForm({ editingUser, onCancel, onSuccess, onError }) {
     const [isLoading, setIsLoading] = useState(false)
