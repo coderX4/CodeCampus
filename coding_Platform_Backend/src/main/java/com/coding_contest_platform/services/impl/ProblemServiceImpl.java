@@ -111,4 +111,10 @@ public class ProblemServiceImpl implements ProblemService {
     public ProblemData getProblemData(String id) {
         return problemDataRepository.findOneById(id);
     }
+
+    @Override
+    public List<Problem> getActiveProblems() {
+        return problemRepository.findByStatus("active");
+    }
+
 }
