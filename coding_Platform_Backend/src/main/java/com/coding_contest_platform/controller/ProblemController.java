@@ -40,4 +40,10 @@ public class ProblemController {
     public ResponseEntity<?> getProblemsData(@PathVariable String id) {
         return ResponseEntity.ok(problemService.getProblemData(id));
     }
+
+    //users window
+    @GetMapping({"/getactiveproblems"})
+    public ResponseEntity<?> getActiveProblems() {
+        return ResponseEntity.ok(problemService.getActiveProblems());
+    }
 }

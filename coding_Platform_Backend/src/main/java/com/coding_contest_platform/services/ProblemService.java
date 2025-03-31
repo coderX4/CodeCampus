@@ -24,4 +24,7 @@ public interface ProblemService {
     ProblemRequest updateProblem(String id, ProblemRequest problemRequest);
 
     ProblemData getProblemData(String id);
+
+    List<Problem> getActiveProblems();
+
 }

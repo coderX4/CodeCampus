@@ -5,6 +5,8 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface ProblemRepository extends MongoRepository<Problem, String> {
     // Find the latest problem ID that starts with the given prefix (sorted in descending order)
@@ -12,4 +14,7 @@ public interface ProblemRepository extends MongoRepository<Problem, String> {
     String findLatestProblemId(String prefix);
 
     Problem findOneById(String id);
+
+    List<Problem> findByStatus(String status);
+
 }
