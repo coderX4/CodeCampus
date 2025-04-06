@@ -3,6 +3,7 @@ package com.coding_contest_platform.services;
 import com.coding_contest_platform.dto.ProblemRequest;
 import com.coding_contest_platform.entity.Problem;
 import com.coding_contest_platform.entity.ProblemData;
+import com.coding_contest_platform.entity.ProblemTestCase;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -24,6 +25,8 @@ public interface ProblemService {
     ProblemRequest updateProblem(String id, ProblemRequest problemRequest);
 
     ProblemData getProblemData(String id);
+
+    ProblemTestCase getProblemTestCase(String id);
 
     List<Problem> getActiveProblems();
 

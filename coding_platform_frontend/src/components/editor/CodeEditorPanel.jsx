@@ -17,12 +17,14 @@ export default function CodeEditorPanel({
                                             setIsFullScreen,
                                             onExecuteCode,
                                             result,
+                                            supportedLanguages = ["c", "cpp", "java"],
                                         }) {
     const [loading, setLoading] = useState(false)
     const [showConsole, setShowConsole] = useState(false)
     const [consoleOutput, setConsoleOutput] = useState([])
     const editorContainerRef = useRef(null)
     const fullScreenRef = useRef(null)
+    const [isSubmit, setIsSubmit] = useState(false)
 
     // Update console output when result changes
     useEffect(() => {
@@ -70,7 +72,7 @@ export default function CodeEditorPanel({
             })
     }
 
-    const handleExecute = async (isSubmit) => {
+    const handleExecute = async () => {
         setLoading(true)
         try {
             await onExecuteCode(isSubmit)
@@ -91,10 +93,9 @@ export default function CodeEditorPanel({
                                     <SelectValue placeholder="Select Language" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="javascript">JavaScript</SelectItem>
-                                    <SelectItem value="python">Python</SelectItem>
-                                    <SelectItem value="java">Java</SelectItem>
-                                    <SelectItem value="cpp">C++</SelectItem>
+                                    {supportedLanguages.includes("c") && <SelectItem value="c">C</SelectItem>}
+                                    {supportedLanguages.includes("cpp") && <SelectItem value="cpp">C++</SelectItem>}
+                                    {supportedLanguages.includes("java") && <SelectItem value="java">Java</SelectItem>}
                                 </SelectContent>
                             </Select>
 
@@ -215,7 +216,10 @@ export default function CodeEditorPanel({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleExecute(false)}
+                                onClick={() => {
+                                    setIsSubmit(false)
+                                    handleExecute()}
+                            }
                                 disabled={loading}
                                 className="btn-hover"
                                 aria-label="Run code"
@@ -225,7 +229,10 @@ export default function CodeEditorPanel({
                             </Button>
                             <Button
                                 size="sm"
-                                onClick={() => handleExecute(true)}
+                                onClick={() => {
+                                    setIsSubmit(true)
+                                    handleExecute()}
+                                }
                                 disabled={loading}
                                 className="bg-primary hover:bg-primary/90 text-primary-foreground btn-hover"
                                 aria-label="Submit solution"

@@ -92,7 +92,7 @@ export default function AdminProblems() {
         }
 
         try {
-            const response = await fetch(`http://localhost:8083/api/problems/getproblemsdata/${id}`, {
+            const response = await fetch(`http://localhost:8083/api/problems/getproblemformdata/${id}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -213,7 +213,11 @@ export default function AdminProblems() {
 
         try {
             // Determine if we're creating or updating a problem or duplicating it
-            let isEditing = !!editingProblem
+            let isEditing
+            if(editingProblem != null){
+                isEditing = true
+            }
+
             if(isDuplicteProblem){
                 isEditing = false
             }
@@ -328,6 +332,8 @@ export default function AdminProblems() {
             if (data) {
                 duplicatedProblem.description = data.description || ""
                 duplicatedProblem.approach = data.approach || ""
+                duplicatedProblem.codeTemplates = data.codeTemplates
+                duplicatedProblem.testCases = data.testCases
             }
 
             setEditingProblem(duplicatedProblem)
@@ -354,6 +360,8 @@ export default function AdminProblems() {
                     ...problem,
                     description: data.description || "No description available",
                     approach: data.approach || "No approach available",
+                    codeTemplates: data.codeTemplates,
+                    testCases: data.testCases
                 })
                 setIsViewDialogOpen(true)
             } else {
@@ -387,21 +395,14 @@ export default function AdminProblems() {
         setIsLoading(true)
         try {
             const data = await fetchProblemData(problem.id)
-
-            // Log the original values for debugging
-            console.log("Editing problem with original values:", {
-                id: problem.id,
-                title: problem.title,
-                difficulty: problem.difficulty,
-                status: problem.status,
-            })
-
             if (data) {
                 // Create a clean problem object with the original values
                 const problemToEdit = {
                     ...problem,
                     description: data.description || "",
                     approach: data.approach || "",
+                    codeTemplates: data.codeTemplates,
+                    testCases: data.testCases,
                 }
 
                 setEditingProblem(problemToEdit)
@@ -412,6 +413,15 @@ export default function AdminProblems() {
                     ...problem,
                     description: "",
                     approach: "",
+                    codeTemplates: {
+                        c: "",
+                        cpp: "",
+                        java: "",
+                    },
+                    testCases: {
+                        run: [{input: "", expectedOutput: ""}],
+                        submit: [{input: "", expectedOutput: ""}],
+                    },
                 })
                 setShowAddProblemForm(true)
                 toast({
