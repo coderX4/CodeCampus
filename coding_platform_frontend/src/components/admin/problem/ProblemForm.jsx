@@ -1,18 +1,28 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx"
-import { Input } from "@/components/ui/input.jsx"
 import { Button } from "@/components/ui/button.jsx"
-import { Textarea } from "@/components/ui/textarea.jsx"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx"
-import { Checkbox } from "@/components/ui/checkbox.jsx"
-import { Label } from "@/components/ui/label.jsx"
 import { AlertCircle } from "lucide-react"
+import ProblemBasicInfo from "./ProblemBasicInfo.jsx"
+import ProblemDescription from "./ProblemDescription.jsx"
+import ProblemSolution from "./ProblemSolution.jsx"
+import ProblemCodeTemplates from "./ProblemCodeTemplates.jsx"
+import ProblemTestCases from "./ProblemTestCases.jsx"
+import ProblemStatus from "./ProblemStatus.jsx"
 
-export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoading, error, onError ,isDuplicateProblem}) {
+export default function ProblemForm({
+                                        editingProblem,
+                                        onCancel,
+                                        onSubmit,
+                                        isLoading,
+                                        error,
+                                        onError,
+                                        isDuplicateProblem,
+                                    }) {
     const [diff, setDiff] = useState("")
     const [stat, setStat] = useState("")
-    const capitalizedDifficulty = diff.charAt(0).toUpperCase() + diff.slice(1);
-    const capitalizedStatus = stat.charAt(0).toUpperCase() + stat.slice(1);
+    const capitalizedDifficulty = diff.charAt(0).toUpperCase() + diff.slice(1)
+    const capitalizedStatus = stat.charAt(0).toUpperCase() + stat.slice(1)
+    // Update the formData state to include separate run and submit test cases
     const [formData, setFormData] = useState({
         title: "",
         difficulty: "medium",
@@ -23,6 +33,17 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
         approach: "",
         pseudocode: "",
         status: "active",
+        // Add new fields for code templates
+        codeTemplates: {
+            c: "// C code here template not right now",
+            cpp: "// C++ code template\n#include\nusing namespace std;\n\n// Your solution here\n",
+            java: "// Java code template\npublic class Solution {\n    // Your solution here\n}\n",
+        },
+        // Separate test cases for run and submit
+        testCases: {
+            run: [{ input: "", expectedOutput: "" }],
+            submit: [{ input: "", expectedOutput: "" }],
+        },
     })
 
     // Available tags for selection
@@ -42,7 +63,7 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
         "Bit Manipulation",
     ]
 
-    // Initialize form data when editing a problem
+    // Update the useEffect for editing problem to handle the new test case structure
     useEffect(() => {
         if (editingProblem) {
             try {
@@ -58,6 +79,23 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
 
                 console.log("Setting form with difficulty:", diff, "status:", stat)
 
+                // Handle test cases from editing problem
+                let runTestCases = [{ input: "", expectedOutput: "" }]
+                let submitTestCases = [{ input: "", expectedOutput: "" }]
+
+                if (editingProblem.testCases) {
+                    if (editingProblem.testCases.run && editingProblem.testCases.run.length > 0) {
+                        runTestCases = editingProblem.testCases.run
+                    } else if (Array.isArray(editingProblem.testCases) && editingProblem.testCases.length > 0) {
+                        // For backward compatibility with old format
+                        runTestCases = editingProblem.testCases
+                    }
+
+                    if (editingProblem.testCases.submit && editingProblem.testCases.submit.length > 0) {
+                        submitTestCases = editingProblem.testCases.submit
+                    }
+                }
+
                 // Set the form data with all values
                 setFormData({
                     title: editingProblem.title || "",
@@ -69,6 +107,17 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
                     approach: parsedData2.approach || "",
                     pseudocode: parsedData2.pseudocode || "",
                     status: stat,
+                    // Add code templates from editing problem or use defaults
+                    codeTemplates: editingProblem.codeTemplates || {
+                        c: "// C code template\n#include <stdio.h>\n\n// Your solution here\n",
+                        cpp: "// C++ code template\n#include <iostream>\nusing namespace std;\n\n// Your solution here\n",
+                        java: "// Java code template\npublic class Solution {\n    // Your solution here\n}\n",
+                    },
+                    // Add test cases with the new structure
+                    testCases: {
+                        run: runTestCases,
+                        submit: submitTestCases,
+                    },
                 })
             } catch (err) {
                 console.error("Error parsing problem data:", err)
@@ -85,6 +134,15 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
                     approach: "",
                     pseudocode: "",
                     status: editingProblem.status || "active",
+                    codeTemplates: {
+                        c: "// C code template\n#include <stdio.h>\n\n// Your solution here\n",
+                        cpp: "// C++ code template\n#include <iostream>\nusing namespace std;\n\n// Your solution here\n",
+                        java: "// Java code template\npublic class Solution {\n    // Your solution here\n}\n",
+                    },
+                    testCases: {
+                        run: [{ input: "", expectedOutput: "" }],
+                        submit: [{ input: "", expectedOutput: "" }],
+                    },
                 })
             }
         }
@@ -201,10 +259,9 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
     const handleDifficultyChange = (difficulty) => {
         setFormData((prev) => ({
             ...prev,
-            difficulty: difficulty // Correctly updating difficulty
-        }));
-    };
-
+            difficulty: difficulty,
+        }))
+    }
 
     const handleExampleChange = (index, field, value) => {
         const newExamples = [...formData.examples]
@@ -228,6 +285,55 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
                 examples: prev.examples.filter((_, i) => i !== index),
             }))
         }
+    }
+
+    const handleCodeTemplateChange = (language, value) => {
+        setFormData((prev) => ({
+            ...prev,
+            codeTemplates: {
+                ...prev.codeTemplates,
+                [language]: value,
+            },
+        }))
+    }
+
+    // Update the test case handlers to handle both run and submit test cases
+    const handleTestCaseChange = (type, index, field, value) => {
+        const newTestCases = { ...formData.testCases }
+        newTestCases[type][index][field] = value
+        setFormData((prev) => ({
+            ...prev,
+            testCases: newTestCases,
+        }))
+    }
+
+    // Update the test case handlers to handle both run and submit test cases
+    const addTestCase = (type) => {
+        if (formData.testCases[type].length < 6) {
+            const newTestCases = { ...formData.testCases }
+            newTestCases[type] = [...newTestCases[type], { input: "", expectedOutput: "" }]
+            setFormData((prev) => ({
+                ...prev,
+                testCases: newTestCases,
+            }))
+        }
+    }
+
+    // Update the test case handlers to handle both run and submit test cases
+    const removeTestCase = (type, index) => {
+        if (formData.testCases[type].length > 1) {
+            const newTestCases = { ...formData.testCases }
+            newTestCases[type] = newTestCases[type].filter((_, i) => i !== index)
+            setFormData((prev) => ({
+                ...prev,
+                testCases: newTestCases,
+            }))
+        }
+    }
+
+    const handleStatusChange = (value) => {
+        console.log("Status changed to:", value)
+        setFormData((prev) => ({ ...prev, status: value }))
     }
 
     const formatDescription = () => {
@@ -281,6 +387,7 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
         }
     }
 
+    // Update the validation in handleSubmit
     const handleSubmit = (e) => {
         e.preventDefault()
 
@@ -305,6 +412,17 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
             return
         }
 
+        //Validate test cases - both run and submit
+        if (formData.testCases.run.some((tc) => !tc.input.trim() || !tc.expectedOutput.trim())) {
+           onError("All run test cases must have input and expected output values")
+           return
+        }
+
+        if (formData.testCases.submit.some((tc) => !tc.input.trim() || !tc.expectedOutput.trim())) {
+           onError("All submit test cases must have input and expected output values")
+           return
+        }
+
         try {
             // Format the description
             const formattedDescription = formatDescription()
@@ -318,6 +436,9 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
                 description: formattedDescription,
                 approach: formattedApproach,
                 status: formData.status,
+                // Add the new fields
+                codeTemplates: formData.codeTemplates,
+                testCases: formData.testCases,
             }
 
             console.log("Submitting problem with:", problemData)
@@ -333,8 +454,16 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
     return (
         <Card className="mb-6">
             <CardHeader>
-                <CardTitle>{editingProblem ? (isDuplicateProblem ? "Copy Problem" : "Edit Problem") : "Add New Problem"}</CardTitle>
-                <CardDescription>{editingProblem ? (isDuplicateProblem ? "Copy Problem details to create new Problem" : "Update problem details") : "Create a new coding problem"}</CardDescription>
+                <CardTitle>
+                    {editingProblem ? (isDuplicateProblem ? "Copy Problem" : "Edit Problem") : "Add New Problem"}
+                </CardTitle>
+                <CardDescription>
+                    {editingProblem
+                        ? isDuplicateProblem
+                            ? "Copy Problem details to create new Problem"
+                            : "Update problem details"
+                        : "Create a new coding problem"}
+                </CardDescription>
             </CardHeader>
             <CardContent>
                 {error && (
@@ -344,181 +473,49 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
-                            <Label htmlFor="title">Problem Title</Label>
-                            <Input
-                                id="title"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleChange}
-                                placeholder="Enter problem title"
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="difficulty">Difficulty</Label>
-                            <Select
-                                value={formData.difficulty || ""}
-                                onValueChange={handleDifficultyChange}
-                            >
-                                <SelectTrigger id="difficulty">
-                                    <SelectValue placeholder={capitalizedDifficulty || "Select difficulty"} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="easy">Easy</SelectItem>
-                                    <SelectItem value="medium">Medium</SelectItem>
-                                    <SelectItem value="hard">Hard</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Basic Information */}
+                    <ProblemBasicInfo
+                        formData={formData}
+                        handleChange={handleChange}
+                        handleDifficultyChange={handleDifficultyChange}
+                        handleTagToggle={handleTagToggle}
+                        tagOptions={tagOptions}
+                        capitalizedDifficulty={capitalizedDifficulty}
+                    />
 
-                    <div className="space-y-2">
-                        <Label>Tags</Label>
-                        <div className="flex flex-wrap gap-2 p-3 border rounded-md">
-                            {tagOptions.map((tag) => (
-                                <div key={tag} className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id={`tag-${tag}`}
-                                        checked={formData.tags.includes(tag)}
-                                        onCheckedChange={() => handleTagToggle(tag)}
-                                    />
-                                    <Label
-                                        htmlFor={`tag-${tag}`}
-                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                        {tag}
-                                    </Label>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    {/* Problem Description */}
+                    <ProblemDescription
+                        formData={formData}
+                        handleChange={handleChange}
+                        handleExampleChange={handleExampleChange}
+                        addExample={addExample}
+                        removeExample={removeExample}
+                    />
 
-                    <div className="space-y-2">
-                        <Label htmlFor="about">Problem Description</Label>
-                        <Textarea
-                            id="about"
-                            name="about"
-                            value={formData.about}
-                            onChange={handleChange}
-                            placeholder="Describe the problem in detail..."
-                            className="min-h-[150px]"
-                            required
-                        />
-                    </div>
+                    {/* Solution Approach */}
+                    <ProblemSolution formData={formData} handleChange={handleChange} />
 
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <Label>Examples</Label>
-                            {formData.examples.length < 3 && (
-                                <Button type="button" variant="outline" onClick={addExample} size="sm">
-                                    Add Example
-                                </Button>
-                            )}
-                        </div>
-                        <div className="space-y-4">
-                            {formData.examples.map((ex, index) => (
-                                <div key={index} className="p-3 border rounded space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <Label>Example {index + 1}</Label>
-                                        {formData.examples.length > 1 && (
-                                            <Button type="button" variant="destructive" size="sm" onClick={() => removeExample(index)}>
-                                                Remove
-                                            </Button>
-                                        )}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`input-${index}`}>Input</Label>
-                                        <Input
-                                            id={`input-${index}`}
-                                            value={ex.input}
-                                            onChange={(e) => handleExampleChange(index, "input", e.target.value)}
-                                            placeholder="Input"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`output-${index}`}>Output</Label>
-                                        <Input
-                                            id={`output-${index}`}
-                                            value={ex.output}
-                                            onChange={(e) => handleExampleChange(index, "output", e.target.value)}
-                                            placeholder="Output"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`explanation-${index}`}>Explanation (optional)</Label>
-                                        <Input
-                                            id={`explanation-${index}`}
-                                            value={ex.explanation}
-                                            onChange={(e) => handleExampleChange(index, "explanation", e.target.value)}
-                                            placeholder="Explanation"
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    {/* Code Templates */}
+                    <ProblemCodeTemplates
+                        codeTemplates={formData.codeTemplates}
+                        handleCodeTemplateChange={handleCodeTemplateChange}
+                    />
 
-                    <div className="space-y-2">
-                        <Label htmlFor="constraints">Constraints</Label>
-                        <Textarea
-                            id="constraints"
-                            name="constraints"
-                            value={formData.constraints}
-                            onChange={handleChange}
-                            placeholder="Enter constraints (one per line)..."
-                            className="min-h-[100px]"
-                            required
-                        />
-                    </div>
+                    {/* Test Cases */}
+                    <ProblemTestCases
+                        testCases={formData.testCases}
+                        handleTestCaseChange={handleTestCaseChange}
+                        addTestCase={addTestCase}
+                        removeTestCase={removeTestCase}
+                    />
 
-                    <div className="space-y-2">
-                        <Label htmlFor="approach">Solution Approach</Label>
-                        <Textarea
-                            id="approach"
-                            name="approach"
-                            value={formData.approach}
-                            onChange={handleChange}
-                            placeholder="Provide a reference solution..."
-                            className="min-h-[200px] font-mono"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="pseudocode">Pseudocode</Label>
-                        <Textarea
-                            id="pseudocode"
-                            name="pseudocode"
-                            value={formData.pseudocode}
-                            onChange={handleChange}
-                            placeholder="Provide pseudocode for the solution..."
-                            className="min-h-[200px] font-mono"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="status">Status</Label>
-                        <Select
-                            defaultValue={formData.status}
-                            value={formData.status}
-                            onValueChange={(value) => {
-                                console.log("Status changed to:", value)
-                                setFormData((prev) => ({ ...prev, status: value }))
-                            }}
-                        >
-                            <SelectTrigger id="status">
-                                <SelectValue placeholder={capitalizedStatus || "Select status"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="active">Active</SelectItem>
-                                <SelectItem value="draft">Draft</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    {/* Problem Status */}
+                    <ProblemStatus
+                        status={formData.status}
+                        setStatus={handleStatusChange}
+                        capitalizedStatus={capitalizedStatus}
+                    />
 
                     <div className="flex items-center justify-end gap-2">
                         <Button variant="outline" type="button" onClick={onCancel} disabled={isLoading}>
@@ -527,32 +524,36 @@ export default function ProblemForm({ editingProblem, onCancel, onSubmit, isLoad
                         <Button type="submit" disabled={isLoading}>
                             {isLoading ? (
                                 <>
-                                  <span className="mr-2">
-                                    <svg
-                                        className="animate-spin h-4 w-4 text-white"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                    >
-                                      <circle
-                                          className="opacity-25"
-                                          cx="12"
-                                          cy="12"
-                                          r="10"
-                                          stroke="currentColor"
-                                          strokeWidth="4"
-                                      ></circle>
-                                      <path
-                                          className="opacity-75"
-                                          fill="currentColor"
-                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                      ></path>
-                                    </svg>
-                                  </span>
+                  <span className="mr-2">
+                    <svg
+                        className="animate-spin h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                      <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                      ></circle>
+                      <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  </span>
                                     Processing...
                                 </>
                             ) : editingProblem ? (
-                                isDuplicateProblem ? ("Copy Problem") : ("Update Problem")
+                                isDuplicateProblem ? (
+                                    "Copy Problem"
+                                ) : (
+                                    "Update Problem"
+                                )
                             ) : (
                                 "Create Problem"
                             )}

@@ -10,11 +10,7 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class EditorResponse {
-    private String id;
-    private String title;
-    private String difficulty;
-    private String acceptance;
+public class ProblemDataResponse {
     private String description;
     private String approach;
     private Map<String, String> codeTemplates;

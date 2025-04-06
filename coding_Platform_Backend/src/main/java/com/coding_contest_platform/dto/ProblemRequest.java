@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
@@ -16,4 +17,6 @@ public class ProblemRequest {
     private String description;
     private String approach;
     private String status;
+    private Map<String, String> codeTemplates;             // language → code
+    private Map<String, List<TestCase>> testCases;
 }
