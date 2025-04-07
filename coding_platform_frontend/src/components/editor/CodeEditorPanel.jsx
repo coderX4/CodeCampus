@@ -24,7 +24,6 @@ export default function CodeEditorPanel({
     const [consoleOutput, setConsoleOutput] = useState([])
     const editorContainerRef = useRef(null)
     const fullScreenRef = useRef(null)
-    const [isSubmit, setIsSubmit] = useState(false)
 
     // Update console output when result changes
     useEffect(() => {
@@ -72,7 +71,7 @@ export default function CodeEditorPanel({
             })
     }
 
-    const handleExecute = async () => {
+    const handleExecute = async (isSubmit) => {
         setLoading(true)
         try {
             await onExecuteCode(isSubmit)
@@ -217,8 +216,7 @@ export default function CodeEditorPanel({
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                    setIsSubmit(false)
-                                    handleExecute()}
+                                    handleExecute(false)}
                             }
                                 disabled={loading}
                                 className="btn-hover"
@@ -230,8 +228,7 @@ export default function CodeEditorPanel({
                             <Button
                                 size="sm"
                                 onClick={() => {
-                                    setIsSubmit(true)
-                                    handleExecute()}
+                                    handleExecute(true)}
                                 }
                                 disabled={loading}
                                 className="bg-primary hover:bg-primary/90 text-primary-foreground btn-hover"
