@@ -105,8 +105,10 @@ export default function EditorPage() {
     setLayout(layout === "horizontal" ? "vertical" : "horizontal")
   }
 
+  // Update the handleExecuteCode function to process test case results
   const handleExecuteCode = async (isSubmit) => {
     setError("")
+    setResult(null) // Reset previous results
 
     const storedUser = sessionStorage.getItem("user")
     const loggedUser = storedUser ? JSON.parse(storedUser) : null
@@ -118,10 +120,10 @@ export default function EditorPage() {
 
     try {
       const executionData = {
-        email : loggedUser.email,
-        language : language,
+        email: loggedUser.email,
+        language: language,
         code: code,
-        isSubmit : !!isSubmit
+        isSubmit: !!isSubmit,
       }
       const response = await fetch(`http://localhost:8083/api/editor/execute/${problem.id}`, {
         method: "POST",
@@ -136,17 +138,71 @@ export default function EditorPage() {
         const errorData = await response.json().catch(() => ({}))
         throw new Error(errorData.message || `Failed to execute`)
       }
-      const data = await response.json();
+
+      const data = await response.json()
       console.log(data)
-      // Success
-      toast({
-        title: "Problem Executed",
-        description: `Problem solution execution has been successfull.`,
+
+      // Process test case results
+      const passedTestCases = data.filter((testCase) => testCase.correct).length
+      const totalTestCases = data.length
+      const hasErrors = data.some((testCase) => testCase.error && testCase.error.trim() !== "")
+
+      // Create console output messages
+      const consoleOutput = [{ type: "info", message: `Running code in ${language}...` }]
+
+      // Add error messages if any
+      data.forEach((testCase, index) => {
+        if (testCase.error && testCase.error.trim() !== "") {
+          consoleOutput.push({
+            type: "error",
+            message: `Error in test case ${index + 1}: ${testCase.error}`,
+          })
+        }
       })
 
+      // Add summary message
+      if (passedTestCases === totalTestCases) {
+        consoleOutput.push({
+          type: "success",
+          message: `All test cases passed! (${passedTestCases}/${totalTestCases})`,
+        })
+      } else {
+        consoleOutput.push({
+          type: "info",
+          message: `Passed ${passedTestCases} out of ${totalTestCases} test cases`,
+        })
+      }
+
+      // Set result state with processed data
+      setResult({
+        status: passedTestCases === totalTestCases ? (isSubmit ? "Accepted" : "Success") : "Failed",
+        passedTestCases,
+        totalTestCases,
+        testCases: data,
+        consoleOutput,
+        runtime: isSubmit ? "56ms" : undefined,
+        memory: isSubmit ? "42.1MB" : undefined,
+      })
+
+      // Show toast notification
+      toast({
+        title: passedTestCases === totalTestCases ? "Success!" : "Execution Complete",
+        description:
+            passedTestCases === totalTestCases
+                ? `All ${totalTestCases} test cases passed successfully.`
+                : `Passed ${passedTestCases} out of ${totalTestCases} test cases.`,
+        variant: passedTestCases === totalTestCases ? "default" : "destructive",
+      })
     } catch (err) {
       console.error(`Error in execution problem:`, err)
       setError(err.message || `Failed to execute the problem solution`)
+
+      // Set error result
+      setResult({
+        status: "Error",
+        consoleOutput: [{ type: "error", message: err.message || "An error occurred during execution" }],
+      })
+
       toast({
         variant: "destructive",
         title: "Error",
@@ -154,60 +210,6 @@ export default function EditorPage() {
       })
     }
   }
-
-  // // Update the handleExecuteCode function to only use run test cases
-  // const handleExecuteCode = async (isSubmit) => {
-  //   // In a real implementation, you would send only the run test cases to the backend
-  //   const testCases = problem.testCases?.run || []
-  //
-  //   // Simulate code execution with the run test cases
-  //   const executionResult = await executeCode(code, language, isSubmit, testCases)
-  //   setResult(executionResult)
-  // }
-
-  // // Update the executeCode function to accept test cases
-  // const executeCode = async (code, language, isSubmit, testCases) => {
-  //   // In a real app, this would be an API call to execute the code with the provided test cases
-  //   return new Promise((resolve) => {
-  //     setTimeout(() => {
-  //       if (isSubmit) {
-  //         resolve({
-  //           status: "Accepted",
-  //           runtime: "56ms",
-  //           memory: "42.1MB",
-  //           consoleOutput: [
-  //             { type: "info", message: `Running code in ${language}...` },
-  //             { type: "success", message: "All test cases passed!" },
-  //             { type: "info", message: "Runtime: 56ms (faster than 85% of submissions)" },
-  //             { type: "info", message: "Memory: 42.1MB (less than 65% of submissions)" },
-  //           ],
-  //         })
-  //       } else {
-  //         // Generate console output based on the actual test cases
-  //         const consoleOutput = [{ type: "info", message: `Running code in ${language}...` }]
-  //
-  //         // Add test case results to console output
-  //         testCases.forEach((testCase, index) => {
-  //           consoleOutput.push({
-  //             type: "info",
-  //             message: `Test case ${index + 1}: ${testCase.input.substring(0, 30)}${testCase.input.length > 30 ? "..." : ""}`,
-  //           })
-  //           consoleOutput.push({
-  //             type: "success",
-  //             message: `Output: [0,1] ✓ Expected: ${testCase.expectedOutput.substring(0, 30)}${testCase.expectedOutput.length > 30 ? "..." : ""}`,
-  //           })
-  //         })
-  //
-  //         consoleOutput.push({ type: "success", message: "All test cases passed!" })
-  //
-  //         resolve({
-  //           status: "Success",
-  //           consoleOutput: consoleOutput,
-  //         })
-  //       }
-  //     }, 1500)
-  //   })
-  // }
 
   // Replace the resetCode function to use the language-specific template
   const resetCode = () => {
@@ -226,8 +228,7 @@ export default function EditorPage() {
       ? "fixed inset-0 z-50 bg-background/95 backdrop-blur-sm p-4 overflow-auto"
       : "container py-4 mx-auto px-4"
 
-  const gridClasses =
-      layout === "horizontal" ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : "grid grid-cols-1 md:grid-cols-12 gap-6"
+  const gridClasses = layout === "horizontal" ? "grid grid-cols-1 md:grid-cols-12 gap-6" : "flex flex-col gap-6 mx-auto"
 
   if (isLoading || !problem) {
     return (
@@ -302,13 +303,13 @@ export default function EditorPage() {
           <div className={gridClasses}>
             {/* Problem Description Section */}
             {(!isFullScreen || layout === "vertical") && (
-                <div className={layout === "vertical" ? "md:col-span-5" : ""}>
+                <div className={layout === "horizontal" ? "md:col-span-5" : "w-full max-w-3xl mx-auto"}>
                   <ProblemDescription problem={problem} result={result} layout={layout} />
                 </div>
             )}
 
             {/* Code Editor Section */}
-            <div className={layout === "vertical" ? "md:col-span-7" : ""}>
+            <div className={layout === "horizontal" ? "md:col-span-7" : "w-full"}>
               <CodeEditorPanel
                   code={code}
                   setCode={setCode}
