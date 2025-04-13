@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast.js"
 export default function EditorPage() {
   const { id } = useParams()
   const [problem, setProblem] = useState(null)
+  const [subs, setSubs] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
   const [isFullScreen, setIsFullScreen] = useState(false)
@@ -33,6 +34,49 @@ export default function EditorPage() {
 
   // Toast notifications
   const { toast } = useToast()
+  //fetch submissions
+  const fetchSubmissions = async (id) => {
+    setError("")
+    setIsLoading(true)
+
+    const storedUser = sessionStorage.getItem("user")
+    const loggedUser = storedUser ? JSON.parse(storedUser) : null
+
+    if (!loggedUser || !loggedUser.token) {
+      setError("Authentication required. Please log in again.")
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8083/api/editor/getsubmissions/${loggedUser.email}/${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${loggedUser.token}`,
+        },
+      })
+
+      if (response.status === 403) {
+        setError("Access denied: You do not have permission to access this resource.")
+        setIsLoading(false)
+        return
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || "Failed to fetch submissions")
+      }
+
+      const data = await response.json()
+      setSubs(data)
+    } catch (err) {
+      console.error("Error fetching problems:", err)
+      setError(err.message || "Failed to fetch submissions")
+    } finally {
+      setIsLoading(false)
+    }
+  }
   // Fetch problems from API
   const fetchProblem = async (id) => {
     setIsLoading(true)
@@ -69,6 +113,7 @@ export default function EditorPage() {
 
       const data = await response.json()
       setProblem(data)
+      fetchSubmissions(id)
     } catch (err) {
       console.error("Error fetching problems:", err)
       setError(err.message || "Failed to fetch problems")
@@ -83,11 +128,16 @@ export default function EditorPage() {
   }, [id])
 
   // Update useEffect to set the initial code based on selected language's template
+  // But don't reset code when only submissions change
   useEffect(() => {
     if (problem && problem.codeTemplates && problem.codeTemplates[language]) {
-      setCode(problem.codeTemplates[language])
+      // Only set the code if it's the initial load or language changed
+      // Check if code is empty or if language changed
+      if (code === "" || !code.includes(problem.codeTemplates[language])) {
+        setCode(problem.codeTemplates[language])
+      }
     }
-  }, [problem, language])
+  }, [problem, language]) // Removed subs dependency
 
   // Add a new function to handle language changes
   const handleLanguageChange = (newLanguage) => {
@@ -123,9 +173,12 @@ export default function EditorPage() {
         email: loggedUser.email,
         language: language,
         code: code,
-        isSubmit: !!isSubmit,
       }
-      const response = await fetch(`http://localhost:8083/api/editor/execute/${problem.id}`, {
+
+      const urls = isSubmit
+          ? "http://localhost:8083/api/editor/execute-submit/"
+          : "http://localhost:8083/api/editor/execute-run/"
+      const response = await fetch(urls + `${problem.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -140,8 +193,6 @@ export default function EditorPage() {
       }
 
       const data = await response.json()
-      console.log(data)
-
       // Process test case results
       const passedTestCases = data.filter((testCase) => testCase.correct).length
       const totalTestCases = data.length
@@ -150,14 +201,35 @@ export default function EditorPage() {
       // Create console output messages
       const consoleOutput = [{ type: "info", message: `Running code in ${language}...` }]
 
-      // Add error messages if any
+      // Add detailed test case results
       data.forEach((testCase, index) => {
+        // If there's an error, show it first
         if (testCase.error && testCase.error.trim() !== "") {
           consoleOutput.push({
             type: "error",
             message: `Error in test case ${index + 1}: ${testCase.error}`,
           })
         }
+
+        // Show test case details
+        consoleOutput.push({
+          type: testCase.correct ? "success" : "error",
+          message: `Test Case ${index + 1}: ${testCase.correct ? "PASSED" : "FAILED"}`,
+        })
+
+        // Show input, expected output, and actual output
+        consoleOutput.push({
+          type: "info",
+          message: `  Input: ${testCase.input.replace(/\n/g, ", ")}`,
+        })
+        consoleOutput.push({
+          type: "info",
+          message: `  Expected Output: ${testCase.expectedOutput}`,
+        })
+        consoleOutput.push({
+          type: "info",
+          message: `  Actual Output: ${testCase.actualOutput}`,
+        })
       })
 
       // Add summary message
@@ -193,6 +265,10 @@ export default function EditorPage() {
                 : `Passed ${passedTestCases} out of ${totalTestCases} test cases.`,
         variant: passedTestCases === totalTestCases ? "default" : "destructive",
       })
+      if (isSubmit) {
+        // If it's a submission, immediately fetch the updated submissions
+        fetchSubmissions(id)
+      }
     } catch (err) {
       console.error(`Error in execution problem:`, err)
       setError(err.message || `Failed to execute the problem solution`)
@@ -304,7 +380,7 @@ export default function EditorPage() {
             {/* Problem Description Section */}
             {(!isFullScreen || layout === "vertical") && (
                 <div className={layout === "horizontal" ? "md:col-span-5" : "w-full max-w-3xl mx-auto"}>
-                  <ProblemDescription problem={problem} result={result} layout={layout} />
+                  <ProblemDescription problem={problem} result={result} layout={layout} subs={subs} />
                 </div>
             )}
 
@@ -328,4 +404,3 @@ export default function EditorPage() {
       </main>
   )
 }
-

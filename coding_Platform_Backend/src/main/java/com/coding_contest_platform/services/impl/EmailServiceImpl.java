@@ -1,6 +1,6 @@
 package com.coding_contest_platform.services.impl;
 
-import com.coding_contest_platform.config.DynamicMailSender;
+import com.coding_contest_platform.helper.DynamicMailSender;
 import com.coding_contest_platform.services.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

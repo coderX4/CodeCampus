@@ -16,9 +16,9 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -57,6 +57,56 @@ public class EditorServiceImpl implements EditorService {
     }
 
     @Override
+    public List<ExecutionResponse> parallelExecutor(String code, String language, List<TestCase> testCases) throws InterruptedException ,ExecutionException{
+
+        BlockingQueue<Callable<ExecutionResponse>> taskQueue2 = new LinkedBlockingQueue<>();
+        ExecutorService resultCollector = Executors.newFixedThreadPool(testCases.size());
+        List<Future<ExecutionResponse>> scheduledFutures = Collections.synchronizedList(new ArrayList<>());
+
+        // Prepare tasks
+        for (TestCase testCase : testCases) {
+            taskQueue2.add(() -> executeSingleTestCase(
+                    code, language, testCase
+            ));
+        }
+
+        // Schedule tasks one-by-one every 210ms
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        final AtomicInteger completed = new AtomicInteger(0);
+        int totalTasks = taskQueue2.size();
+
+        scheduler.scheduleAtFixedRate(() -> {
+            Callable<ExecutionResponse> task = taskQueue2.poll();
+            if (task != null) {
+                try {
+                    ExecutionResponse result = task.call(); // <-- direct call ensures spacing!
+                    synchronized (scheduledFutures) {
+                        scheduledFutures.add(CompletableFuture.completedFuture(result));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (completed.incrementAndGet() >= totalTasks) {
+                scheduler.shutdown();
+            }
+        }, 0, 210, TimeUnit.MILLISECONDS);
+
+
+        // Wait for scheduler to finish
+        scheduler.awaitTermination(10, TimeUnit.SECONDS);
+
+        // Gather results
+        List<ExecutionResponse> finalResults = new ArrayList<>();
+        for (Future<ExecutionResponse> future : scheduledFutures) {
+            finalResults.add(future.get());
+        }
+
+        resultCollector.shutdown();
+        return finalResults;
+    }
+
     public ExecutionResponse executeSingleTestCase(String code, String language, TestCase testCase) {
         String version;
         if(language.equals("java")) {

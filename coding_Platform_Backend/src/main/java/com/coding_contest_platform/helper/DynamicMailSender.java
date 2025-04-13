@@ -1,4 +1,4 @@
-package com.coding_contest_platform.config;
+package com.coding_contest_platform.helper;
 
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
