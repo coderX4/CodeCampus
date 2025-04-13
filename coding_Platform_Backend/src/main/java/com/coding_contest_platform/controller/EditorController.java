@@ -1,22 +1,20 @@
 package com.coding_contest_platform.controller;
 
-import com.coding_contest_platform.dto.ExecutionRequest;
-import com.coding_contest_platform.dto.ExecutionResponse;
-import com.coding_contest_platform.dto.TestCase;
+import com.coding_contest_platform.dto.*;
 import com.coding_contest_platform.entity.ProblemTestCase;
 import com.coding_contest_platform.entity.User;
+import com.coding_contest_platform.entity.UserSubmissions;
+import com.coding_contest_platform.repository.UserSubmissionsRepository;
 import com.coding_contest_platform.services.EditorService;
 import com.coding_contest_platform.services.ProblemService;
 import com.coding_contest_platform.services.UserServices;
+import com.coding_contest_platform.services.UserSubmissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 @RestController
 @RequestMapping("/api/editor")
@@ -26,6 +24,7 @@ public class EditorController {
     private final EditorService editorService;
     private final ProblemService problemService;
     private final UserServices userServices;
+    private final UserSubmissionService userSubmissionService;
 
     // Define test cases
     private final List<TestCase> testCases ;
@@ -35,36 +34,48 @@ public class EditorController {
         return ResponseEntity.ok(editorService.getProblem(id));
     }
 
-    @PostMapping({"/execute/{id}"})
-    public ResponseEntity<List<ExecutionResponse>> executeCode(@PathVariable String id,@RequestBody ExecutionRequest executionRequest) throws InterruptedException, ExecutionException {
-        User user = userServices.getUserByEmail(executionRequest.getEmail());
+    @PostMapping({"/execute-run/{id}"})
+    public ResponseEntity<List<ExecutionResponse>> executeCodeRun(@PathVariable String id,@RequestBody ExecutionRequest executionRequest) throws ExecutionException, InterruptedException {
+
         ProblemTestCase problemTestCase = problemService.getProblemTestCase(id);
         Map<String, List<TestCase>> testCasesMap = problemTestCase.getTestCases();
         List<TestCase> runTestCases = testCasesMap.getOrDefault("run", new ArrayList<>());
-        if (executionRequest.getIsSubmit().equals("true")) {
-            List<TestCase> submitTestCases = testCasesMap.getOrDefault("submit", new ArrayList<>());
 
-            testCases.addAll(runTestCases);
-            testCases.addAll(submitTestCases); // Now finalTestCases has both run and submit
-        } else {
-            testCases.addAll(runTestCases);
-        }
-
-        ExecutorService executor = Executors.newFixedThreadPool(1);
-        List<Future<ExecutionResponse>> futures = new ArrayList<>();
-
-        for (TestCase testCase : testCases) {
-            futures.add(executor.submit(() -> editorService.executeSingleTestCase(executionRequest.getCode(), executionRequest.getLanguage(), testCase)));
-        }
-
-        List<ExecutionResponse> results = new ArrayList<>();
-        for (Future<ExecutionResponse> future : futures) {
-            results.add(future.get());  // Get the result when execution is done
-        }
-
-        executor.shutdown();
-        testCases.clear();
-        return ResponseEntity.ok(results);
+        return ResponseEntity.ok(editorService.parallelExecutor(
+                executionRequest.getCode(),
+                executionRequest.getLanguage(),
+                runTestCases)
+        );
     }
 
+    @PostMapping({"/execute-submit/{id}"})
+    public ResponseEntity<List<ExecutionResponse>> executeCodeSubmit(@PathVariable String id,@RequestBody ExecutionRequest executionRequest) throws ExecutionException, InterruptedException {
+        User user = userServices.getUserByEmail(executionRequest.getEmail());
+        ProblemTestCase problemTestCase = problemService.getProblemTestCase(id);
+        Map<String, List<TestCase>> testCasesMap = problemTestCase.getTestCases();
+        List<TestCase> submitTestCases = testCasesMap.getOrDefault("submit", new ArrayList<>());
+        submitTestCases.addAll(testCasesMap.getOrDefault("run", new ArrayList<>()));
+
+        List<ExecutionResponse> executionResponses = editorService.parallelExecutor(
+                executionRequest.getCode(),
+                executionRequest.getLanguage(),
+                submitTestCases
+        );
+
+        userSubmissionService.saveSubmissions(
+                executionRequest.getEmail(),
+                id,
+                executionResponses,
+                executionRequest.getLanguage(),
+                executionRequest.getCode()
+        );
+
+        return ResponseEntity.ok(executionResponses);
+    }
+
+    @GetMapping({"/getsubmissions/{email}/{id}"})
+    public ResponseEntity<?> getSubmissions(@PathVariable("id") String id,@PathVariable("email") String email){
+        List<SubmissionDTO> submissionDTOList = userSubmissionService.getSubmissions(email,id);
+        return ResponseEntity.ok(submissionDTOList);
+    }
 }

@@ -4,11 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ExecutionRequest {
-    private String email;
+public class SubmissionDTO {
+    private String dateTime;
+    private boolean isAccepted;
     private String language;
     private String code;
+    List<ExecutionResponse> executionResponse;
 }
