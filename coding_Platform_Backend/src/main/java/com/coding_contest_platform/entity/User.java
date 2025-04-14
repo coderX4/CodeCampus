@@ -1,12 +1,12 @@
 package com.coding_contest_platform.entity;
 
+import com.coding_contest_platform.helper.Provider;
+import com.coding_contest_platform.helper.Role;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.Date;
 
 @Document(collection = "users")
 @TypeAlias("Users")

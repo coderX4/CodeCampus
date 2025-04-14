@@ -2,8 +2,8 @@ package com.coding_contest_platform.controller;
 
 
 import com.coding_contest_platform.dto.AdminRegisterRequest;
-import com.coding_contest_platform.entity.Provider;
-import com.coding_contest_platform.entity.Role;
+import com.coding_contest_platform.helper.Provider;
+import com.coding_contest_platform.helper.Role;
 import com.coding_contest_platform.entity.User;
 import com.coding_contest_platform.repository.UserRepository;
 import com.coding_contest_platform.security.JwtService;
