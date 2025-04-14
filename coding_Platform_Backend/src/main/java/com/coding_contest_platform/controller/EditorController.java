@@ -1,10 +1,10 @@
 package com.coding_contest_platform.controller;
 
 import com.coding_contest_platform.dto.*;
+import com.coding_contest_platform.entity.Problem;
 import com.coding_contest_platform.entity.ProblemTestCase;
-import com.coding_contest_platform.entity.User;
 import com.coding_contest_platform.entity.UserSubmissions;
-import com.coding_contest_platform.repository.UserSubmissionsRepository;
+import com.coding_contest_platform.repository.ProblemRepository;
 import com.coding_contest_platform.services.EditorService;
 import com.coding_contest_platform.services.ProblemService;
 import com.coding_contest_platform.services.UserServices;
@@ -23,11 +23,8 @@ public class EditorController {
 
     private final EditorService editorService;
     private final ProblemService problemService;
-    private final UserServices userServices;
     private final UserSubmissionService userSubmissionService;
-
-    // Define test cases
-    private final List<TestCase> testCases ;
+    private final ProblemRepository problemRepository;
 
     @GetMapping({"/getproblem/{id}"})
     public ResponseEntity<?> getProblem(@PathVariable String id) {
@@ -50,7 +47,6 @@ public class EditorController {
 
     @PostMapping({"/execute-submit/{id}"})
     public ResponseEntity<List<ExecutionResponse>> executeCodeSubmit(@PathVariable String id,@RequestBody ExecutionRequest executionRequest) throws ExecutionException, InterruptedException {
-        User user = userServices.getUserByEmail(executionRequest.getEmail());
         ProblemTestCase problemTestCase = problemService.getProblemTestCase(id);
         Map<String, List<TestCase>> testCasesMap = problemTestCase.getTestCases();
         List<TestCase> submitTestCases = testCasesMap.getOrDefault("submit", new ArrayList<>());
@@ -62,13 +58,22 @@ public class EditorController {
                 submitTestCases
         );
 
-        userSubmissionService.saveSubmissions(
+        boolean isAccepted = userSubmissionService.saveSubmissions(
                 executionRequest.getEmail(),
                 id,
                 executionResponses,
                 executionRequest.getLanguage(),
                 executionRequest.getCode()
         );
+
+        Problem problem = problemRepository.findOneById(id);
+        problem.setSubmissions(problem.getSubmissions() + 1);
+        if(isAccepted){
+            problem.setAcceptedSubmissions(problem.getAcceptedSubmissions() + 1);
+        }
+        float rate = Math.round(((float) problem.getAcceptedSubmissions() / problem.getSubmissions()) * 10000) / 100f;
+        problem.setAcceptance(String.format("%.2f", rate) + " %");
+        problemRepository.save(problem);
 
         return ResponseEntity.ok(executionResponses);
     }

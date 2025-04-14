@@ -19,7 +19,8 @@ public class Problem {
     private String difficulty;
     private List<String> tags;
     private String acceptance;
-    private int submissions;
+    private long acceptedSubmissions;
+    private long submissions;
     private String dateAdded;
     private String status;
 }

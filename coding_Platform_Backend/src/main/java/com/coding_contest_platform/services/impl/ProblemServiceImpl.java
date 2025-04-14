@@ -61,7 +61,7 @@ public class ProblemServiceImpl implements ProblemService {
 
         Problem problem = new Problem(
                 customId,problemRequest.getTitle(),problemRequest.getDifficulty(),
-                problemRequest.getTags(),"0 %",0,
+                problemRequest.getTags(),"0",0,0,
                 formattedDate,problemRequest.getStatus()
         );
 

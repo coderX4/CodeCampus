@@ -1,6 +1,6 @@
 package com.coding_contest_platform.dto;
 
-import com.coding_contest_platform.entity.Role;
+import com.coding_contest_platform.helper.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

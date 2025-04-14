@@ -29,7 +29,10 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
         return userSubmissions.getSubmission().get(id);
     }
 
-    public SubmissionDTO saveDto(String language, String code, List<ExecutionResponse> executionResponseList){
+    @Override
+    public boolean saveSubmissions(String email, String pId, List<ExecutionResponse> executionResponseList, String language, String code){
+        UserSubmissions userSubmissions = userSubmissionsRepository.findByEmail(email);
+        //SubmissionDTO submissionDTO = saveDto(language, code, executionResponseList);
         LocalDateTime dateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy [HH:mm:ss]");
         String formattedDateTime = dateTime.format(formatter);
@@ -45,13 +48,7 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
             }
         }
         submissionDTO.setAccepted(cnt == executionResponseList.size());
-        return submissionDTO;
-    }
 
-    @Override
-    public void saveSubmissions(String email, String pId, List<ExecutionResponse> executionResponseList, String language, String code){
-        UserSubmissions userSubmissions = userSubmissionsRepository.findByEmail(email);
-        SubmissionDTO submissionDTO = saveDto(language, code, executionResponseList);
         if(userSubmissions == null){
             userSubmissions = new UserSubmissions();
             userSubmissions.setEmail(email);
@@ -61,6 +58,7 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
             submission.put(pId, submissionDTOList);
             userSubmissions.setSubmission(submission);
             userSubmissionsRepository.save(userSubmissions);
+            return submissionDTO.isAccepted();
         }
         else{
             Map<String, List<SubmissionDTO>> submission = userSubmissions.getSubmission();
@@ -78,7 +76,7 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
 
             userSubmissions.setSubmission(submission);
             userSubmissionsRepository.save(userSubmissions);
-
+            return submissionDTO.isAccepted();
         }
     }
 }
