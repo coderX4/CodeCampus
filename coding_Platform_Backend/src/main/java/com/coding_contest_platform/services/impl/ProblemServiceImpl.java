@@ -61,7 +61,7 @@ public class ProblemServiceImpl implements ProblemService {
 
         Problem problem = new Problem(
                 customId,problemRequest.getTitle(),problemRequest.getDifficulty(),
-                problemRequest.getTags(),"0",0,0,
+                problemRequest.getTags(),"0 %",0,0,
                 formattedDate,problemRequest.getStatus()
         );
 
@@ -145,5 +145,18 @@ public class ProblemServiceImpl implements ProblemService {
     public List<Problem> getActiveProblems() {
         return problemRepository.findByStatus("active");
     }
+
+    @Override
+    public void saveSubmission(String id, boolean isAccepted) {
+        Problem problem = problemRepository.findOneById(id);
+        problem.setSubmissions(problem.getSubmissions() + 1);
+        if(isAccepted){
+            problem.setAcceptedSubmissions(problem.getAcceptedSubmissions() + 1);
+        }
+        float rate = Math.round(((float) problem.getAcceptedSubmissions() / problem.getSubmissions()) * 10000) / 100f;
+        problem.setAcceptance(String.format("%.2f", rate) + " %");
+        problemRepository.save(problem);
+    }
+
 
 }

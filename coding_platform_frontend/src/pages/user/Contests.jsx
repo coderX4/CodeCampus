@@ -1,137 +1,168 @@
+import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx"
-import Header from "@/components/layout/header.jsx"
-import Footer from "@/components/layout/footer.jsx"
 import { Badge } from "@/components/ui/badge.jsx"
 import { Button } from "@/components/ui/button.jsx"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.jsx"
 import { Clock, Trophy, Users } from "lucide-react"
 import { Link } from "react-router-dom"
+import LiveClock from "@/components/shared/LiveClock.jsx"
+import { determineContestStatus } from "@/utils/contestUtils.js"
 
 function ContestCard({ id, title, description, date, time, participants, difficulty, problems, status = "upcoming" }) {
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xl">{title}</CardTitle>
-          <Badge variant="outline">{difficulty}</Badge>
-        </div>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xl">{title}</CardTitle>
+            <Badge variant="outline">{difficulty}</Badge>
+          </div>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span>
               {date} • {time}
             </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span>{participants} participants</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-muted-foreground" />
+              <span>{problems} problems</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span>{participants} participants</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-muted-foreground" />
-            <span>{problems} problems</span>
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button variant="outline" asChild>
-          <Link to={`/dashboard/contest/${id}`}>View Details</Link>
-        </Button>
-        {status === "upcoming" && (
-          <Button asChild>
-            <Link to={`/dashboard/contest/${id}`}>Register</Link>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button variant="outline" asChild>
+            <Link to={`/dashboard/contest/${id}`}>View Details</Link>
           </Button>
-        )}
-        {status === "ongoing" && (
-          <Button asChild>
-            <Link to={`/dashboard/contest/${id}`}>Enter Contest</Link>
-          </Button>
-        )}
-        {status === "past" && (
-          <Button variant="secondary" asChild>
-            <Link to={`/dashboard/contest/${id}`}>View Results</Link>
-          </Button>
-        )}
-      </CardFooter>
-    </Card>
+          {status === "upcoming" && (
+              <Button asChild>
+                <Link to={`/dashboard/contest/${id}`}>Register</Link>
+              </Button>
+          )}
+          {status === "ongoing" && (
+              <Button asChild>
+                <Link to={`/dashboard/contest/${id}`}>Enter Contest</Link>
+              </Button>
+          )}
+          {status === "past" && (
+              <Button variant="secondary" asChild>
+                <Link to={`/dashboard/contest/${id}`}>View Results</Link>
+              </Button>
+          )}
+        </CardFooter>
+      </Card>
   )
 }
 
 export default function Contests() {
+  const [contests, setContests] = useState([])
+  const [activeTab, setActiveTab] = useState("upcoming")
+
   // Mock contests data
-  const upcomingContests = [
+  const initialContests = [
     {
       id: "1",
       title: "Algorithms Championship",
       description: "Test your algorithmic skills in this 3-hour contest",
+      startDate: "2025-03-15",
+      startTime: "14:00",
+      duration: "3 hours",
       date: "March 15, 2025",
       time: "2:00 PM - 5:00 PM",
       participants: 120,
       difficulty: "Medium",
       problems: 6,
+      saveAsDraft: false,
     },
     {
       id: "2",
       title: "Data Structures Showdown",
       description: "Master data structures challenges in this competitive event",
+      startDate: "2025-03-22",
+      startTime: "10:00",
+      duration: "3 hours",
       date: "March 22, 2025",
       time: "10:00 AM - 1:00 PM",
       participants: 85,
       difficulty: "Hard",
       problems: 5,
+      saveAsDraft: false,
     },
     {
       id: "3",
-      title: "Competitive Coding Cup",
-      description: "The ultimate coding competition for college students",
-      date: "April 5, 2025",
-      time: "3:00 PM - 6:00 PM",
-      participants: 150,
-      difficulty: "Medium-Hard",
-      problems: 7,
-    },
-  ]
-
-  const ongoingContests = [
-    {
-      id: "4",
       title: "Weekly Challenge #43",
       description: "Solve weekly problems to improve your coding skills",
-      date: "March 11, 2025",
-      time: "10:00 AM - 1:00 PM",
+      // Set to current date for demo purposes
+      startDate: new Date().toISOString().split("T")[0],
+      // Set to a time 1 hour before current time for demo purposes
+      startTime: new Date(Date.now() - 60 * 60 * 1000).toTimeString().slice(0, 5),
+      duration: "3 hours",
+      date: "Today",
+      time: "Started 1 hour ago",
       participants: 95,
       difficulty: "Easy-Medium",
       problems: 5,
-      status: "ongoing",
+      saveAsDraft: false,
     },
-  ]
-
-  const pastContests = [
     {
-      id: "5",
+      id: "4",
       title: "Weekly Challenge #42",
       description: "Weekly coding problems for all skill levels",
+      startDate: "2025-03-01",
+      startTime: "10:00",
+      duration: "3 hours",
       date: "March 1, 2025",
       time: "10:00 AM - 1:00 PM",
       participants: 110,
       difficulty: "Medium",
       problems: 6,
-      status: "past",
+      saveAsDraft: false,
     },
     {
-      id: "6",
+      id: "5",
       title: "Data Structures Marathon",
       description: "A deep dive into data structures problems",
+      startDate: "2025-02-15",
+      startTime: "14:00",
+      duration: "4 hours",
       date: "February 15, 2025",
       time: "2:00 PM - 6:00 PM",
       participants: 75,
       difficulty: "Hard",
       problems: 8,
-      status: "past",
+      saveAsDraft: false,
     },
   ]
+
+  // Update contest statuses based on current time
+  useEffect(() => {
+    // Update contest statuses initially
+    updateContestStatuses()
+
+    // Set up interval to update contest statuses every minute
+    const interval = setInterval(updateContestStatuses, 60000)
+
+    // Clean up interval on component unmount
+    return () => clearInterval(interval)
+  }, [])
+
+  // Function to update contest statuses
+  const updateContestStatuses = () => {
+    const updatedContests = initialContests.map((contest) => ({
+      ...contest,
+      status: determineContestStatus(contest),
+    }))
+    setContests(updatedContests)
+  }
+
+  // Filter contests based on active tab
+  const filteredContests = contests.filter((contest) => activeTab === "all" || contest.status === activeTab)
 
   return (
       <main className="flex-1">
@@ -139,27 +170,36 @@ export default function Contests() {
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-bold">Contests</h1>
+              <LiveClock showDate={true} className="text-right" />
             </div>
-            <Tabs defaultValue="upcoming" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3 mb-6">
                 <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
                 <TabsTrigger value="ongoing">Ongoing</TabsTrigger>
                 <TabsTrigger value="past">Past</TabsTrigger>
               </TabsList>
               <TabsContent value="upcoming" className="space-y-6">
-                {upcomingContests.map((contest) => (
-                  <ContestCard key={contest.id} {...contest} />
-                ))}
+                {filteredContests.length > 0 ? (
+                    filteredContests.map((contest) => <ContestCard key={contest.id} {...contest} />)
+                ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No upcoming contests available at the moment.
+                    </div>
+                )}
               </TabsContent>
               <TabsContent value="ongoing" className="space-y-6">
-                {ongoingContests.map((contest) => (
-                  <ContestCard key={contest.id} {...contest} />
-                ))}
+                {filteredContests.length > 0 ? (
+                    filteredContests.map((contest) => <ContestCard key={contest.id} {...contest} />)
+                ) : (
+                    <div className="text-center py-8 text-muted-foreground">No contests are currently in progress.</div>
+                )}
               </TabsContent>
               <TabsContent value="past" className="space-y-6">
-                {pastContests.map((contest) => (
-                  <ContestCard key={contest.id} {...contest} />
-                ))}
+                {filteredContests.length > 0 ? (
+                    filteredContests.map((contest) => <ContestCard key={contest.id} {...contest} />)
+                ) : (
+                    <div className="text-center py-8 text-muted-foreground">No past contests to display.</div>
+                )}
               </TabsContent>
             </Tabs>
           </div>
@@ -167,4 +207,3 @@ export default function Contests() {
       </main>
   )
 }
-

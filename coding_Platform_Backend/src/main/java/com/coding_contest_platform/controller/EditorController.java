@@ -1,13 +1,9 @@
 package com.coding_contest_platform.controller;
 
 import com.coding_contest_platform.dto.*;
-import com.coding_contest_platform.entity.Problem;
 import com.coding_contest_platform.entity.ProblemTestCase;
-import com.coding_contest_platform.entity.UserSubmissions;
-import com.coding_contest_platform.repository.ProblemRepository;
 import com.coding_contest_platform.services.EditorService;
 import com.coding_contest_platform.services.ProblemService;
-import com.coding_contest_platform.services.UserServices;
 import com.coding_contest_platform.services.UserSubmissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
@@ -24,7 +20,6 @@ public class EditorController {
     private final EditorService editorService;
     private final ProblemService problemService;
     private final UserSubmissionService userSubmissionService;
-    private final ProblemRepository problemRepository;
 
     @GetMapping({"/getproblem/{id}"})
     public ResponseEntity<?> getProblem(@PathVariable String id) {
@@ -66,14 +61,7 @@ public class EditorController {
                 executionRequest.getCode()
         );
 
-        Problem problem = problemRepository.findOneById(id);
-        problem.setSubmissions(problem.getSubmissions() + 1);
-        if(isAccepted){
-            problem.setAcceptedSubmissions(problem.getAcceptedSubmissions() + 1);
-        }
-        float rate = Math.round(((float) problem.getAcceptedSubmissions() / problem.getSubmissions()) * 10000) / 100f;
-        problem.setAcceptance(String.format("%.2f", rate) + " %");
-        problemRepository.save(problem);
+        problemService.saveSubmission(id, isAccepted);
 
         return ResponseEntity.ok(executionResponses);
     }

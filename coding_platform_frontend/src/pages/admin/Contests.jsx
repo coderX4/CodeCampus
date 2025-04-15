@@ -1,95 +1,94 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button.jsx"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx"
-import { Input } from "@/components/ui/input.jsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx"
-import { Badge } from "@/components/ui/badge.jsx"
-import { Textarea } from "@/components/ui/textarea.jsx"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx"
-import { Checkbox } from "@/components/ui/checkbox.jsx"
-import { Search, Plus, Edit, Trash2, Calendar, Clock, Users, BarChart, Filter } from "lucide-react"
+import { Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
+import ContestFilters from "@/components/admin/contest/ContestFilters.jsx"
+import ContestTable from "@/components/admin/contest/ContestTable.jsx"
+import CreateContestForm from "@/components/admin/contest/CreateContestForm.jsx"
+import LiveClock from "@/components/shared/LiveClock.jsx"
+import { determineContestStatus } from "@/utils/contestUtils.js"
+import { useToast } from "@/hooks/use-toast.js"
 
 export default function AdminContests() {
     const [activeTab, setActiveTab] = useState("upcoming")
     const [searchQuery, setSearchQuery] = useState("")
     const [showAddContestForm, setShowAddContestForm] = useState(false)
     const [difficultyFilter, setDifficultyFilter] = useState("all")
+    const [contests, setContests] = useState([])
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState("")
+    const [editingContest, setEditingContest] = useState(false)
 
-    // Mock contests data
-    const contests = [
-        {
-            id: "1",
-            title: "Algorithms Championship",
-            description: "Test your algorithmic skills in this 3-hour contest",
-            startDate: "2025-03-15",
-            startTime: "14:00",
-            duration: "3 hours",
-            difficulty: "Medium",
-            participants: 120,
-            problems: 6,
-            status: "upcoming",
-        },
-        {
-            id: "2",
-            title: "Data Structures Showdown",
-            description: "Master data structures challenges in this competitive event",
-            startDate: "2025-03-22",
-            startTime: "10:00",
-            duration: "3 hours",
-            difficulty: "Hard",
-            participants: 85,
-            problems: 5,
-            status: "upcoming",
-        },
-        {
-            id: "3",
-            title: "Weekly Challenge #43",
-            description: "Solve weekly problems to improve your coding skills",
-            startDate: "2025-03-11",
-            startTime: "10:00",
-            duration: "3 hours",
-            difficulty: "Easy-Medium",
-            participants: 95,
-            problems: 5,
-            status: "ongoing",
-        },
-        {
-            id: "4",
-            title: "Weekly Challenge #42",
-            description: "Weekly coding problems for all skill levels",
-            startDate: "2025-03-01",
-            startTime: "10:00",
-            duration: "3 hours",
-            difficulty: "Medium",
-            participants: 110,
-            problems: 6,
-            status: "past",
-        },
-        {
-            id: "5",
-            title: "Data Structures Marathon",
-            description: "A deep dive into data structures problems",
-            startDate: "2025-02-15",
-            startTime: "14:00",
-            duration: "4 hours",
-            difficulty: "Hard",
-            participants: 75,
-            problems: 8,
-            status: "past",
-        },
-        {
-            id: "6",
-            title: "Competitive Coding Cup",
-            description: "The ultimate coding competition for college students",
-            startDate: "2025-04-05",
-            startTime: "15:00",
-            duration: "3 hours",
-            difficulty: "Medium-Hard",
-            participants: 0,
-            problems: 7,
-            status: "draft",
-        },
-    ]
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1)
+    const contestsPerPage = 10
+
+    const { toast } = useToast()
+
+    const fetchContests = async () => {
+        setIsLoading(true)
+        setError("")
+
+        const storedUser = sessionStorage.getItem("user")
+        const loggedUser = storedUser ? JSON.parse(storedUser) : null
+
+        if (!loggedUser || !loggedUser.token) {
+            setError("Authentication required. Please log in again.")
+            setIsLoading(false)
+            return
+        }
+
+        try {
+            const response = await fetch("http://localhost:8083/api/contest/getcontests", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${loggedUser.token}`,
+                },
+            })
+
+            if (response.status === 403) {
+                setError("Access denied: You do not have permission to access this resource.")
+                setIsLoading(false)
+                return
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.message || "Failed to fetch contests")
+            }
+
+            const data = await response.json()
+            const updatedContests = data.map((contest) => ({
+                ...contest,
+                status: determineContestStatus(contest),
+            }))
+            setContests(updatedContests)
+        } catch (err) {
+            console.error("Error fetching problems:", err)
+            setError(err.message || "Failed to fetch contests")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchContests()
+    }, []);
+
+    // Update contest statuses based on current time
+    useEffect(() => {
+        // Set up interval to update contest statuses every minute
+        const interval = setInterval(fetchContests, 60000)
+
+        // Clean up interval on component unmount
+        return () => clearInterval(interval)
+    }, [])
+
+    // Reset to first page when filters change
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [searchQuery, difficultyFilter, activeTab])
 
     // Filter contests based on search query, tab, and difficulty
     const filteredContests = contests.filter((contest) => {
@@ -104,24 +103,237 @@ export default function AdminContests() {
         return matchesSearch && matchesTab && matchesDifficulty
     })
 
-    // Mock problems for contest creation
-    const availableProblems = [
-        { id: "1", title: "Two Sum", difficulty: "Easy" },
-        { id: "2", title: "Add Two Numbers", difficulty: "Medium" },
-        { id: "3", title: "Longest Substring Without Repeating Characters", difficulty: "Medium" },
-        { id: "4", title: "Median of Two Sorted Arrays", difficulty: "Hard" },
-        { id: "5", title: "Longest Palindromic Substring", difficulty: "Medium" },
-        { id: "6", title: "Zigzag Conversion", difficulty: "Medium" },
-        { id: "7", title: "Reverse Integer", difficulty: "Medium" },
-        { id: "8", title: "String to Integer (atoi)", difficulty: "Medium" },
-    ]
+    // Get paginated contests
+    const getPaginatedContests = (filteredContests) => {
+        const indexOfLastContest = currentPage * contestsPerPage
+        const indexOfFirstContest = indexOfLastContest - contestsPerPage
+        return filteredContests.slice(indexOfFirstContest, indexOfLastContest)
+    }
+
+    // Handle page change
+    const handlePageChange = (page) => {
+        setCurrentPage(page)
+    }
+
+    // Render pagination controls
+    const renderPagination = (filteredContests) => {
+        const totalContests = filteredContests.length
+        const totalPages = Math.ceil(totalContests / contestsPerPage)
+
+        if (totalPages <= 1) return null
+
+        return (
+            <div className="flex items-center justify-between py-4">
+                <div className="text-sm text-muted-foreground">
+                    Showing {Math.min((currentPage - 1) * contestsPerPage + 1, totalContests)} to{" "}
+                    {Math.min(currentPage * contestsPerPage, totalContests)} of {totalContests} contests
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(1)}
+                        disabled={currentPage === 1}
+                        aria-label="First page"
+                    >
+                        <ChevronsLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        aria-label="Previous page"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+
+                    <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            // Show pages around current page
+                            let pageNum
+                            if (totalPages <= 5) {
+                                pageNum = i + 1
+                            } else if (currentPage <= 3) {
+                                pageNum = i + 1
+                            } else if (currentPage >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i
+                            } else {
+                                pageNum = currentPage - 2 + i
+                            }
+
+                            return (
+                                <Button
+                                    key={pageNum}
+                                    variant={currentPage === pageNum ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => handlePageChange(pageNum)}
+                                    aria-label={`Page ${pageNum}`}
+                                    aria-current={currentPage === pageNum ? "page" : undefined}
+                                >
+                                    {pageNum}
+                                </Button>
+                            )
+                        })}
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        aria-label="Next page"
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handlePageChange(totalPages)}
+                        disabled={currentPage === totalPages}
+                        aria-label="Last page"
+                    >
+                        <ChevronsRight className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+        )
+    }
+
+    // Handle contest creation
+    const handleCreateContest = async (contestData) => {
+        // Validate that problems are selected
+        if (contestData.problems.length === 0) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Please select at least one problem for the contest",
+            })
+            return
+        }
+
+        // Here you would typically make an API call to create the contest
+        setIsLoading(true)
+        setError("")
+
+        const storedUser = sessionStorage.getItem("user")
+        const loggedUser = storedUser ? JSON.parse(storedUser) : null
+
+        if (!loggedUser || !loggedUser.token) {
+            setError("Authentication required. Please log in again.")
+            setIsLoading(false)
+            return
+        }
+
+        try {
+            const response = await fetch("http://localhost:8083/api/contest/createcontest", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${loggedUser.token}`,
+                },
+                body: JSON.stringify(contestData),
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.message || `Failed to create contest`)
+            }
+
+            toast({
+                title: "Contest Created",
+                description: `Contest "${contestData.title}" has been created successfully.`,
+            })
+
+            setShowAddContestForm(false)
+            //fetch the contests
+            fetchContests()
+        } catch (err) {
+            console.error(`Error ${editingContest ? "updating" : "creating"} contest:`, err)
+            setError(err.message || `Failed to ${editingContest ? "update" : "create"} problem`)
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: err.message || `Failed to ${editingContest ? "update" : "create"} contest`,
+            })
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    // Handle contest editing
+    const handleEditContest = (contest) => {
+        console.log("Editing contest:", contest)
+        // Implement edit functionality
+        toast({
+            title: "Edit Contest",
+            description: `Editing contest "${contest.title}"`,
+        })
+    }
+
+    // Handle contest deletion
+    const handleDeleteContest = async (contest) => {
+        if (!window.confirm(`Are you sure you want to delete the contest "${contest.title}"?`)) {
+            return
+        }
+
+        setIsLoading(true)
+        setError("")
+
+        const storedUser = sessionStorage.getItem("user")
+        const loggedUser = storedUser ? JSON.parse(storedUser) : null
+
+        try {
+            const response = await fetch(`http://localhost:8083/api/contest/delete/${contest.id}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${loggedUser.token}`,
+                },
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.message || "Failed to delete contests")
+            }
+
+            // Implement delete functionality
+            toast({
+                title: "Contest Deleted",
+                description: `Contest "${contest.title}" has been deleted.`,
+            })
+
+            fetchContests()
+        } catch (err) {
+            console.error("Error deleting contests:", err)
+            setError(err.message || "Failed to delete contests")
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: err.message || "Failed to delete contests",
+            })
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    // Handle viewing contest statistics
+    const handleViewStats = (contest) => {
+        console.log("Viewing stats for contest:", contest)
+        // Implement stats view functionality
+        toast({
+            title: "Contest Statistics",
+            description: `Viewing statistics for "${contest.title}"`,
+        })
+    }
 
     return (
         <div className="flex-1 overflow-auto">
             <main className="grid flex-1 items-start gap-4 p-4 md:gap-8 md:p-6">
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold">Contest Management</h1>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-4">
+                        <LiveClock showDate={true} className="text-right" />
                         <Button variant="outline" size="sm" onClick={() => setShowAddContestForm(!showAddContestForm)}>
                             {showAddContestForm ? (
                                 "Cancel"
@@ -135,156 +347,15 @@ export default function AdminContests() {
                 </div>
 
                 {showAddContestForm && (
-                    <Card className="mb-6">
-                        <CardHeader>
-                            <CardTitle>Create New Contest</CardTitle>
-                            <CardDescription>Set up a new coding contest</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form className="space-y-4">
-                                <div className="space-y-2">
-                                    <label htmlFor="title" className="text-sm font-medium">
-                                        Contest Title
-                                    </label>
-                                    <Input id="title" placeholder="Enter contest title" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="description" className="text-sm font-medium">
-                                        Description
-                                    </label>
-                                    <Textarea id="description" placeholder="Describe the contest..." className="min-h-[100px]" />
-                                </div>
-                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <label htmlFor="startDate" className="text-sm font-medium">
-                                            Start Date
-                                        </label>
-                                        <Input id="startDate" type="date" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label htmlFor="startTime" className="text-sm font-medium">
-                                            Start Time
-                                        </label>
-                                        <Input id="startTime" type="time" />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <label htmlFor="duration" className="text-sm font-medium">
-                                            Duration
-                                        </label>
-                                        <Select defaultValue="3">
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select duration" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="1">1 hour</SelectItem>
-                                                <SelectItem value="2">2 hours</SelectItem>
-                                                <SelectItem value="3">3 hours</SelectItem>
-                                                <SelectItem value="4">4 hours</SelectItem>
-                                                <SelectItem value="5">5 hours</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label htmlFor="difficulty" className="text-sm font-medium">
-                                            Difficulty
-                                        </label>
-                                        <Select defaultValue="medium">
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select difficulty" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="easy">Easy</SelectItem>
-                                                <SelectItem value="easy-medium">Easy-Medium</SelectItem>
-                                                <SelectItem value="medium">Medium</SelectItem>
-                                                <SelectItem value="medium-hard">Medium-Hard</SelectItem>
-                                                <SelectItem value="hard">Hard</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Select Problems</label>
-                                    <Card>
-                                        <CardContent className="p-4">
-                                            <div className="space-y-4">
-                                                {availableProblems.map((problem) => (
-                                                    <div key={problem.id} className="flex items-center space-x-2">
-                                                        <Checkbox id={`problem-${problem.id}`} />
-                                                        <label
-                                                            htmlFor={`problem-${problem.id}`}
-                                                            className="flex flex-1 items-center justify-between text-sm font-medium leading-none"
-                                                        >
-                                                            <span>{problem.title}</span>
-                                                            <Badge
-                                                                className={
-                                                                    problem.difficulty === "Easy"
-                                                                        ? "bg-green-100 text-green-800"
-                                                                        : problem.difficulty === "Medium"
-                                                                            ? "bg-yellow-100 text-yellow-800"
-                                                                            : "bg-red-100 text-red-800"
-                                                                }
-                                                            >
-                                                                {problem.difficulty}
-                                                            </Badge>
-                                                        </label>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="rules" className="text-sm font-medium">
-                                        Contest Rules
-                                    </label>
-                                    <Textarea id="rules" placeholder="Enter contest rules and guidelines..." className="min-h-[100px]" />
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox id="saveAsDraft" />
-                                    <label htmlFor="saveAsDraft" className="text-sm font-medium leading-none">
-                                        Save as draft (won't be visible to users)
-                                    </label>
-                                </div>
-                                <div className="flex items-center justify-end gap-2">
-                                    <Button variant="outline" type="button" onClick={() => setShowAddContestForm(false)}>
-                                        Cancel
-                                    </Button>
-                                    <Button type="submit">Create Contest</Button>
-                                </div>
-                            </form>
-                        </CardContent>
-                    </Card>
+                    <CreateContestForm onCancel={() => setShowAddContestForm(false)} onSubmit={handleCreateContest} />
                 )}
 
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex w-full max-w-sm items-center space-x-2">
-                        <Search className="h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search contests..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="h-9"
-                        />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                            <SelectTrigger className="h-9 w-[130px]">
-                                <SelectValue placeholder="Difficulty" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Difficulties</SelectItem>
-                                <SelectItem value="easy">Easy</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="hard">Hard</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button variant="outline" size="sm" className="h-9">
-                            <Filter className="mr-1 h-4 w-4" /> More Filters
-                        </Button>
-                    </div>
-                </div>
+                <ContestFilters
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    difficultyFilter={difficultyFilter}
+                    setDifficultyFilter={setDifficultyFilter}
+                />
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                     <TabsList>
@@ -296,127 +367,56 @@ export default function AdminContests() {
                     </TabsList>
 
                     <TabsContent value="all" className="space-y-4">
-                        <Card>
-                            <CardContent className="p-0">
-                                <div className="relative w-full overflow-auto">
-                                    <table className="w-full caption-bottom text-sm">
-                                        <thead className="border-b">
-                                        <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Title</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Date & Time</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Duration</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Difficulty</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Problems</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Participants</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
-                                            <th className="h-12 px-4 text-right align-middle font-medium">Actions</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        {filteredContests.map((contest) => (
-                                            <tr
-                                                key={contest.id}
-                                                className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                                            >
-                                                <td className="p-4 align-middle">
-                                                    <div className="font-medium">{contest.title}</div>
-                                                    <div className="text-sm text-muted-foreground">{contest.description}</div>
-                                                </td>
-                                                <td className="p-4 align-middle">
-                                                    <div className="flex items-center">
-                                                        <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                                                        <span>{contest.startDate}</span>
-                                                    </div>
-                                                    <div className="flex items-center mt-1">
-                                                        <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                                                        <span>{contest.startTime}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 align-middle">{contest.duration}</td>
-                                                <td className="p-4 align-middle">
-                                                    <Badge
-                                                        className={
-                                                            contest.difficulty.includes("Easy")
-                                                                ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                                                : contest.difficulty.includes("Medium")
-                                                                    ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
-                                                                    : "bg-red-100 text-red-800 hover:bg-red-100"
-                                                        }
-                                                    >
-                                                        {contest.difficulty}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-4 align-middle">{contest.problems}</td>
-                                                <td className="p-4 align-middle">
-                                                    <div className="flex items-center">
-                                                        <Users className="mr-2 h-4 w-4 text-muted-foreground" />
-                                                        <span>{contest.participants}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 align-middle">
-                                                    <Badge
-                                                        variant={
-                                                            contest.status === "upcoming"
-                                                                ? "outline"
-                                                                : contest.status === "ongoing"
-                                                                    ? "default"
-                                                                    : contest.status === "past"
-                                                                        ? "secondary"
-                                                                        : "outline"
-                                                        }
-                                                        className={
-                                                            contest.status === "upcoming"
-                                                                ? "bg-blue-100 text-blue-800 hover:bg-blue-100"
-                                                                : contest.status === "ongoing"
-                                                                    ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                                                    : contest.status === "past"
-                                                                        ? "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                                                                        : "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
-                                                        }
-                                                    >
-                                                        {contest.status.charAt(0).toUpperCase() + contest.status.slice(1)}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-4 align-middle text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <Button variant="ghost" size="icon">
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon">
-                                                            <BarChart className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon">
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <ContestTable
+                            contests={getPaginatedContests(filteredContests)}
+                            onEdit={handleEditContest}
+                            onDelete={handleDeleteContest}
+                            onViewStats={handleViewStats}
+                        />
+                        {renderPagination(filteredContests)}
                     </TabsContent>
 
                     <TabsContent value="upcoming" className="space-y-4">
-                        {/* Similar content as "all" tab but filtered for upcoming contests */}
+                        <ContestTable
+                            contests={getPaginatedContests(filteredContests.filter((contest) => contest.status === "upcoming"))}
+                            onEdit={handleEditContest}
+                            onDelete={handleDeleteContest}
+                            onViewStats={handleViewStats}
+                        />
+                        {renderPagination(filteredContests.filter((contest) => contest.status === "upcoming"))}
                     </TabsContent>
 
                     <TabsContent value="ongoing" className="space-y-4">
-                        {/* Similar content as "all" tab but filtered for ongoing contests */}
+                        <ContestTable
+                            contests={getPaginatedContests(filteredContests.filter((contest) => contest.status === "ongoing"))}
+                            onEdit={handleEditContest}
+                            onDelete={handleDeleteContest}
+                            onViewStats={handleViewStats}
+                        />
+                        {renderPagination(filteredContests.filter((contest) => contest.status === "ongoing"))}
                     </TabsContent>
 
                     <TabsContent value="past" className="space-y-4">
-                        {/* Similar content as "all" tab but filtered for past contests */}
+                        <ContestTable
+                            contests={getPaginatedContests(filteredContests.filter((contest) => contest.status === "past"))}
+                            onEdit={handleEditContest}
+                            onDelete={handleDeleteContest}
+                            onViewStats={handleViewStats}
+                        />
+                        {renderPagination(filteredContests.filter((contest) => contest.status === "past"))}
                     </TabsContent>
 
                     <TabsContent value="draft" className="space-y-4">
-                        {/* Similar content as "all" tab but filtered for draft contests */}
+                        <ContestTable
+                            contests={getPaginatedContests(filteredContests.filter((contest) => contest.status === "draft"))}
+                            onEdit={handleEditContest}
+                            onDelete={handleDeleteContest}
+                            onViewStats={handleViewStats}
+                        />
+                        {renderPagination(filteredContests.filter((contest) => contest.status === "draft"))}
                     </TabsContent>
                 </Tabs>
             </main>
         </div>
     )
 }
-

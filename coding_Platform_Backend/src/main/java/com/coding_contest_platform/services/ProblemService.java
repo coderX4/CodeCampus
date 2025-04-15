@@ -30,4 +30,5 @@ public interface ProblemService {
 
     List<Problem> getActiveProblems();
 
+    void saveSubmission(String id, boolean isAccepted);
 }
