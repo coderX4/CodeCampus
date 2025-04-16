@@ -12,12 +12,14 @@ import { useToast } from "@/hooks/use-toast.js"
 export default function AdminContests() {
     const [activeTab, setActiveTab] = useState("upcoming")
     const [searchQuery, setSearchQuery] = useState("")
+    // Update the state to track the contest being edited
     const [showAddContestForm, setShowAddContestForm] = useState(false)
+    const [editingContest, setEditingContest] = useState(null)
+    const [isDuplicateContest, setIsDuplicateContest] = useState(false)
     const [difficultyFilter, setDifficultyFilter] = useState("all")
     const [contests, setContests] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
-    const [editingContest, setEditingContest] = useState(false)
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1)
@@ -74,7 +76,7 @@ export default function AdminContests() {
 
     useEffect(() => {
         fetchContests()
-    }, []);
+    }, [])
 
     // Update contest statuses based on current time
     useEffect(() => {
@@ -200,7 +202,26 @@ export default function AdminContests() {
         )
     }
 
-    // Handle contest creation
+    // Update the handleEditContest function to check if the contest is eligible for editing
+    const handleEditContest = (contest) => {
+        // Only allow editing of upcoming or draft contests
+        if (contest.status !== "upcoming" && contest.status !== "draft") {
+            toast({
+                variant: "destructive",
+                title: "Cannot Edit Contest",
+                description: "Only upcoming contests or drafts can be edited.",
+            })
+            return
+        }
+
+        setEditingContest(contest)
+        setShowAddContestForm(true)
+
+        // Scroll to the top of the page to show the form
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
+    // Update the handleCreateContest function to handle both create and edit operations
     const handleCreateContest = async (contestData) => {
         // Validate that problems are selected
         if (contestData.problems.length === 0) {
@@ -212,7 +233,6 @@ export default function AdminContests() {
             return
         }
 
-        // Here you would typically make an API call to create the contest
         setIsLoading(true)
         setError("")
 
@@ -226,31 +246,42 @@ export default function AdminContests() {
         }
 
         try {
-            const response = await fetch("http://localhost:8083/api/contest/createcontest", {
-                method: "POST",
+            // Determine if we're creating or updating
+            const isEditing = !!editingContest
+            const url = isEditing
+                ? `http://localhost:8083/api/contest/update/${editingContest.id}`
+                : "http://localhost:8083/api/contest/createcontest"
+
+            const method = isEditing ? "PUT" : "POST"
+
+            // If editing, include the contest ID in the request body
+            const requestData = isEditing ? { ...contestData, id: editingContest.id } : contestData
+
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${loggedUser.token}`,
                 },
-                body: JSON.stringify(contestData),
+                body: JSON.stringify(requestData),
             })
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}))
-                throw new Error(errorData.message || `Failed to create contest`)
+                throw new Error(errorData.message || `Failed to ${isEditing ? "update" : "create"} contest`)
             }
 
             toast({
-                title: "Contest Created",
-                description: `Contest "${contestData.title}" has been created successfully.`,
+                title: isEditing ? "Contest Updated" : "Contest Created",
+                description: `Contest "${contestData.title}" has been ${isEditing ? "updated" : "created"} successfully.`,
             })
 
             setShowAddContestForm(false)
-            //fetch the contests
+            setEditingContest(null) // Reset editing state
             fetchContests()
         } catch (err) {
             console.error(`Error ${editingContest ? "updating" : "creating"} contest:`, err)
-            setError(err.message || `Failed to ${editingContest ? "update" : "create"} problem`)
+            setError(err.message || `Failed to ${editingContest ? "update" : "create"} contest`)
             toast({
                 variant: "destructive",
                 title: "Error",
@@ -259,16 +290,6 @@ export default function AdminContests() {
         } finally {
             setIsLoading(false)
         }
-    }
-
-    // Handle contest editing
-    const handleEditContest = (contest) => {
-        console.log("Editing contest:", contest)
-        // Implement edit functionality
-        toast({
-            title: "Edit Contest",
-            description: `Editing contest "${contest.title}"`,
-        })
     }
 
     // Handle contest deletion
@@ -327,6 +348,39 @@ export default function AdminContests() {
         })
     }
 
+    // Update the button text and form cancel handler
+    const handleCancelForm = () => {
+        setShowAddContestForm(false)
+        setEditingContest(null) // Reset editing state
+    }
+
+    // Add the duplicate contest handler
+    const handleDuplicateContest = (contest) => {
+        // Create a copy of the contest with a modified title
+        const duplicatedContest = {
+            ...contest,
+            title: `Copy of ${contest.title}`,
+            // Remove the id so a new one will be generated on save
+            id: undefined,
+        }
+        setIsDuplicateContest(true)
+
+        // Set the duplicated contest as the editing contest
+        setEditingContest(duplicatedContest)
+
+        // Show the form
+        setShowAddContestForm(true)
+
+        // Scroll to the top of the page to show the form
+        window.scrollTo({ top: 0, behavior: "smooth" })
+
+        // Show a toast notification
+        toast({
+            title: "Duplicate Contest",
+            description: "Make changes to the duplicated contest and save to create a new contest.",
+        })
+    }
+
     return (
         <div className="flex-1 overflow-auto">
             <main className="grid flex-1 items-start gap-4 p-4 md:gap-8 md:p-6">
@@ -334,7 +388,18 @@ export default function AdminContests() {
                     <h1 className="text-3xl font-bold">Contest Management</h1>
                     <div className="flex items-center gap-4">
                         <LiveClock showDate={true} className="text-right" />
-                        <Button variant="outline" size="sm" onClick={() => setShowAddContestForm(!showAddContestForm)}>
+                        {/* Update the button text based on whether we're editing or creating */}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                if (showAddContestForm) {
+                                    handleCancelForm()
+                                } else {
+                                    setShowAddContestForm(true)
+                                }
+                            }}
+                        >
                             {showAddContestForm ? (
                                 "Cancel"
                             ) : (
@@ -346,8 +411,14 @@ export default function AdminContests() {
                     </div>
                 </div>
 
+                {/* Update the form component to pass the editing contest data */}
                 {showAddContestForm && (
-                    <CreateContestForm onCancel={() => setShowAddContestForm(false)} onSubmit={handleCreateContest} />
+                    <CreateContestForm
+                        onCancel={handleCancelForm}
+                        onSubmit={handleCreateContest}
+                        editContest={editingContest} // Pass the contest being edited
+                        isDuplicateContest={isDuplicateContest}
+                    />
                 )}
 
                 <ContestFilters
@@ -362,7 +433,7 @@ export default function AdminContests() {
                         <TabsTrigger value="all">All Contests</TabsTrigger>
                         <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
                         <TabsTrigger value="ongoing">Ongoing</TabsTrigger>
-                        <TabsTrigger value="past">Past</TabsTrigger>
+                        <TabsTrigger value="past">Past Contests</TabsTrigger>
                         <TabsTrigger value="draft">Drafts</TabsTrigger>
                     </TabsList>
 
@@ -372,6 +443,7 @@ export default function AdminContests() {
                             onEdit={handleEditContest}
                             onDelete={handleDeleteContest}
                             onViewStats={handleViewStats}
+                            onDuplicate={handleDuplicateContest}
                         />
                         {renderPagination(filteredContests)}
                     </TabsContent>
@@ -382,6 +454,7 @@ export default function AdminContests() {
                             onEdit={handleEditContest}
                             onDelete={handleDeleteContest}
                             onViewStats={handleViewStats}
+                            onDuplicate={handleDuplicateContest}
                         />
                         {renderPagination(filteredContests.filter((contest) => contest.status === "upcoming"))}
                     </TabsContent>
@@ -392,6 +465,7 @@ export default function AdminContests() {
                             onEdit={handleEditContest}
                             onDelete={handleDeleteContest}
                             onViewStats={handleViewStats}
+                            onDuplicate={handleDuplicateContest}
                         />
                         {renderPagination(filteredContests.filter((contest) => contest.status === "ongoing"))}
                     </TabsContent>
@@ -402,6 +476,7 @@ export default function AdminContests() {
                             onEdit={handleEditContest}
                             onDelete={handleDeleteContest}
                             onViewStats={handleViewStats}
+                            onDuplicate={handleDuplicateContest}
                         />
                         {renderPagination(filteredContests.filter((contest) => contest.status === "past"))}
                     </TabsContent>
@@ -412,6 +487,7 @@ export default function AdminContests() {
                             onEdit={handleEditContest}
                             onDelete={handleDeleteContest}
                             onViewStats={handleViewStats}
+                            onDuplicate={handleDuplicateContest}
                         />
                         {renderPagination(filteredContests.filter((contest) => contest.status === "draft"))}
                     </TabsContent>

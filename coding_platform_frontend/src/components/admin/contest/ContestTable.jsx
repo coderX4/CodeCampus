@@ -1,9 +1,11 @@
+"use client"
+
 import { Badge } from "@/components/ui/badge.jsx"
 import { Button } from "@/components/ui/button.jsx"
 import { Card, CardContent } from "@/components/ui/card.jsx"
-import { Calendar, Clock, Edit, Trash2, BarChart, Users } from "lucide-react"
+import { Calendar, Clock, Trash2, BarChart, Users, Copy, PencilIcon } from "lucide-react"
 
-export default function ContestTable({ contests, onEdit, onDelete, onViewStats }) {
+export default function ContestTable({ contests, onEdit, onDelete, onViewStats, onDuplicate }) {
     // Helper function to format date
     const formatDate = (dateString) => {
         if (!dateString) return "N/A"
@@ -122,11 +124,24 @@ export default function ContestTable({ contests, onEdit, onDelete, onViewStats }
                                     </td>
                                     <td className="p-4 align-middle text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            <Button variant="ghost" size="icon" onClick={() => onEdit(contest)}>
-                                                <Edit className="h-4 w-4" />
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => onEdit(contest)}
+                                                disabled={contest.status !== "upcoming" && contest.status !== "draft"}
+                                                title={
+                                                    contest.status !== "upcoming" && contest.status !== "draft"
+                                                        ? "Only upcoming contests or drafts can be edited"
+                                                        : "Edit contest"
+                                                }
+                                            >
+                                                <PencilIcon className="h-4 w-4" />
                                             </Button>
                                             <Button variant="ghost" size="icon" onClick={() => onViewStats(contest)}>
                                                 <BarChart className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" onClick={() => onDuplicate(contest)}>
+                                                <Copy className="h-4 w-4" />
                                             </Button>
                                             <Button variant="ghost" size="icon" onClick={() => onDelete(contest)}>
                                                 <Trash2 className="h-4 w-4" />
