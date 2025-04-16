@@ -83,6 +83,15 @@ export default function ProblemSelector({ selectedProblems, setSelectedProblems 
         setIsSearched(searchQuery !== "" || difficultyFilter !== "" || tagFilter !== "")
     }, [searchQuery, difficultyFilter, tagFilter])
 
+    // Add a useEffect to update the UI when selectedProblems changes from parent
+    useEffect(() => {
+        // This ensures the selected problems table updates when editing a contest
+        // and the problems are loaded from the parent component
+        if (selectedProblems.length > 0) {
+            setIsSearched(true)
+        }
+    }, [selectedProblems])
+
     // Filter problems based on search query, difficulty, and tag
     const filteredProblems = problems.filter((problem) => {
         if (!isSearched) return false

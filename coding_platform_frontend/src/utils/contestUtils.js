@@ -4,6 +4,13 @@
  * @returns {string} - The status of the contest: "draft", "upcoming", "ongoing", or "past"
  */
 export const determineContestStatus = (contest) => {
+    console.log("Determining status for contest:", {
+        title: contest.title,
+        saveAsDraft: contest.saveAsDraft,
+        startDate: contest.startDate,
+        startTime: contest.startTime,
+    })
+
     // If contest is saved as draft, return "draft" status
     if (contest.saveAsDraft) {
         return "draft"
@@ -78,7 +85,7 @@ export const getContestEndTime = (startDateTime, durationStr) => {
         const endDateTime = new Date(startDateTime.getTime())
 
         // Parse duration string
-        let hours = Number.parseInt(durationStr)
+        const hours = Number.parseInt(durationStr)
 
         // Add duration to start time
         endDateTime.setHours(endDateTime.getHours() + hours)

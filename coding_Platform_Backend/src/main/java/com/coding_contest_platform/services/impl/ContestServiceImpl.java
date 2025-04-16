@@ -37,4 +37,34 @@ public class ContestServiceImpl implements ContestService {
         Contest contest = contestRepository.findOneById(contestId);
         contestRepository.delete(contest);
     }
+
+    @Transactional
+    @Override
+    public Contest updateContest(Contest contest, String contestId) {
+        Contest contest1 = contestRepository.findOneById(contestId);
+        if(!contest.getDuration().equals("")){
+            contest1.setDuration(contest.getDuration());
+        }
+        if(!contest.getDifficulty().equals("")){
+            contest1.setDifficulty(contest.getDifficulty());
+        }
+        if(!contest.getTitle().equals("")){
+            contest1.setTitle(contest.getTitle());
+        }
+        if(!contest.getDescription().equals("")){
+            contest1.setDescription(contest.getDescription());
+        }
+        if(!contest.getStartDate().equals("")){
+            contest1.setStartDate(contest.getStartDate());
+        }
+        if(!contest.getStartTime().equals("")){
+            contest1.setStartTime(contest.getStartTime());
+        }
+        if(!contest.getRules().equals("")){
+            contest1.setRules(contest.getRules());
+        }
+        contest1.setProblems(contest.getProblems());
+        contest1.setSaveAsDraft(contest.isSaveAsDraft());
+        return contestRepository.save(contest1);
+    }
 }

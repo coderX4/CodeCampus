@@ -1,4 +1,6 @@
-import { useState } from "react"
+"use client"
+
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button.jsx"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx"
 import { Input } from "@/components/ui/input.jsx"
@@ -7,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox.jsx"
 import ProblemSelector from "./ProblemSelector.jsx"
 
-export default function CreateContestForm({ onCancel, onSubmit}) {
+// Update the component to handle editing
+export default function CreateContestForm({ onCancel, onSubmit, editContest ,isDuplicateContest}) {
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -20,6 +23,103 @@ export default function CreateContestForm({ onCancel, onSubmit}) {
     })
 
     const [selectedProblems, setSelectedProblems] = useState([])
+
+    // Fix the function name typo from "setFromData" to "setFormData" and improve the date/time handling
+    const initializeFormData = () => {
+        try {
+            // Initialize with default values to prevent undefined errors
+            let formattedDate = ""
+            let formattedTime = ""
+
+            // Handle date formatting
+            if (editContest.startDate) {
+                // Try to parse the date
+                const startDateTime = new Date(editContest.startDate)
+
+                // Check if date is valid
+                if (!isNaN(startDateTime.getTime())) {
+                    // Format date as YYYY-MM-DD
+                    formattedDate = startDateTime.toISOString().split("T")[0]
+
+                    // Get time from startTime property if it exists
+                    if (editContest.startTime && typeof editContest.startTime === "string") {
+                        formattedTime = editContest.startTime
+                        // Ensure time is in HH:MM format
+                        if (formattedTime.length > 5) {
+                            formattedTime = formattedTime.substring(0, 5)
+                        }
+                    } else {
+                        // Extract time from the date object
+                        const hours = String(startDateTime.getHours()).padStart(2, "0")
+                        const minutes = String(startDateTime.getMinutes()).padStart(2, "0")
+                        formattedTime = `${hours}:${minutes}`
+                    }
+                } else {
+                    console.error("Invalid date format in contest data:", editContest.startDate)
+                }
+            }
+            // Set form data with all available fields
+            setFormData({
+                title: editContest.title || "",
+                description: editContest.description || "",
+                startDate: formattedDate,
+                startTime: formattedTime,
+                duration: editContest.duration,
+                difficulty: editContest.difficulty || "medium",
+                rules: editContest.rules || "",
+                saveAsDraft: editContest.saveAsDraft,
+            })
+            // If the contest has problems, fetch the full problem objects
+            if (editContest.problems && Array.isArray(editContest.problems)) {
+                fetchProblemsForEdit(editContest.problems)
+            }
+        } catch (error) {
+            console.error("Error setting up edit form:", error)
+        }
+    }
+    // Initialize form with edit data if provided
+    // Update the useEffect to call the correctly named function
+    useEffect(() => {
+        if (editContest) {
+            initializeFormData()
+        }
+    }, [editContest])
+
+    // Add a new function to fetch problem details when editing
+    const fetchProblemsForEdit = async (problemIds) => {
+        if (!problemIds || problemIds.length === 0) return
+
+        const storedUser = sessionStorage.getItem("user")
+        const loggedUser = storedUser ? JSON.parse(storedUser) : null
+
+        if (!loggedUser || !loggedUser.token) {
+            console.error("Authentication required to fetch problems")
+            return
+        }
+
+        try {
+            const response = await fetch("http://localhost:8083/api/problems/getproblems", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${loggedUser.token}`,
+                },
+            })
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch problems")
+            }
+
+            const allProblems = await response.json()
+
+            // Filter to get only the problems that are in our contest
+            const contestProblems = allProblems.filter((problem) => problemIds.includes(problem.id))
+
+            setSelectedProblems(contestProblems)
+        } catch (error) {
+            console.error("Error fetching problems for edit:", error)
+        }
+    }
 
     const handleInputChange = (e) => {
         const { name, value } = e.target
@@ -52,15 +152,15 @@ export default function CreateContestForm({ onCancel, onSubmit}) {
         onSubmit({
             ...formData,
             problems: problemIds, // Send only the problem IDs
-            participants: 0,
+            participants: editContest ? editContest.participants : 0,
         })
     }
 
     return (
         <Card className="mb-6">
             <CardHeader>
-                <CardTitle>Create New Contest</CardTitle>
-                <CardDescription>Set up a new coding contest</CardDescription>
+                <CardTitle>{editContest ? (isDuplicateContest ? "Duplicate Contest" : "Edit Contest" ) : "Create New Contest"}</CardTitle>
+                <CardDescription>{editContest ? (isDuplicateContest ? "Copying contest details" : "Update contest details" ) : "Set up a new coding contest"}</CardDescription>
             </CardHeader>
             <CardContent>
                 <form className="space-y-4" onSubmit={handleSubmit}>
@@ -147,9 +247,7 @@ export default function CreateContestForm({ onCancel, onSubmit}) {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="easy">Easy</SelectItem>
-                                    <SelectItem value="easy-medium">Easy-Medium</SelectItem>
                                     <SelectItem value="medium">Medium</SelectItem>
-                                    <SelectItem value="medium-hard">Medium-Hard</SelectItem>
                                     <SelectItem value="hard">Hard</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -186,7 +284,7 @@ export default function CreateContestForm({ onCancel, onSubmit}) {
                         <Button variant="outline" type="button" onClick={onCancel}>
                             Cancel
                         </Button>
-                        <Button type="submit">Create Contest</Button>
+                        <Button type="submit">{editContest ? (isDuplicateContest ? "Copy Contest" : "Update Contest") : "Create Contest"}</Button>
                     </div>
                 </form>
             </CardContent>

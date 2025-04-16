@@ -31,4 +31,9 @@ public class ContestController {
         contestService.deleteContest(id);
         return ResponseEntity.ok().build();
     }
+
+    @PutMapping({"/update/{id}"})
+    public ResponseEntity<Contest> updateContest(@PathVariable("id") String id, @RequestBody Contest contest) {
+        return ResponseEntity.ok(contestService.updateContest(contest,id));
+    }
 }

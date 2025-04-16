@@ -14,4 +14,7 @@ public interface ContestService {
 
     @Transactional
     void deleteContest(String contestId);
+
+    @Transactional
+    Contest updateContest(Contest contest, String contestId);
 }
