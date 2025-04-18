@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "@/AuthContext.jsx";
+import { useAuth } from "@/utils/AuthContext.jsx";
 
 const OauthCallback = () => {
     const { email } = useParams();

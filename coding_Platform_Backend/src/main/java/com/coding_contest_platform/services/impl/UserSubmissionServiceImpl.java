@@ -1,7 +1,7 @@
 package com.coding_contest_platform.services.impl;
 
-import com.coding_contest_platform.dto.ExecutionResponse;
-import com.coding_contest_platform.dto.SubmissionDTO;
+import com.coding_contest_platform.dto.editor.ExecutionResponse;
+import com.coding_contest_platform.dto.editor.SubmissionDTO;
 import com.coding_contest_platform.entity.UserSubmissions;
 import com.coding_contest_platform.repository.UserSubmissionsRepository;
 import com.coding_contest_platform.services.UserSubmissionService;

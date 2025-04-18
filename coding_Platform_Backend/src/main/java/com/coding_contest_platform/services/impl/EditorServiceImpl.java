@@ -1,8 +1,8 @@
 package com.coding_contest_platform.services.impl;
 
-import com.coding_contest_platform.dto.EditorResponse;
-import com.coding_contest_platform.dto.ExecutionResponse;
-import com.coding_contest_platform.dto.TestCase;
+import com.coding_contest_platform.dto.editor.EditorResponse;
+import com.coding_contest_platform.dto.editor.ExecutionResponse;
+import com.coding_contest_platform.dto.problem.TestCase;
 import com.coding_contest_platform.entity.Problem;
 import com.coding_contest_platform.entity.ProblemData;
 import com.coding_contest_platform.entity.ProblemTestCase;

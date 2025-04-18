@@ -4,7 +4,7 @@ import { Code, Moon, Sun, ChevronLeft, Settings, Save, User, LogOut } from "luci
 import { Button } from "@/components/ui/button.jsx"
 import { useTheme } from "@/components/theme-provider.jsx"
 import { useState } from "react"
-import { useAuth } from "@/AuthContext.jsx"
+import { useAuth } from "@/utils/AuthContext.jsx"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx"
 
 export default function EditorLayout() {

@@ -1,168 +1,118 @@
 import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx"
-import { Badge } from "@/components/ui/badge.jsx"
-import { Button } from "@/components/ui/button.jsx"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.jsx"
-import { Clock, Trophy, Users } from "lucide-react"
-import { Link } from "react-router-dom"
+import { AlertCircle } from "lucide-react"
 import LiveClock from "@/components/shared/LiveClock.jsx"
 import { determineContestStatus } from "@/utils/contestUtils.js"
-
-function ContestCard({ id, title, description, date, time, participants, difficulty, problems, status = "upcoming" }) {
-  return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl">{title}</CardTitle>
-            <Badge variant="outline">{difficulty}</Badge>
-          </div>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span>
-              {date} • {time}
-            </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span>{participants} participants</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-muted-foreground" />
-              <span>{problems} problems</span>
-            </div>
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" asChild>
-            <Link to={`/dashboard/contest/${id}`}>View Details</Link>
-          </Button>
-          {status === "upcoming" && (
-              <Button asChild>
-                <Link to={`/dashboard/contest/${id}`}>Register</Link>
-              </Button>
-          )}
-          {status === "ongoing" && (
-              <Button asChild>
-                <Link to={`/dashboard/contest/${id}`}>Enter Contest</Link>
-              </Button>
-          )}
-          {status === "past" && (
-              <Button variant="secondary" asChild>
-                <Link to={`/dashboard/contest/${id}`}>View Results</Link>
-              </Button>
-          )}
-        </CardFooter>
-      </Card>
-  )
-}
+import ContestCard from "@/components/contest/ContestCard.jsx"
 
 export default function Contests() {
   const [contests, setContests] = useState([])
   const [activeTab, setActiveTab] = useState("upcoming")
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  // Mock contests data
-  const initialContests = [
-    {
-      id: "1",
-      title: "Algorithms Championship",
-      description: "Test your algorithmic skills in this 3-hour contest",
-      startDate: "2025-03-15",
-      startTime: "14:00",
-      duration: "3 hours",
-      date: "March 15, 2025",
-      time: "2:00 PM - 5:00 PM",
-      participants: 120,
-      difficulty: "Medium",
-      problems: 6,
-      saveAsDraft: false,
-    },
-    {
-      id: "2",
-      title: "Data Structures Showdown",
-      description: "Master data structures challenges in this competitive event",
-      startDate: "2025-03-22",
-      startTime: "10:00",
-      duration: "3 hours",
-      date: "March 22, 2025",
-      time: "10:00 AM - 1:00 PM",
-      participants: 85,
-      difficulty: "Hard",
-      problems: 5,
-      saveAsDraft: false,
-    },
-    {
-      id: "3",
-      title: "Weekly Challenge #43",
-      description: "Solve weekly problems to improve your coding skills",
-      // Set to current date for demo purposes
-      startDate: new Date().toISOString().split("T")[0],
-      // Set to a time 1 hour before current time for demo purposes
-      startTime: new Date(Date.now() - 60 * 60 * 1000).toTimeString().slice(0, 5),
-      duration: "3 hours",
-      date: "Today",
-      time: "Started 1 hour ago",
-      participants: 95,
-      difficulty: "Easy-Medium",
-      problems: 5,
-      saveAsDraft: false,
-    },
-    {
-      id: "4",
-      title: "Weekly Challenge #42",
-      description: "Weekly coding problems for all skill levels",
-      startDate: "2025-03-01",
-      startTime: "10:00",
-      duration: "3 hours",
-      date: "March 1, 2025",
-      time: "10:00 AM - 1:00 PM",
-      participants: 110,
-      difficulty: "Medium",
-      problems: 6,
-      saveAsDraft: false,
-    },
-    {
-      id: "5",
-      title: "Data Structures Marathon",
-      description: "A deep dive into data structures problems",
-      startDate: "2025-02-15",
-      startTime: "14:00",
-      duration: "4 hours",
-      date: "February 15, 2025",
-      time: "2:00 PM - 6:00 PM",
-      participants: 75,
-      difficulty: "Hard",
-      problems: 8,
-      saveAsDraft: false,
-    },
-  ]
+  const fetchContests = async () => {
+    setIsLoading(true)
+    setError("")
+
+    const storedUser = sessionStorage.getItem("user")
+    const loggedUser = storedUser ? JSON.parse(storedUser) : null
+
+    if (!loggedUser || !loggedUser.token) {
+      setError("Authentication required. Please log in again.")
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const response = await fetch("http://localhost:8083/api/contest/getcontests", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${loggedUser.token}`,
+        },
+      })
+
+      if (response.status === 403) {
+        setError("Access denied: You do not have permission to access this resource.")
+        setIsLoading(false)
+        return
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || "Failed to fetch contests")
+      }
+
+      const data = await response.json()
+
+      // Filter out draft contests and update contest statuses
+      const updatedContests = data
+          .filter((contest) => contest.saveAsDraft !== true) // Filter out drafts
+          .map((contest) => ({
+            ...contest,
+            status: determineContestStatus(contest),
+          }))
+
+      setContests(updatedContests)
+    } catch (err) {
+      console.error("Error fetching contests:", err)
+      setError(err.message || "Failed to fetch contests")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchContests()
+  }, [])
 
   // Update contest statuses based on current time
   useEffect(() => {
-    // Update contest statuses initially
-    updateContestStatuses()
-
     // Set up interval to update contest statuses every minute
-    const interval = setInterval(updateContestStatuses, 60000)
+    const interval = setInterval(fetchContests, 60000)
 
     // Clean up interval on component unmount
     return () => clearInterval(interval)
   }, [])
 
-  // Function to update contest statuses
-  const updateContestStatuses = () => {
-    const updatedContests = initialContests.map((contest) => ({
-      ...contest,
-      status: determineContestStatus(contest),
-    }))
-    setContests(updatedContests)
-  }
-
   // Filter contests based on active tab
   const filteredContests = contests.filter((contest) => activeTab === "all" || contest.status === activeTab)
+
+  // Loading and error states
+  const renderContent = () => {
+    if (isLoading && contests.length === 0) {
+      return (
+          <div className="text-center py-8">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+            <p className="mt-2 text-muted-foreground">Loading contests...</p>
+          </div>
+      )
+    }
+
+    if (error) {
+      return (
+          <div className="text-center py-8 text-destructive flex flex-col items-center">
+            <AlertCircle className="h-8 w-8 mb-2" />
+            <p>{error}</p>
+          </div>
+      )
+    }
+
+    if (filteredContests.length === 0) {
+      return (
+          <div className="text-center py-8 text-muted-foreground">No {activeTab} contests available at the moment.</div>
+      )
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {filteredContests.map((contest) => (
+              <ContestCard key={contest.id} {...contest} />
+          ))}
+        </div>
+    )
+  }
 
   return (
       <main className="flex-1">
@@ -179,27 +129,13 @@ export default function Contests() {
                 <TabsTrigger value="past">Past</TabsTrigger>
               </TabsList>
               <TabsContent value="upcoming" className="space-y-6">
-                {filteredContests.length > 0 ? (
-                    filteredContests.map((contest) => <ContestCard key={contest.id} {...contest} />)
-                ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No upcoming contests available at the moment.
-                    </div>
-                )}
+                {renderContent()}
               </TabsContent>
               <TabsContent value="ongoing" className="space-y-6">
-                {filteredContests.length > 0 ? (
-                    filteredContests.map((contest) => <ContestCard key={contest.id} {...contest} />)
-                ) : (
-                    <div className="text-center py-8 text-muted-foreground">No contests are currently in progress.</div>
-                )}
+                {renderContent()}
               </TabsContent>
               <TabsContent value="past" className="space-y-6">
-                {filteredContests.length > 0 ? (
-                    filteredContests.map((contest) => <ContestCard key={contest.id} {...contest} />)
-                ) : (
-                    <div className="text-center py-8 text-muted-foreground">No past contests to display.</div>
-                )}
+                {renderContent()}
               </TabsContent>
             </Tabs>
           </div>

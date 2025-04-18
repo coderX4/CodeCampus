@@ -1,4 +1,4 @@
-package com.coding_contest_platform.dto;
+package com.coding_contest_platform.dto.login_signup;
 
 import com.coding_contest_platform.helper.Role;
 import lombok.AllArgsConstructor;

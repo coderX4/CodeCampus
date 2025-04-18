@@ -2,7 +2,7 @@ import { Routes, Route } from "react-router-dom"
 import Home from "@/pages/global/Home.jsx"
 import Practice from "@/pages/user/Practice.jsx"
 import Contests from "@/pages/user/Contests.jsx"
-import Contest from "@/pages/user/Contest.jsx"
+import Contest from "@/components/contest/Contest.jsx"
 import Editor from "@/pages/user/EditorPage.jsx"
 import Leaderboard from "@/pages/user/Leaderboard.jsx"
 import MainSection from "@/pages/user/MainSection.jsx"
@@ -11,8 +11,8 @@ import AboutUs from "@/pages/global/AboutUs.jsx"
 import ContactUs from "@/pages/global/ContactUs.jsx"
 import SignUp from "@/pages/global/Sign-up.jsx"
 import HomeLayout from "@/components/layout/home-layout.jsx"
-import ProtectedRoute from "@/ProtectedRoute.jsx"
-import OauthCallback from "@/OauthCallback.jsx"
+import ProtectedRoute from "@/utils/ProtectedRoute.jsx"
+import OauthCallback from "@/utils/OauthCallback.jsx"
 import DashboardLayout from "@/components/layout/dashboard-layout.jsx"
 import { Toaster } from "@/components/ui/toaster.jsx"
 
@@ -71,7 +71,6 @@ function App() {
                     <Route path="problems" element={<AdminProblems />} />
                     <Route path="contests" element={<AdminContests />} />
                     <Route path="leaderboard" element={<AdminLeaderboard />} />
-                    <Route path="contest/:id" element={<Contest />} />
                 </Route>
 
                 {/* Nested Routes for Code Editor page*/}

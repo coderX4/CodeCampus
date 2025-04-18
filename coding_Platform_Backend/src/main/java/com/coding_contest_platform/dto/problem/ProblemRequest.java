@@ -1,4 +1,4 @@
-package com.coding_contest_platform.dto;
+package com.coding_contest_platform.dto.problem;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,13 +10,13 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class EditorResponse {
-    private String id;
+public class ProblemRequest {
     private String title;
     private String difficulty;
-    private String acceptance;
+    private List<String> tags;
     private String description;
     private String approach;
-    private Map<String, String> codeTemplates;
+    private String status;
+    private Map<String, String> codeTemplates;             // language → code
     private Map<String, List<TestCase>> testCases;
 }

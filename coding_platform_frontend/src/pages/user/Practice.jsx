@@ -161,7 +161,7 @@ export default function Practice() {
             variant="outline"
             onClick={() => {
               setError("")
-              fetchProblems()
+              fetchProblem()
             }}
         >
           <RefreshCw className="mr-2 h-4 w-4" />

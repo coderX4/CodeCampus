@@ -1,15 +1,15 @@
 package com.coding_contest_platform.controller;
 
 
-import com.coding_contest_platform.dto.AdminRegisterRequest;
+import com.coding_contest_platform.dto.login_signup.AdminRegisterRequest;
 import com.coding_contest_platform.helper.Provider;
 import com.coding_contest_platform.helper.Role;
 import com.coding_contest_platform.entity.User;
 import com.coding_contest_platform.repository.UserRepository;
 import com.coding_contest_platform.security.JwtService;
-import com.coding_contest_platform.dto.AuthRequest;
-import com.coding_contest_platform.dto.AuthResponse;
-import com.coding_contest_platform.dto.RegisterRequest;
+import com.coding_contest_platform.dto.login_signup.AuthRequest;
+import com.coding_contest_platform.dto.login_signup.AuthResponse;
+import com.coding_contest_platform.dto.login_signup.RegisterRequest;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
