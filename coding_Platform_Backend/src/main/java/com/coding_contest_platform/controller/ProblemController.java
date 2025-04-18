@@ -1,7 +1,7 @@
 package com.coding_contest_platform.controller;
 
-import com.coding_contest_platform.dto.ProblemDataResponse;
-import com.coding_contest_platform.dto.ProblemRequest;
+import com.coding_contest_platform.dto.problem.ProblemDataResponse;
+import com.coding_contest_platform.dto.problem.ProblemRequest;
 import com.coding_contest_platform.entity.ProblemData;
 import com.coding_contest_platform.entity.ProblemTestCase;
 import com.coding_contest_platform.services.ProblemService;

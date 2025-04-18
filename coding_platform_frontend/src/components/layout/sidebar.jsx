@@ -21,7 +21,7 @@ import {
 } from "lucide-react"
 import { useTheme } from "@/components/theme-provider.jsx"
 import { Button } from "@/components/ui/button"
-import { useAuth } from "@/AuthContext.jsx"
+import { useAuth } from "@/utils/AuthContext.jsx"
 import { useEffect, useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx"
 

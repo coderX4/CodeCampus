@@ -1,6 +1,6 @@
 package com.coding_contest_platform.entity;
 
-import com.coding_contest_platform.dto.TestCase;
+import com.coding_contest_platform.dto.problem.TestCase;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

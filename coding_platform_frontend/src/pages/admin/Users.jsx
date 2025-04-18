@@ -2,11 +2,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button.jsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx"
 import { Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
-import UserForm from "../../components/admin/user/UserForm.jsx"
-import UserFilters from "../../components/admin/user/UserFilters.jsx"
-import UserTable from "../../components/admin/user/UserTable.jsx"
-import UserBulkActions from "../../components/admin/user/UserBulkActions.jsx"
-import SendEmailForm from "../../components/admin/user/SendEmailForm.jsx"
+import {UserForm,UserFilters,UserTable,UserBulkActions,SendEmailForm} from "@/components/admin/adminindex.js"
 import { AlertTriangle, RefreshCw } from "lucide-react"
 
 export default function AdminUsers() {

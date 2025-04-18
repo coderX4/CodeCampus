@@ -1,6 +1,9 @@
 package com.coding_contest_platform.controller;
 
-import com.coding_contest_platform.dto.*;
+import com.coding_contest_platform.dto.editor.ExecutionRequest;
+import com.coding_contest_platform.dto.editor.ExecutionResponse;
+import com.coding_contest_platform.dto.editor.SubmissionDTO;
+import com.coding_contest_platform.dto.problem.TestCase;
 import com.coding_contest_platform.entity.ProblemTestCase;
 import com.coding_contest_platform.services.EditorService;
 import com.coding_contest_platform.services.ProblemService;
@@ -27,7 +30,7 @@ public class EditorController {
     }
 
     @PostMapping({"/execute-run/{id}"})
-    public ResponseEntity<List<ExecutionResponse>> executeCodeRun(@PathVariable String id,@RequestBody ExecutionRequest executionRequest) throws ExecutionException, InterruptedException {
+    public ResponseEntity<List<ExecutionResponse>> executeCodeRun(@PathVariable String id, @RequestBody ExecutionRequest executionRequest) throws ExecutionException, InterruptedException {
 
         ProblemTestCase problemTestCase = problemService.getProblemTestCase(id);
         Map<String, List<TestCase>> testCasesMap = problemTestCase.getTestCases();

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input.jsx"
 import { Clock, Code, Trophy, Users, CheckCircle, ArrowRight, Github } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx"
 import { Badge } from "@/components/ui/badge.jsx"
-import {useAuth} from "@/AuthContext.jsx";
+import {useAuth} from "@/utils/AuthContext.jsx";
 
 export default function Home() {
   const navigate = useNavigate();

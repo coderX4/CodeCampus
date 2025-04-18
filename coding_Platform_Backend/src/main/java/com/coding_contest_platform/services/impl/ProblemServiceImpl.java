@@ -1,6 +1,6 @@
 package com.coding_contest_platform.services.impl;
 
-import com.coding_contest_platform.dto.ProblemRequest;
+import com.coding_contest_platform.dto.problem.ProblemRequest;
 import com.coding_contest_platform.entity.ProblemData;
 import com.coding_contest_platform.entity.ProblemSequence;
 import com.coding_contest_platform.entity.ProblemTestCase;

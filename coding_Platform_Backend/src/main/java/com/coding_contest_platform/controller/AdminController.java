@@ -1,6 +1,6 @@
 package com.coding_contest_platform.controller;
 
-import com.coding_contest_platform.dto.AdminRegisterRequest;
+import com.coding_contest_platform.dto.login_signup.AdminRegisterRequest;
 import com.coding_contest_platform.helper.Provider;
 import com.coding_contest_platform.helper.Role;
 import com.coding_contest_platform.entity.User;

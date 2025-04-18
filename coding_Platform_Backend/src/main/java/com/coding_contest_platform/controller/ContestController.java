@@ -1,5 +1,6 @@
 package com.coding_contest_platform.controller;
 
+import com.coding_contest_platform.dto.contest.ContestDTO;
 import com.coding_contest_platform.entity.Contest;
 import com.coding_contest_platform.services.ContestService;
 import com.coding_contest_platform.services.ProblemService;
@@ -14,7 +15,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ContestController {
     private final ContestService contestService;
-    private final ProblemService problemService;
 
     @PostMapping({"/createcontest"})
     public ResponseEntity<Contest> createContest(@RequestBody Contest contest) {
@@ -35,5 +35,10 @@ public class ContestController {
     @PutMapping({"/update/{id}"})
     public ResponseEntity<Contest> updateContest(@PathVariable("id") String id, @RequestBody Contest contest) {
         return ResponseEntity.ok(contestService.updateContest(contest,id));
+    }
+
+    @GetMapping({"/getcontestdetails/{id}"})
+    public ResponseEntity<ContestDTO> getContestDetails(@PathVariable("id") String id) {
+        return ResponseEntity.ok(contestService.getContestDetails(id));
     }
 }

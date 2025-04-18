@@ -3,10 +3,7 @@ import { Button } from "@/components/ui/button.jsx"
 import { Card } from "@/components/ui/card.jsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx"
 import { Plus, AlertTriangle, RefreshCw, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
-import ProblemFilters from "@/components/admin/problem/ProblemFilters.jsx"
-import ProblemTable from "@/components/admin/problem/ProblemTable.jsx"
-import ProblemForm from "@/components/admin/problem/ProblemForm.jsx"
-import ProblemViewDialog from "@/components/admin/problem/ProblemViewDialog.jsx"
+import {ProblemFilters,ProblemTable,ProblemForm,ProblemViewDialog} from "@/components/admin/adminindex.js"
 import { useToast } from "@/hooks/use-toast.js"
 
 export default function AdminProblems() {

@@ -1,4 +1,4 @@
-package com.coding_contest_platform.dto;
+package com.coding_contest_platform.dto.problem;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

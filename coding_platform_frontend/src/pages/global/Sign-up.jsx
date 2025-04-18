@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input.jsx"
 import { Checkbox } from "@/components/ui/checkbox.jsx"
 import { Github } from "lucide-react"
-import {useAuth} from "@/AuthContext.jsx";
+import {useAuth} from "@/utils/AuthContext.jsx";
 export default function SignUp() {
     const [formData, setFormData] = useState({
         firstName: "",
