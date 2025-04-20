@@ -7,7 +7,7 @@ import { useState } from "react"
 import { useAuth } from "@/utils/AuthContext.jsx"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx"
 
-export default function EditorLayout() {
+export default function ProblemEditorLayout() {
     const { theme, setTheme } = useTheme()
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
     const { logout } = useAuth()

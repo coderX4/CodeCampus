@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams } from "react-router-dom"
 import { Link } from "react-router-dom"
-import { ArrowLeft } from "lucide-react"
-import { Button } from "@/components/ui/button.jsx"
-import { Layout, Settings } from "lucide-react"
-import {EditorSettingsDialog,CodeEditorPanel,ProblemDescription} from "@/components/editor/editorindex.js"
-import { Dialog, DialogTrigger } from "@/components/ui/dialog.jsx"
+import { ArrowLeft, Layout, Settings } from "lucide-react"
+import { CodeEditorPanel } from "@/components/editor/editorindex.js"
+import { ProblemDescription } from "@/components/editor/editorindex.js"
 import { useToast } from "@/hooks/use-toast.js"
+import ConsoleOutputPanel from "@/components/editor/ConsoleOutputPanel"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogTrigger } from "@/components/ui/dialog"
+import  EditorSettingsDialog  from "@/components/editor/EditorSettingsDialog"
 
 export default function EditorPage() {
   const { id } = useParams()
@@ -32,17 +34,16 @@ export default function EditorPage() {
 
   // Toast notifications
   const { toast } = useToast()
-  //fetch submissions
-  const fetchSubmissions = async (id) => {
+
+  //fetch submissions - modified to use useCallback
+  const fetchSubmissions = useCallback(async () => {
     setError("")
-    setIsLoading(true)
 
     const storedUser = sessionStorage.getItem("user")
     const loggedUser = storedUser ? JSON.parse(storedUser) : null
 
     if (!loggedUser || !loggedUser.token) {
       setError("Authentication required. Please log in again.")
-      setIsLoading(false)
       return
     }
 
@@ -57,7 +58,6 @@ export default function EditorPage() {
 
       if (response.status === 403) {
         setError("Access denied: You do not have permission to access this resource.")
-        setIsLoading(false)
         return
       }
 
@@ -71,10 +71,9 @@ export default function EditorPage() {
     } catch (err) {
       console.error("Error fetching problems:", err)
       setError(err.message || "Failed to fetch submissions")
-    } finally {
-      setIsLoading(false)
     }
-  }
+  }, [id])
+
   // Fetch problems from API
   const fetchProblem = async (id) => {
     setIsLoading(true)
@@ -111,7 +110,7 @@ export default function EditorPage() {
 
       const data = await response.json()
       setProblem(data)
-      fetchSubmissions(id)
+      fetchSubmissions()
     } catch (err) {
       console.error("Error fetching problems:", err)
       setError(err.message || "Failed to fetch problems")
@@ -123,7 +122,7 @@ export default function EditorPage() {
   // Fetch problem data
   useEffect(() => {
     fetchProblem(id)
-  }, [id])
+  }, [id, fetchSubmissions])
 
   // Update useEffect to set the initial code based on selected language's template
   // But don't reset code when only submissions change
@@ -263,9 +262,10 @@ export default function EditorPage() {
                 : `Passed ${passedTestCases} out of ${totalTestCases} test cases.`,
         variant: passedTestCases === totalTestCases ? "default" : "destructive",
       })
+
       if (isSubmit) {
-        // If it's a submission, immediately fetch the updated submissions
-        fetchSubmissions(id)
+        // If it's a submission, fetch the updated submissions without page reload
+        fetchSubmissions()
       }
     } catch (err) {
       console.error(`Error in execution problem:`, err)
@@ -297,13 +297,6 @@ export default function EditorPage() {
     }
   }
 
-  // Determine layout classes
-  const containerClasses = isFullScreen
-      ? "fixed inset-0 z-50 bg-background/95 backdrop-blur-sm p-4 overflow-auto"
-      : "container py-4 mx-auto px-4"
-
-  const gridClasses = layout === "horizontal" ? "grid grid-cols-1 md:grid-cols-12 gap-6" : "flex flex-col gap-6 mx-auto"
-
   if (isLoading || !problem) {
     return (
         <div className="flex items-center justify-center h-screen">
@@ -314,88 +307,114 @@ export default function EditorPage() {
 
   return (
       <main className="flex-1 min-h-screen">
-        <div className={containerClasses}>
+        <div
+            className={
+              isFullScreen
+                  ? "fixed inset-0 z-50 bg-background/95 backdrop-blur-sm overflow-auto"
+                  : "container py-4 mx-auto px-4"
+            }
+        >
           {!isFullScreen && (
-              <>
-                <Link
-                    to="/dashboard/practice"
-                    className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
-                    aria-label="Back to Problems"
-                >
-                  <ArrowLeft className="mr-1 h-4 w-4" /> Back to Problems
-                </Link>
-
-                <div className="flex flex-col md:flex-row justify-between items-start mb-6">
-                  <div>
-                    <h1 className="text-2xl font-bold">
-                      {problem.id}. {problem.title}
-                    </h1>
-                    <div className="flex items-center gap-3 mt-2">
-                      <div
-                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                              problem.difficulty === "easy"
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                  : problem.difficulty === "medium"
-                                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                                      : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                          }`}
-                      >
-                        {problem.difficulty}
-                      </div>
-                      <span className="text-sm text-muted-foreground">Acceptance: {problem.acceptance}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 mt-4 md:mt-0">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={toggleLayout}
-                        className="btn-hover"
-                        aria-label={layout === "horizontal" ? "Switch to vertical layout" : "Switch to horizontal layout"}
-                    >
-                      <Layout className="mr-1 h-4 w-4" />
-                      {layout === "horizontal" ? "Vertical Layout" : "Horizontal Layout"}
-                    </Button>
-                    <Dialog open={showSettings} onOpenChange={setShowSettings}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="btn-hover" aria-label="Editor settings">
-                          <Settings className="mr-1 h-4 w-4" />
-                          Settings
-                        </Button>
-                      </DialogTrigger>
-                      <EditorSettingsDialog
-                          settings={editorSettings}
-                          onSettingsChange={setEditorSettings}
-                          onClose={() => setShowSettings(false)}
-                      />
-                    </Dialog>
-                  </div>
-                </div>
-              </>
+              <Link
+                  to="/dashboard/practice"
+                  className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
+                  aria-label="Back to Problems"
+              >
+                <ArrowLeft className="mr-1 h-4 w-4" /> Back to Problems
+              </Link>
           )}
 
-          <div className={gridClasses}>
-            {/* Problem Description Section */}
-            {(!isFullScreen || layout === "vertical") && (
-                <div className={layout === "horizontal" ? "md:col-span-5" : "w-full max-w-3xl mx-auto"}>
-                  <ProblemDescription problem={problem} result={result} layout={layout} subs={subs} />
+          <div className="flex flex-col border rounded-lg overflow-hidden shadow-sm">
+            {/* Header */}
+            <div className="bg-background p-4 border-b">
+              <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold">
+                    {problem.id}. {problem.title}
+                  </h1>
+                  <div className="flex items-center gap-3 mt-2">
+                    <div
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            problem.difficulty === "easy"
+                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                : problem.difficulty === "medium"
+                                    ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                    : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                        }`}
+                    >
+                      {problem.difficulty}
+                    </div>
+                    <span className="text-sm text-muted-foreground">Acceptance: {problem.acceptance}</span>
+                  </div>
                 </div>
-            )}
+                <div className="flex items-center gap-2">
+                  <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={toggleLayout}
+                      className="btn-hover"
+                      aria-label={layout === "horizontal" ? "Switch to vertical layout" : "Switch to horizontal layout"}
+                  >
+                    <Layout className="mr-1 h-4 w-4" />
+                    {layout === "horizontal" ? "Vertical Layout" : "Horizontal Layout"}
+                  </Button>
+                  <Dialog open={showSettings} onOpenChange={setShowSettings}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="btn-hover" aria-label="Editor settings">
+                        <Settings className="mr-1 h-4 w-4" />
+                        Settings
+                      </Button>
+                    </DialogTrigger>
+                    <EditorSettingsDialog
+                        settings={editorSettings}
+                        onSettingsChange={setEditorSettings}
+                        onClose={() => setShowSettings(false)}
+                    />
+                  </Dialog>
+                </div>
+              </div>
+            </div>
 
-            {/* Code Editor Section */}
-            <div className={layout === "horizontal" ? "md:col-span-7" : "w-full"}>
-              <CodeEditorPanel
-                  code={code}
-                  setCode={setCode}
-                  language={language}
-                  setLanguage={handleLanguageChange}
-                  settings={editorSettings}
-                  isFullScreen={isFullScreen}
-                  setIsFullScreen={setIsFullScreen}
-                  onExecuteCode={handleExecuteCode}
-                  result={result}
-                  supportedLanguages={["c", "cpp", "java"]}
-              />
+            {/* Content Area */}
+            <div className="flex-1 flex flex-col">
+              {/* Editor and Problem Description */}
+              <div className={`${layout === "horizontal" ? "flex" : "flex flex-col"}`} style={{ minHeight: "70vh" }}>
+                {/* Problem Description Section */}
+                {(!isFullScreen || layout === "vertical") && (
+                    <div
+                        className={layout === "horizontal" ? "w-5/12 overflow-auto border-r" : "h-1/2 overflow-auto border-b"}
+                    >
+                      <ProblemDescription problem={problem} result={result} layout={layout} subs={subs} />
+                    </div>
+                )}
+
+                {/* Code Editor Section */}
+                <div className={layout === "horizontal" ? "w-7/12 overflow-auto" : "h-1/2 overflow-auto"}>
+                  <CodeEditorPanel
+                      code={code}
+                      setCode={setCode}
+                      language={language}
+                      setLanguage={handleLanguageChange}
+                      settings={editorSettings}
+                      isFullScreen={isFullScreen}
+                      setIsFullScreen={setIsFullScreen}
+                      onExecuteCode={handleExecuteCode}
+                      result={null} // We're handling the result separately
+                      supportedLanguages={["c", "cpp", "java"]}
+                  />
+                </div>
+              </div>
+
+              {/* Console Output Panel - Fixed Height */}
+              <div className="border-t bg-muted/10 h-[200px] overflow-auto">
+                {result && result.consoleOutput ? (
+                    <ConsoleOutputPanel consoleOutput={result.consoleOutput} className="m-4" />
+                ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <p>Run your code to see output here</p>
+                    </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

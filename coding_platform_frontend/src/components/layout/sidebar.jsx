@@ -175,6 +175,17 @@ export default function Sidebar() {
                                 Dashboard
                             </Link>
                             <Link
+                                to={`/dashboard/practice`}
+                                className={`sidebar-item flex items-center gap-3 rounded-lg px-3 py-2 ${
+                                    isActive("/dashboard/practice")
+                                        ? "sidebar-active"
+                                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                                }`}
+                            >
+                                <FileCode className="h-4 w-4" />
+                                Practice Problems
+                            </Link>
+                            <Link
                                 to={`/dashboard/contests`}
                                 className={`sidebar-item flex items-center gap-3 rounded-lg px-3 py-2 ${
                                     isActive("/dashboard/contests")
@@ -184,17 +195,6 @@ export default function Sidebar() {
                             >
                                 <Trophy className="h-4 w-4" />
                                 Contests
-                            </Link>
-                            <Link
-                                to={`/dashboard/practice`}
-                                className={`sidebar-item flex items-center gap-3 rounded-lg px-3 py-2 ${
-                                    isActive("/dashboard/practice")
-                                        ? "sidebar-active"
-                                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                                }`}
-                            >
-                                <FileCode className="h-4 w-4" />
-                                Practice
                             </Link>
                             <Link
                                 to={`/dashboard/leaderboard`}

@@ -3,10 +3,10 @@ import Home from "@/pages/global/Home.jsx"
 import Practice from "@/pages/user/Practice.jsx"
 import Contests from "@/pages/user/Contests.jsx"
 import Contest from "@/components/contest/Contest.jsx"
-import Editor from "@/pages/user/EditorPage.jsx"
+import EditorPage from "@/pages/user/EditorPage.jsx"
 import Leaderboard from "@/pages/user/Leaderboard.jsx"
 import MainSection from "@/pages/user/MainSection.jsx"
-import EditorLayout from "@/components/layout/editor-layout.jsx"
+import ProblemEditorLayout from "@/components/layout/problem-editor-layout.jsx"
 import AboutUs from "@/pages/global/AboutUs.jsx"
 import ContactUs from "@/pages/global/ContactUs.jsx"
 import SignUp from "@/pages/global/Sign-up.jsx"
@@ -22,6 +22,8 @@ import AdminUsers from "@/pages/admin/Users.jsx"
 import AdminProblems from "@/pages/admin/Problems.jsx"
 import AdminContests from "@/pages/admin/Contests.jsx"
 import AdminLeaderboard from "@/pages/admin/Leaderboard.jsx"
+import ContestEditorLayout from "@/components/layout/contest-editor-layout.jsx";
+import ContestEditorPage from "@/pages/user/ContestEditorPage.jsx";
 
 function App() {
     return (
@@ -78,11 +80,23 @@ function App() {
                     path="editor"
                     element={
                         <ProtectedRoute>
-                            <EditorLayout />
+                            <ProblemEditorLayout />
                         </ProtectedRoute>
                     }
                 >
-                    <Route path="problem/:id" element={<Editor />} />
+                    <Route path="problem/:id" element={<EditorPage />} />
+                </Route>
+
+                {/* Nested Routes for Contest Editor page*/}
+                <Route
+                    path="contest-editor"
+                    element={
+                        <ProtectedRoute>
+                            <ContestEditorLayout />
+                        </ProtectedRoute>
+                    }
+                >
+                    <Route path="contest/:id" element={<ContestEditorPage />} />
                 </Route>
             </Routes>
 

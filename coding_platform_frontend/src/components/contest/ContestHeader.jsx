@@ -39,13 +39,21 @@ export default function ContestHeader({ contest, contestStatus, countdown, timeR
                     {contestStatus === "past" && "Contest ended"}
                 </Badge>
                 {contestStatus === "upcoming" && (
-                    <Button disabled={timeRemaining?.diff > 5 * 60 * 1000}>
-                        {timeRemaining?.diff <= 5 * 60 * 1000 ? "Start Contest" : "Register"}
-                    </Button>
+                    <>
+                        {timeRemaining?.diff <= 5 * 60 * 1000 ? (
+                            <Button disabled={timeRemaining?.diff <= 5 * 60 * 1000}>
+                                Enter Contest
+                            </Button>
+                        ): (
+                            <Button>
+                                <Link to={`/contest/${contest.id}/participate`}>Register</Link>
+                            </Button>
+                        )}
+                    </>
                 )}
                 {contestStatus === "ongoing" && (
                     <Button asChild>
-                        <Link to={`/contest/${contest.id}/participate`}>Enter Contest</Link>
+                        <Link to={`/contest-editor/contest/${contest.id}`}>Enter Contest</Link>
                     </Button>
                 )}
                 {contestStatus === "past" && (

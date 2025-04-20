@@ -2,22 +2,22 @@ import { useRef, useState } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card.jsx"
 import { Button } from "@/components/ui/button.jsx"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx"
-import { Maximize2, Minimize2, RotateCcw, Copy, Play, Loader2 } from "lucide-react"
+import { Maximize2, Minimize2, RotateCcw, Copy } from "lucide-react"
 import MonacoEditor from "@/components/editor/MonacoEditor"
 import ResizablePanel from "@/components/editor/ResizablePanel"
 
-export default function CodeEditorPanel({
-                                            code,
-                                            setCode,
-                                            language,
-                                            setLanguage,
-                                            settings,
-                                            isFullScreen,
-                                            setIsFullScreen,
-                                            onExecuteCode,
-                                            result,
-                                            supportedLanguages = ["c", "cpp", "java"],
-                                        }) {
+export default function ContestCodeEditorPanel({
+                                                   code,
+                                                   setCode,
+                                                   language,
+                                                   setLanguage,
+                                                   settings,
+                                                   isFullScreen,
+                                                   setIsFullScreen,
+                                                   onExecuteCode,
+                                                   result,
+                                                   supportedLanguages = ["c", "cpp", "java"],
+                                               }) {
     const [loading, setLoading] = useState(false)
     const editorContainerRef = useRef(null)
     const fullScreenRef = useRef(null)
@@ -40,7 +40,6 @@ export default function CodeEditorPanel({
         }
     }
 
-    // Update the resetCode function to use the problem's initialCode if available
     const resetCode = () => {
         if (window.confirm("Are you sure you want to reset your code to the initial template?")) {
             // In a real app, this would reset to the initial code from the problem
@@ -150,79 +149,8 @@ export default function CodeEditorPanel({
                                 scrollBeyondLastLine: false,
                                 automaticLayout: true,
                             }}
-                            height={isFullScreen ? "calc(100vh - 200px)" : "500px"}
+                            height={isFullScreen ? "calc(100vh - 200px)" : "100%"}
                         />
-                    </div>
-
-                    <div
-                        className={`p-4 border-t flex items-center justify-between ${isFullScreen ? "bg-background border shadow-sm" : "bg-muted/50"}`}
-                    >
-                        <div className="flex-grow">
-                            {result && result.status && (
-                                <div className="flex items-center gap-2">
-                                    {result.status === "Accepted" ? (
-                                        <div
-                                            className={`font-medium flex items-center ${isFullScreen ? "text-green-600 dark:text-green-500" : "text-green-600 dark:text-green-400"}`}
-                                        >
-                                            <svg
-                                                className="w-5 h-5 mr-1"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                                />
-                                            </svg>
-                                            {result.status}
-                                            {result.runtime && (
-                                                <span
-                                                    className={`text-sm ml-2 ${isFullScreen ? "text-foreground/70" : "text-muted-foreground"}`}
-                                                >
-                          Runtime: {result.runtime} • Memory: {result.memory}
-                        </span>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <span
-                                            className={`font-medium ${isFullScreen ? "text-yellow-600 dark:text-yellow-500" : "text-yellow-600 dark:text-yellow-400"}`}
-                                        >
-                      {result.status}
-                    </span>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                    handleExecute(false)
-                                }}
-                                disabled={loading}
-                                className="btn-hover"
-                                aria-label="Run code"
-                            >
-                                {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Play className="mr-1 h-4 w-4" />}
-                                Run
-                            </Button>
-                            <Button
-                                size="sm"
-                                onClick={() => {
-                                    handleExecute(true)
-                                }}
-                                disabled={loading}
-                                className="bg-primary hover:bg-primary/90 text-primary-foreground btn-hover"
-                                aria-label="Submit solution"
-                            >
-                                Submit
-                            </Button>
-                        </div>
                     </div>
                 </CardContent>
             </Card>

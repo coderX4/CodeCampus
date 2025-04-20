@@ -41,4 +41,9 @@ public class ContestController {
     public ResponseEntity<ContestDTO> getContestDetails(@PathVariable("id") String id) {
         return ResponseEntity.ok(contestService.getContestDetails(id));
     }
+
+    @GetMapping({"/register/{id}/{email}"})
+    public ResponseEntity<?> registerContest(@PathVariable("id") String id, @PathVariable("email") String email) {
+        return ResponseEntity.ok().build();
+    }
 }

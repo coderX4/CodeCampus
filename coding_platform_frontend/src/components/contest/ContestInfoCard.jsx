@@ -47,7 +47,7 @@ export default function ContestInfoCard({ contest }) {
                     </div>
                     <div className="space-y-2">
                         <h3 className="text-sm font-medium text-muted-foreground">Duration</h3>
-                        <p>{contest.duration || "TBA"}</p>
+                        <p>{contest.duration || "TBA"} hr</p>
                     </div>
                     <div className="space-y-2">
                         <h3 className="text-sm font-medium text-muted-foreground">Participants</h3>

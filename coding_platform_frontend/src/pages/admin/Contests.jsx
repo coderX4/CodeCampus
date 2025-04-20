@@ -245,7 +245,10 @@ export default function AdminContests() {
 
         try {
             // Determine if we're creating or updating
-            const isEditing = !!editingContest
+            let isEditing = !!editingContest
+            if(isDuplicateContest){
+                isEditing = false
+            }
             const url = isEditing
                 ? `http://localhost:8083/api/contest/update/${editingContest.id}`
                 : "http://localhost:8083/api/contest/createcontest"
@@ -276,6 +279,7 @@ export default function AdminContests() {
 
             setShowAddContestForm(false)
             setEditingContest(null) // Reset editing state
+            setIsDuplicateContest(false)
             fetchContests()
         } catch (err) {
             console.error(`Error ${editingContest ? "updating" : "creating"} contest:`, err)
