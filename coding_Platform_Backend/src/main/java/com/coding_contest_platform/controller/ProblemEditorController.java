@@ -18,7 +18,7 @@ import java.util.concurrent.*;
 @RestController
 @RequestMapping("/api/editor")
 @RequiredArgsConstructor
-public class EditorController {
+public class ProblemEditorController {
 
     private final EditorService editorService;
     private final ProblemService problemService;

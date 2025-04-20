@@ -32,16 +32,26 @@ export default function ProblemsTab({ contestStatus, countdown, problems }) {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                {contestStatus === "upcoming" ? (
+                {contestStatus !== "past" ? (
                     <div className="flex flex-col items-center justify-center py-8">
                         <Clock className="h-16 w-16 text-muted-foreground mb-4" />
-                        <p className="text-center text-muted-foreground">
-                            Problems will be revealed when the contest starts.
-                            <br />
-                            {countdown && `Contest starts in ${countdown}`}
-                            <br />
-                            Make sure to register before the contest begins!
-                        </p>
+                        {contestStatus === "ongoing" ? (
+                            <p className="text-center text-muted-foreground">
+                                Problems will be revealed when the contest ends.
+                                <br />
+                                {countdown && `Contest starts in ${countdown}`}
+                                <br />
+                                Make sure to submit before the contest ends!
+                            </p>
+                        ) : (
+                            <p className="text-center text-muted-foreground">
+                                Problems will be revealed when the contest starts.
+                                <br />
+                                {countdown && `Contest starts in ${countdown}`}
+                                <br />
+                                Make sure to register before the contest begins!
+                            </p>
+                        )}
                     </div>
                 ) : problems.length > 0 ? (
                     <div className="space-y-4">

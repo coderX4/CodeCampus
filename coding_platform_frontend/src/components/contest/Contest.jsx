@@ -8,7 +8,6 @@ import ContestInfoCard from "./ContestInfoCard.jsx"
 import ProblemsTab from "./ProblemsTab.jsx"
 import LeaderboardTab from "./LeaderboardTab.jsx"
 import RulesTab from "./RulesTab.jsx"
-import {determineContestStatus} from "@/utils/contestUtils.js";
 
 export default function Contest() {
   const { id } = useParams()
