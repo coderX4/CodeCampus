@@ -27,6 +27,7 @@ public class ContestServiceImpl implements ContestService {
     @Override
     public Contest createContest(Contest contest) {
         contest.setParticipants((int) contest.getParticipants());
+        contest.setEmailsParticipants(new ArrayList<>());
         return contestRepository.save(contest);
     }
 
@@ -103,7 +104,29 @@ public class ContestServiceImpl implements ContestService {
                 contest.getDuration(),
                 contest.getDifficulty(),
                 contest.getParticipants(),
-                problemList
+                problemList,
+                contest.getEmailsParticipants()
         );
+    }
+
+    @Transactional
+    @Override
+    public void addParticipant(String id, String email){
+        Contest contest = contestRepository.findOneById(id);
+        List<String> emailList = contest.getEmailsParticipants();
+        if(emailList == null){
+            List<String> emailsParticipants = new ArrayList<>();
+            emailsParticipants.add(email);
+            contest.setEmailsParticipants(emailsParticipants);
+            contest.setParticipants(contest.getParticipants() + 1);
+        }
+        else{
+            if(!emailList.contains(email)){
+                emailList.add(email);
+                contest.setParticipants(contest.getParticipants() + 1);
+                contest.setEmailsParticipants(emailList);
+            }
+        }
+        contestRepository.save(contest);
     }
 }

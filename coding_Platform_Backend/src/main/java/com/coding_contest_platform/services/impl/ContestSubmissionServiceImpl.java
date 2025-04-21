@@ -81,10 +81,16 @@ public class ContestSubmissionServiceImpl implements ContestSubmissionService {
     }
 
     @Override
-    public Map<String, List<SubmissionDTO>> getSubmissions(String id, String uId){
+    public Map<String, List<SubmissionDTO>> getSubmissions(String id, String uId) {
         ContestSubmissions contestSubmissions = contestSubmissionsRepository.findOneByContestId(id);
+
+        if (contestSubmissions == null) {
+            return new HashMap<>();
+        }
+
         Map<String, Map<String, List<SubmissionDTO>>> contestSubmission = contestSubmissions.getContestSubmissions();
 
         return contestSubmission.getOrDefault(uId, new HashMap<>());
     }
+
 }
