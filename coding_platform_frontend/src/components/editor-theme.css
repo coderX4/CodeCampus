@@ -42,7 +42,7 @@
     border-right: 1px solid hsl(var(--border));
 }
 
-/* Syntax highlighting */
+/* Syntax highlighting - Updated for better readability */
 .token.comment,
 .token.prolog,
 .token.doctype,
@@ -60,7 +60,7 @@
 .token.number,
 .token.constant,
 .token.symbol {
-    color: hsl(var(--primary));
+    color: hsl(200, 65%, 45%);
 }
 
 .token.selector,
@@ -68,7 +68,7 @@
 .token.string,
 .token.char,
 .token.builtin {
-    color: hsl(130, 60%, 50%);
+    color: hsl(130, 50%, 40%);
 }
 
 .token.operator,
@@ -76,24 +76,24 @@
 .token.url,
 .language-css .token.string,
 .style .token.string {
-    color: hsl(40, 90%, 60%);
+    color: hsl(40, 70%, 50%);
 }
 
 .token.atrule,
 .token.attr-value,
 .token.keyword {
-    color: hsl(210, 90%, 60%);
+    color: hsl(210, 70%, 50%);
 }
 
 .token.function,
 .token.class-name {
-    color: hsl(330, 70%, 60%);
+    color: hsl(330, 60%, 50%);
 }
 
 .token.regex,
 .token.important,
 .token.variable {
-    color: hsl(30, 90%, 60%);
+    color: hsl(30, 70%, 50%);
 }
 
 .token.important,
@@ -122,14 +122,13 @@
 }
 
 .console-success {
-    color: hsl(142, 76%, 36%);
+    color: hsl(142, 65%, 36%);
 }
 
 .console-error {
-    color: hsl(0, 84%, 60%);
+    color: hsl(0, 70%, 55%);
 }
 
 .console-warning {
-    color: hsl(38, 92%, 50%);
+    color: hsl(38, 80%, 50%);
 }
-

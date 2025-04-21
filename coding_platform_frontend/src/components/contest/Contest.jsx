@@ -8,6 +8,7 @@ import ContestInfoCard from "./ContestInfoCard.jsx"
 import ProblemsTab from "./ProblemsTab.jsx"
 import LeaderboardTab from "./LeaderboardTab.jsx"
 import RulesTab from "./RulesTab.jsx"
+import {useToast} from "@/hooks/use-toast.js";
 
 export default function Contest() {
   const { id } = useParams()
@@ -19,6 +20,9 @@ export default function Contest() {
   const [countdown, setCountdown] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
+  const [reload, setReload] = useState(false)
+  const [registered, setRegistered] = useState(false)
+  const { toast } = useToast()
 
   // Try to get contest data from location state or fetch it
   useEffect(() => {
@@ -28,7 +32,7 @@ export default function Contest() {
     } else {
       fetchContestDetails()
     }
-  }, [id, location.state])
+  }, [id, location.state,reload])
 
   // Fetch all contest details including problems in a single request
   const fetchContestDetails = async () => {
@@ -70,6 +74,10 @@ export default function Contest() {
       }))
       setContestData(data)
       setProblems(updatedProblems)
+      const emailParticipants = data.emailsParticipants
+      if(emailParticipants.includes(loggedUser.email)){
+        setRegistered(true)
+      }
     } catch (err) {
       console.error("Error fetching contest details:", err)
       setError(err.message || "Failed to fetch contest details")
@@ -192,6 +200,46 @@ export default function Contest() {
     )
   }
 
+  const handleRegister = async () =>{
+    setError("")
+
+    const storedUser = sessionStorage.getItem("user")
+    const loggedUser = storedUser ? JSON.parse(storedUser) : null
+
+    if (!loggedUser || !loggedUser.token) {
+      setError("Authentication required. Please log in again.")
+      return
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8083/api/contest/register/${id}/${loggedUser.email}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${loggedUser.token}`,
+        },
+      })
+
+      if (response.status === 403) {
+        setError("Access denied: You do not have permission to access this resource.")
+        return
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || "Failed to register you in the contest.")
+      }
+      setReload(!reload)
+      toast({
+        title: "Registered",
+        description: "You successfully registered to the contest.",
+      })
+    } catch (err) {
+      console.error("Error in registering to contest :", err)
+      setError(err.message || "Failed to register in contest.")
+    }
+  }
+
   return (
       <main className="flex-1">
         <div className="container py-4">
@@ -210,6 +258,8 @@ export default function Contest() {
                 contestStatus={contestStatus}
                 countdown={countdown}
                 timeRemaining={timeRemaining}
+                handleRegister={handleRegister}
+                registered={registered}
             />
 
             <ContestInfoCard contest={contestData} />

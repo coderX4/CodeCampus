@@ -20,4 +20,6 @@ public class ContestDTO {
     private String difficulty;
     private int participants;
     private List<ContestProblemDTO> problems;
+    private List<String> emailsParticipants;
+
 }

@@ -20,4 +20,7 @@ public interface ContestService {
     Contest updateContest(Contest contest, String contestId);
 
     ContestDTO getContestDetails(String id);
+
+    @Transactional
+    void addParticipant(String id, String email);
 }

@@ -2,8 +2,12 @@ import { Badge } from "@/components/ui/badge.jsx"
 import { Button } from "@/components/ui/button.jsx"
 import { Clock } from "lucide-react"
 import { Link } from "react-router-dom"
+import { useToast } from "@/hooks/use-toast.js"
 
-export default function ContestHeader({ contest, contestStatus, countdown, timeRemaining }) {
+export default function ContestHeader({ contest, contestStatus, countdown, timeRemaining ,handleRegister, registered}) {
+
+    // Toast notifications
+    const { toast } = useToast()
     // Get difficulty badge color
     const getDifficultyColor = (difficulty) => {
         switch (difficulty?.toLowerCase()) {
@@ -45,15 +49,29 @@ export default function ContestHeader({ contest, contestStatus, countdown, timeR
                                 Enter Contest
                             </Button>
                         ): (
-                            <Button>
-                                <Link to={`/contest/${contest.id}/participate`}>Register</Link>
+                            <Button disabled={registered === true} onClick={handleRegister}>
+                                {registered ? "Registered" : "Register"}
                             </Button>
                         )}
                     </>
                 )}
                 {contestStatus === "ongoing" && (
-                    <Button asChild>
-                        <Link to={`/contest-editor/contest/${contest.id}`}>Enter Contest</Link>
+                    <Button
+                        asChild={registered}
+                        disabled={!registered}
+                        onClick={
+                            !registered
+                                ? () => {
+                                    toast({
+                                        variant: "destructive",
+                                        title: "Registration Required",
+                                        description: "You must register for this contest before you can enter it.",
+                                    })
+                                }
+                                : undefined
+                        }
+                    >
+                        {registered ? <Link to={`/contest-editor/contest/${contest.id}`}>Enter Contest</Link> : "Enter Contest"}
                     </Button>
                 )}
                 {contestStatus === "past" && (

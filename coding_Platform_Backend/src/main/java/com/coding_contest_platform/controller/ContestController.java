@@ -3,7 +3,6 @@ package com.coding_contest_platform.controller;
 import com.coding_contest_platform.dto.contest.ContestDTO;
 import com.coding_contest_platform.entity.Contest;
 import com.coding_contest_platform.services.ContestService;
-import com.coding_contest_platform.services.ProblemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -44,6 +43,7 @@ public class ContestController {
 
     @GetMapping({"/register/{id}/{email}"})
     public ResponseEntity<?> registerContest(@PathVariable("id") String id, @PathVariable("email") String email) {
+        contestService.addParticipant(id, email);
         return ResponseEntity.ok().build();
     }
 }

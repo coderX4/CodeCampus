@@ -1,8 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button.jsx"
-import { Clock, Layout, Settings, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle } from "lucide-react"
-import { ContestProblemDescription, ContestCodeEditorPanel, ContestConsolePanel,EditorSettingsDialog } from "@/components/editor/editorindex.js"
+import { Clock, Settings, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle } from "lucide-react"
+import {
+    ContestProblemDescription,
+    ContestCodeEditorPanel,
+    ContestConsolePanel,
+    EditorSettingsDialog,
+} from "@/components/editor/editorindex.js"
 import { useToast } from "@/hooks/use-toast.js"
 import { Badge } from "@/components/ui/badge.jsx"
 import { Dialog, DialogTrigger } from "@/components/ui/dialog"
@@ -37,6 +42,9 @@ export default function ContestEditorPage() {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
     const [activeTab, setActiveTab] = useState("editor")
     const consoleRef = useRef(null)
+    // Add loading state variables at the top of the component with other state variables
+    const [isRunning, setIsRunning] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     // Toast notifications
     const { toast } = useToast()
@@ -220,15 +228,25 @@ export default function ContestEditorPage() {
         }
     }, [id])
 
+    // Modify the handleExecuteCode function to handle loading states
     const handleExecuteCode = async (isSubmit) => {
         setError("")
         setResult(null) // Reset previous results
+
+        // Set loading state based on action type
+        if (isSubmit) {
+            setIsSubmitting(true)
+        } else {
+            setIsRunning(true)
+        }
 
         const storedUser = sessionStorage.getItem("user")
         const loggedUser = storedUser ? JSON.parse(storedUser) : null
 
         if (!loggedUser || !loggedUser.token) {
             setError("Authentication required. Please log in again.")
+            setIsRunning(false)
+            setIsSubmitting(false)
             return
         }
 
@@ -333,7 +351,7 @@ export default function ContestEditorPage() {
 
             if (isSubmit) {
                 // If it's a submission, fetch the updated submissions without page reload
-                fetchContestSubmissions()
+                await fetchContestSubmissions()
             }
         } catch (err) {
             console.error(`Error in execution problem:`, err)
@@ -350,6 +368,10 @@ export default function ContestEditorPage() {
                 title: "Error",
                 description: err.message || `Failed to execute the problem solution`,
             })
+        } finally {
+            // Reset loading states
+            setIsRunning(false)
+            setIsSubmitting(false)
         }
     }
 
@@ -399,29 +421,35 @@ export default function ContestEditorPage() {
                             {contestData.difficulty}
                         </Badge>
                     </div>
-
                 </div>
 
                 {/* Problems List */}
                 <div className="flex-1 overflow-y-auto p-2">
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-2 py-1">Problems</h3>
                     <div className="space-y-1 mt-1">
-                        {problems.map((prob, index) => (
-                            <Button
-                                key={prob.id}
-                                variant={selectedProblemIndex === index ? "default" : "ghost"}
-                                size="sm"
-                                onClick={() => handleProblemSelect(index)}
-                                className="w-full justify-start text-left"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <span className="font-medium">Problem {index + 1}</span>
-                                    <Badge variant="outline" className={`text-xs ${getDifficultyColor(prob.difficulty)}`}>
-                                        {prob.difficulty}
-                                    </Badge>
-                                </div>
-                            </Button>
-                        ))}
+                        {problems.map((prob, index) => {
+                            // Check if this problem has an accepted submission
+                            const problemSubs = subs[prob.id] || []
+                            const isAccepted = problemSubs.some((sub) => sub.accepted === true)
+
+                            return (
+                                <Button
+                                    key={prob.id}
+                                    variant={selectedProblemIndex === index ? "default" : "ghost"}
+                                    size="sm"
+                                    onClick={() => handleProblemSelect(index)}
+                                    className="w-full justify-start text-left"
+                                >
+                                    <div className="flex items-center gap-2 w-full">
+                                        <span className="font-medium">Problem {index + 1}</span>
+                                        <Badge variant="outline" className={`text-xs ${getDifficultyColor(prob.difficulty)}`}>
+                                            {prob.difficulty}
+                                        </Badge>
+                                        {isAccepted && <CheckCircle className="h-4 w-4 ml-auto text-green-800" />}
+                                    </div>
+                                </Button>
+                            )
+                        })}
                     </div>
                 </div>
             </div>
@@ -441,8 +469,12 @@ export default function ContestEditorPage() {
                 {/* Header */}
                 <div className="bg-background p-3 border-b flex items-center justify-between">
                     <div>
-                        <h1 className="text-lg font-bold">
+                        <h1 className="text-lg font-bold flex items-center gap-2">
                             Problem {selectedProblemIndex + 1}: {problem.title}
+                            {/* Show checkmark if current problem is accepted */}
+                            {subs[problem.id]?.some((sub) => sub.accepted === true) && (
+                                <CheckCircle className="h-5 w-5 text-green-500" />
+                            )}
                         </h1>
                         <div className="flex items-center gap-2 mt-1">
                             <Badge variant="outline" className={getDifficultyColor(problem.difficulty)}>
@@ -554,6 +586,8 @@ export default function ContestEditorPage() {
                                     </div>
                                 )}
                             </div>
+                            {/* Update the action bar buttons at the bottom of the component
+              Replace the existing buttons in the Fixed Action Bar section with: */}
                             <div className="flex items-center gap-2">
                                 <Button
                                     variant="outline"
@@ -561,20 +595,22 @@ export default function ContestEditorPage() {
                                     onClick={() => {
                                         handleExecuteCode(false)
                                     }}
+                                    disabled={isRunning || isSubmitting}
                                     className="btn-hover"
                                     aria-label="Run code"
                                 >
-                                    Run Code
+                                    {isRunning ? "Running..." : "Run Code"}
                                 </Button>
                                 <Button
                                     size="sm"
                                     onClick={() => {
                                         handleExecuteCode(true)
                                     }}
+                                    disabled={isRunning || isSubmitting}
                                     className="bg-primary hover:bg-primary/90 text-primary-foreground btn-hover"
                                     aria-label="Submit solution"
                                 >
-                                    Submit Solution
+                                    {isSubmitting ? "Submitting..." : "Submit Solution"}
                                 </Button>
                             </div>
                         </div>

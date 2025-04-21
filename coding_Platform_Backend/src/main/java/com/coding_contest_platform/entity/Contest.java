@@ -25,4 +25,5 @@ public class Contest {
     private boolean saveAsDraft;
     private List<String> problems; // it stores the problem ids.
     private int participants;
+    private List<String> emailsParticipants;
 }
