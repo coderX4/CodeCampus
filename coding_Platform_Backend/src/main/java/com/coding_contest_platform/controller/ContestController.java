@@ -1,19 +1,26 @@
 package com.coding_contest_platform.controller;
 
 import com.coding_contest_platform.dto.contest.ContestDTO;
+import com.coding_contest_platform.dto.contest.ContestResultDTO;
 import com.coding_contest_platform.entity.Contest;
+import com.coding_contest_platform.services.ContestResultService;
 import com.coding_contest_platform.services.ContestService;
+import com.coding_contest_platform.services.UserServices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/contest")
 @RequiredArgsConstructor
 public class ContestController {
     private final ContestService contestService;
+    private final UserServices userServices;
+    private final ContestResultService contestResultService;
 
     @PostMapping({"/createcontest"})
     public ResponseEntity<Contest> createContest(@RequestBody Contest contest) {
@@ -45,5 +52,27 @@ public class ContestController {
     public ResponseEntity<?> registerContest(@PathVariable("id") String id, @PathVariable("email") String email) {
         contestService.addParticipant(id, email);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping({"/getResult/{email}/{id}"})
+    public ResponseEntity<ContestResultDTO> getContestResult(@PathVariable("email") String email ,@PathVariable("id") String id) {
+        ContestResultDTO contestResultDTO = contestResultService.sendResult(userServices.getIdByEmail(email),id);
+        if(contestResultDTO==null){
+            contestResultDTO = new ContestResultDTO();
+            return ResponseEntity.ok(contestResultDTO);
+        }
+        else{
+            return ResponseEntity.ok(contestResultDTO);
+        }
+    }
+
+    @GetMapping({"/getLeaderBoardsResult/{id}"})
+    public ResponseEntity<Map<String, ContestResultDTO>> contestLeaderboard(@PathVariable("id") String id){
+        Map<String, ContestResultDTO> resultDTOMap = contestResultService.getContestResults(id);
+        if(resultDTOMap == null){
+            resultDTOMap = new HashMap<>();
+            return ResponseEntity.ok(resultDTOMap);
+        }
+        return ResponseEntity.ok(resultDTOMap);
     }
 }

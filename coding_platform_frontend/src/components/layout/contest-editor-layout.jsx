@@ -1,5 +1,3 @@
-"use client"
-
 import { Outlet } from "react-router-dom"
 import { Code, Moon, Sun, Settings, Save, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button.jsx"
@@ -35,9 +33,36 @@ export default function ContestEditorLayout() {
             else if (elem.msRequestFullscreen) elem.msRequestFullscreen()
         }
 
-        const exitToDashboard = () => {
+        const exitToDashboard = async () => {
             if (hasExited) return
             hasExited = true
+
+            // Get user info from session storage
+            const storedUser = sessionStorage.getItem("user")
+            const user = storedUser ? JSON.parse(storedUser) : { uname: "User" }
+
+            try {
+                // Send violation report to server
+                await fetch("http://localhost:8083/api/contesteditor/report-violation", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${user.token}`,
+                    },
+                    body: JSON.stringify({
+                        email: user.email,
+                        contestId: window.location.pathname.split("/").pop(), // Extract contest ID from URL
+                        timestamp: new Date().toLocaleTimeString(undefined, {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                            hour12: true,
+                        }),
+                    }),
+                })
+            } catch (error) {
+                console.error("Failed to report violation:", error)
+            }
 
             alert("Test is closed due to policy violation.")
             window.history.back()
@@ -77,8 +102,35 @@ export default function ContestEditorLayout() {
     }, [])
 
     // Update the handleFinishTest function to exit fullscreen before navigating back
-    const handleFinishTest = () => {
+    const handleFinishTest = async () => {
         setShowFinishDialog(false)
+
+        // Get user info from session storage
+        const storedUser = sessionStorage.getItem("user")
+        const user = storedUser ? JSON.parse(storedUser) : { uname: "User" }
+
+        try {
+            // Send test completion report to server
+            await fetch("http://localhost:8083/api/contesteditor/finish-test", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${user.token}`,
+                },
+                body: JSON.stringify({
+                    email: user.email,
+                    contestId: window.location.pathname.split("/").pop(), // Extract contest ID from URL
+                    timestamp: new Date().toLocaleTimeString(undefined, {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        hour12: true,
+                    }),
+                }),
+            })
+        } catch (error) {
+            console.error("Failed to report test completion:", error)
+        }
 
         // Exit fullscreen before navigating back
         if (document.fullscreenElement) {

@@ -2,19 +2,25 @@ package com.coding_contest_platform.services.impl;
 
 import com.coding_contest_platform.dto.contest.ContestDTO;
 import com.coding_contest_platform.dto.contest.ContestProblemDTO;
+import com.coding_contest_platform.dto.contest.ContestResultDTO;
 import com.coding_contest_platform.entity.Contest;
+import com.coding_contest_platform.entity.ContestResults;
 import com.coding_contest_platform.entity.Problem;
 import com.coding_contest_platform.entity.ProblemData;
 import com.coding_contest_platform.repository.ContestRepository;
+import com.coding_contest_platform.repository.ContestResultsRepository;
 import com.coding_contest_platform.repository.ProblemDataRepository;
 import com.coding_contest_platform.repository.ProblemRepository;
 import com.coding_contest_platform.services.ContestService;
+import com.coding_contest_platform.services.UserServices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -22,11 +28,13 @@ public class ContestServiceImpl implements ContestService {
     private final ContestRepository contestRepository;
     private final ProblemRepository problemRepository;
     private final ProblemDataRepository problemDataRepository;
+    private final UserServices userServices;
+    private final ContestResultsRepository contestResultsRepository;
 
     @Transactional
     @Override
     public Contest createContest(Contest contest) {
-        contest.setParticipants((int) contest.getParticipants());
+        contest.setParticipants(0);
         contest.setEmailsParticipants(new ArrayList<>());
         return contestRepository.save(contest);
     }
@@ -114,17 +122,49 @@ public class ContestServiceImpl implements ContestService {
     public void addParticipant(String id, String email){
         Contest contest = contestRepository.findOneById(id);
         List<String> emailList = contest.getEmailsParticipants();
-        if(emailList == null){
+
+        //creation of map of problem and their points
+        //initially 0
+        List<String> problems = contest.getProblems();
+        Map<String,Integer> points = new HashMap<>();
+        for(String problemIds : problems){
+            points.put(problemIds,0);
+        }
+
+        //creation of the contest result
+        ContestResultDTO contestResultDTO = new ContestResultDTO();
+        contestResultDTO.setViolation(false);
+        contestResultDTO.setSubmitted(false);
+        contestResultDTO.setCompletionTime("");
+        contestResultDTO.setPoints(points);
+        contestResultDTO.setTotalPoints(0);
+
+        if(emailList.isEmpty()){
             List<String> emailsParticipants = new ArrayList<>();
             emailsParticipants.add(email);
             contest.setEmailsParticipants(emailsParticipants);
             contest.setParticipants(contest.getParticipants() + 1);
+
+            Map<String, ContestResultDTO> result  = new HashMap<>();
+            result.put(userServices.getIdByEmail(email), contestResultDTO);
+
+            ContestResults contestResult = new ContestResults();
+            contestResult.setContestId(id);
+            contestResult.setResults(result);
+            contestResultsRepository.save(contestResult);
         }
         else{
             if(!emailList.contains(email)){
                 emailList.add(email);
                 contest.setParticipants(contest.getParticipants() + 1);
                 contest.setEmailsParticipants(emailList);
+
+                ContestResults contestResult = contestResultsRepository.findOneByContestId(id);
+                Map<String, ContestResultDTO> result = contestResult.getResults();
+                result.put(userServices.getIdByEmail(email), contestResultDTO);
+
+                contestResult.setResults(result);
+                contestResultsRepository.save(contestResult);
             }
         }
         contestRepository.save(contest);
