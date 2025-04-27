@@ -1,15 +1,20 @@
 import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import LiveClock from "@/components/shared/LiveClock.jsx"
 import { determineContestStatus } from "@/utils/contestUtils.js"
 import ContestCard from "@/components/contest/ContestCard.jsx"
+import { Button } from "@/components/ui/button.jsx"
 
 export default function Contests() {
   const [contests, setContests] = useState([])
   const [activeTab, setActiveTab] = useState("upcoming")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const contestsPerPage = 4
 
   const fetchContests = async () => {
     setIsLoading(true)
@@ -76,8 +81,28 @@ export default function Contests() {
     return () => clearInterval(interval)
   }, [])
 
-  // Filter contests based on active tab
-  const filteredContests = contests.filter((contest) => activeTab === "all" || contest.status === activeTab)
+  // Reset to first page when changing tabs
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeTab])
+
+  // Filter contests based on active tab and reverse the order
+  const filteredContests = contests
+      .filter((contest) => activeTab === "all" || contest.status === activeTab)
+      .slice() // Create a copy to avoid mutating the original array
+      .reverse() // Reverse the order to show last items first
+
+  // Calculate pagination
+  const totalContests = filteredContests.length
+  const totalPages = Math.ceil(totalContests / contestsPerPage)
+  const indexOfLastContest = currentPage * contestsPerPage
+  const indexOfFirstContest = indexOfLastContest - contestsPerPage
+  const currentContests = filteredContests.slice(indexOfFirstContest, indexOfLastContest)
+
+  // Handle page change
+  const handlePageChange = (page) => {
+    setCurrentPage(page)
+  }
 
   // Loading and error states
   const renderContent = () => {
@@ -106,10 +131,94 @@ export default function Contests() {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredContests.map((contest) => (
-              <ContestCard key={contest.id} {...contest} />
-          ))}
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {currentContests.map((contest) => (
+                <ContestCard key={contest.id} {...contest} />
+            ))}
+          </div>
+
+          {totalPages > 1 && renderPagination()}
+        </>
+    )
+  }
+
+  // Render pagination controls
+  const renderPagination = () => {
+    return (
+        <div className="flex items-center justify-between py-4 mt-6">
+          <div className="text-sm text-muted-foreground">
+            Showing {Math.min(indexOfFirstContest + 1, totalContests)} to {Math.min(indexOfLastContest, totalContests)} of{" "}
+            {totalContests} contests
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(1)}
+                disabled={currentPage === 1}
+                aria-label="First page"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                aria-label="Previous page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                // Show pages around current page
+                let pageNum
+                if (totalPages <= 5) {
+                  pageNum = i + 1
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i
+                } else {
+                  pageNum = currentPage - 2 + i
+                }
+
+                return (
+                    <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum)}
+                        aria-label={`Page ${pageNum}`}
+                        aria-current={currentPage === pageNum ? "page" : undefined}
+                    >
+                      {pageNum}
+                    </Button>
+                )
+              })}
+            </div>
+
+            <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                aria-label="Next page"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage === totalPages}
+                aria-label="Last page"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
     )
   }

@@ -113,7 +113,8 @@ public class ContestServiceImpl implements ContestService {
                 contest.getDifficulty(),
                 contest.getParticipants(),
                 problemList,
-                contest.getEmailsParticipants()
+                contest.getEmailsParticipants(),
+                contest.getRules()
         );
     }
 
@@ -138,6 +139,7 @@ public class ContestServiceImpl implements ContestService {
         contestResultDTO.setCompletionTime("");
         contestResultDTO.setPoints(points);
         contestResultDTO.setTotalPoints(0);
+        contestResultDTO.setProblemsSolved(0);
 
         if(emailList.isEmpty()){
             List<String> emailsParticipants = new ArrayList<>();

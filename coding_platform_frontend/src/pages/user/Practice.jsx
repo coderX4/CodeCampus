@@ -81,7 +81,7 @@ export default function Practice() {
 
   // Filter problems based on search query, difficulty, tag, and active tab
   const getFilteredProblems = (tab) => {
-    return problems.filter((problem) => {
+    const filtered = problems.filter((problem) => {
       // Only show active problems, hide draft problems
       const isActive = problem.status === "active"
 
@@ -115,6 +115,9 @@ export default function Practice() {
 
       return isActive && matchesSearch && matchesDifficulty && matchesTag && matchesTab
     })
+
+    // Return the filtered problems in reverse order
+    return filtered.slice().reverse()
   }
 
   // Get paginated problems
@@ -406,4 +409,3 @@ export default function Practice() {
       </main>
   )
 }
-

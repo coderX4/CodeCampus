@@ -101,7 +101,7 @@ export default function AdminContests() {
             difficultyFilter === "all" || contest.difficulty.toLowerCase().includes(difficultyFilter.toLowerCase())
 
         return matchesSearch && matchesTab && matchesDifficulty
-    })
+    }).slice().reverse()
 
     // Get paginated contests
     const getPaginatedContests = (filteredContests) => {

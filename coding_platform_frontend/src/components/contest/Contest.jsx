@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Link, useParams, useLocation } from "react-router-dom"
 import { ArrowLeft, AlertCircle } from "lucide-react"
@@ -125,7 +123,6 @@ export default function Contest() {
 
       const data = await response.json()
       setContestResult(data)
-      console.log(data)
     } catch (err) {
       console.error("Error fetching contest result details:", err)
       setError(err.message || "Failed to fetch contest result details")
@@ -329,7 +326,11 @@ export default function Contest() {
               </TabsContent>
 
               <TabsContent value="leaderboard" className="space-y-6">
-                <LeaderboardTab contestStatus={contestStatus} countdown={countdown} />
+                <LeaderboardTab contestStatus={contestStatus}
+                                countdown={countdown}
+                                id={id}
+                                startTime={contestData.startTime}
+                />
               </TabsContent>
 
               <TabsContent value="rules" className="space-y-6">

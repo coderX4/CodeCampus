@@ -1,23 +1,27 @@
 package com.coding_contest_platform.services.impl;
 
+import com.coding_contest_platform.dto.contest.ContestLeaderBoardDTO;
 import com.coding_contest_platform.dto.contest.ContestResultDTO;
 import com.coding_contest_platform.entity.ContestResults;
 import com.coding_contest_platform.entity.Problem;
-import com.coding_contest_platform.repository.ContestRepository;
+import com.coding_contest_platform.entity.User;
 import com.coding_contest_platform.repository.ContestResultsRepository;
 import com.coding_contest_platform.repository.ProblemRepository;
+import com.coding_contest_platform.repository.UserRepository;
 import com.coding_contest_platform.services.ContestResultService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class ContestResultServiceImpl implements ContestResultService {
+    private final UserRepository userRepository;
     private final ContestResultsRepository contestResultsRepository;
-    private final ContestRepository contestRepository;
     private final ProblemRepository problemRepository;
 
     public int assignPoints(boolean isSolved, String difficulty){
@@ -63,10 +67,16 @@ public class ContestResultServiceImpl implements ContestResultService {
         contestResultDTO.setCompletionTime(timestamp);
         Map<String, Integer> points = contestResultDTO.getPoints();
         int total = 0;
+        int cnt = 0;
         for(String pId : points.keySet()){
-            total += points.get(pId);
+            int pts = points.get(pId);
+            total += pts;
+            if(pts > 0){
+                cnt++;
+            }
         }
         contestResultDTO.setTotalPoints(total);
+        contestResultDTO.setProblemsSolved(cnt);
         result.put(uId, contestResultDTO);
         contestResults.setResults(result);
         contestResultsRepository.save(contestResults);
@@ -81,6 +91,7 @@ public class ContestResultServiceImpl implements ContestResultService {
         return (ContestResultDTO) contestResults.getResults().get(uId);
     }
 
+    //dont use this
     @Override
     public Map<String, ContestResultDTO> getContestResults(String cId) {
         ContestResults contestResults = contestResultsRepository.findOneByContestId(cId);
@@ -88,5 +99,29 @@ public class ContestResultServiceImpl implements ContestResultService {
             return null;
         }
         return (Map<String, ContestResultDTO>) contestResults.getResults();
+    }
+
+    @Override
+    public List<ContestLeaderBoardDTO> getContestLeaderBoard(String cId) {
+        ContestResults contestResults = contestResultsRepository.findOneByContestId(cId);
+        if(contestResults == null){
+            return new ArrayList<>();
+        }
+        List<ContestLeaderBoardDTO> leaderBoardDTOS = new ArrayList<>();
+
+        Map<String , ContestResultDTO> resultDTOMap = contestResults.getResults();
+        for(String uId : resultDTOMap.keySet()){
+            ContestResultDTO contestResultDTO = resultDTOMap.get(uId);
+            User user = userRepository.findOneById(uId);
+            ContestLeaderBoardDTO contestLeaderBoardDTO = new ContestLeaderBoardDTO(
+                    user.getUname(),
+                    user.getEmail(),
+                    contestResultDTO.getProblemsSolved(),
+                    contestResultDTO.getTotalPoints(),
+                    contestResultDTO.getCompletionTime()
+            );
+            leaderBoardDTOS.add(contestLeaderBoardDTO);
+        }
+        return leaderBoardDTOS;
     }
 }

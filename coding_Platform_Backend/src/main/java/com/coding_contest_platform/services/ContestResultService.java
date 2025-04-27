@@ -1,8 +1,10 @@
 package com.coding_contest_platform.services;
 
+import com.coding_contest_platform.dto.contest.ContestLeaderBoardDTO;
 import com.coding_contest_platform.dto.contest.ContestResultDTO;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 
 public interface ContestResultService {
@@ -15,4 +17,6 @@ public interface ContestResultService {
     ContestResultDTO sendResult(String uId, String cId);
 
     Map<String, ContestResultDTO> getContestResults(String cId);
+
+    List<ContestLeaderBoardDTO> getContestLeaderBoard(String cId);
 }

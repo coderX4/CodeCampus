@@ -1,6 +1,7 @@
 package com.coding_contest_platform.controller;
 
 import com.coding_contest_platform.dto.contest.ContestDTO;
+import com.coding_contest_platform.dto.contest.ContestLeaderBoardDTO;
 import com.coding_contest_platform.dto.contest.ContestResultDTO;
 import com.coding_contest_platform.entity.Contest;
 import com.coding_contest_platform.services.ContestResultService;
@@ -67,12 +68,7 @@ public class ContestController {
     }
 
     @GetMapping({"/getLeaderBoardsResult/{id}"})
-    public ResponseEntity<Map<String, ContestResultDTO>> contestLeaderboard(@PathVariable("id") String id){
-        Map<String, ContestResultDTO> resultDTOMap = contestResultService.getContestResults(id);
-        if(resultDTOMap == null){
-            resultDTOMap = new HashMap<>();
-            return ResponseEntity.ok(resultDTOMap);
-        }
-        return ResponseEntity.ok(resultDTOMap);
+    public ResponseEntity<List<ContestLeaderBoardDTO>> contestLeaderboard(@PathVariable("id") String id){
+        return ResponseEntity.ok(contestResultService.getContestLeaderBoard(id));
     }
 }
