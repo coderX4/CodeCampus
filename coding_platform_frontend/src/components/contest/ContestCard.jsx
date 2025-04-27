@@ -1,11 +1,8 @@
-"use client"
-
-import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Badge } from "@/components/ui/badge.jsx"
 import { Button } from "@/components/ui/button.jsx"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.jsx"
-import { Clock, Users, Calendar, AlertCircle } from "lucide-react"
+import { Clock, Users, Calendar, Timer} from "lucide-react"
 
 export default function ContestCard({
                                         id,
@@ -18,45 +15,6 @@ export default function ContestCard({
                                         participants,
                                         difficulty,
                                     }) {
-    const [isCompleted, setIsCompleted] = useState(false)
-    const [isLoading, setIsLoading] = useState(true)
-
-    // Check if user has already completed this contest
-    useEffect(() => {
-        const checkContestCompletion = async () => {
-            setIsLoading(true)
-            const storedUser = sessionStorage.getItem("user")
-
-            if (!storedUser) {
-                setIsLoading(false)
-                return
-            }
-
-            const user = JSON.parse(storedUser)
-
-            try {
-                const response = await fetch(`http://localhost:8083/api/contest/check-completion/${id}`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${user.token}`,
-                    },
-                })
-
-                if (response.ok) {
-                    const data = await response.json()
-                    setIsCompleted(data.completed || data.violation || data.submitted)
-                }
-            } catch (error) {
-                console.error("Failed to check contest completion status:", error)
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        checkContestCompletion()
-    }, [id])
-
     // Format date for display
     const formatDate = (dateString) => {
         if (!dateString) return "TBA"
@@ -89,23 +47,6 @@ export default function ContestCard({
 
     // Determine button text and link based on contest status and completion
     const getButtonConfig = () => {
-        if (isLoading) {
-            return {
-                text: "Loading...",
-                disabled: true,
-                link: "#",
-                variant: "outline",
-            }
-        }
-
-        if (isCompleted) {
-            return {
-                text: "View Results",
-                disabled: false,
-                link: `/dashboard/contest/${id}`,
-                variant: "outline",
-            }
-        }
 
         if (status === "ongoing") {
             return {
@@ -149,7 +90,7 @@ export default function ContestCard({
             </CardHeader>
             <CardContent className="flex-grow">
                 <p className="text-muted-foreground mb-4">{description}</p>
-                <div className="grid grid-cols-1 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                     <div className="flex items-center text-sm">
                         <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                         <span>{formatDate(startDate)}</span>
@@ -157,19 +98,17 @@ export default function ContestCard({
                     <div className="flex items-center text-sm">
                         <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
                         <span>
-              {formatTime(startTime)} • {duration}
-            </span>
+                          {formatTime(startTime)}
+                        </span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                        <Timer className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span>{duration} hrs</span>
                     </div>
                     {participants !== undefined && (
                         <div className="flex items-center text-sm">
                             <Users className="h-4 w-4 mr-2 text-muted-foreground" />
                             <span>{participants} participants</span>
-                        </div>
-                    )}
-                    {isCompleted && (
-                        <div className="flex items-center text-sm text-amber-600 mt-2">
-                            <AlertCircle className="h-4 w-4 mr-2" />
-                            <span>You've completed this contest</span>
                         </div>
                     )}
                 </div>

@@ -1,5 +1,3 @@
-"use client"
-
 import { Badge } from "@/components/ui/badge.jsx"
 import { Button } from "@/components/ui/button.jsx"
 import { Card, CardContent } from "@/components/ui/card.jsx"
@@ -67,7 +65,6 @@ export default function ContestTable({ contests, onEdit, onDelete, onViewStats, 
             return "bg-red-100 text-red-800 hover:bg-red-100"
         }
     }
-
     return (
         <Card>
             <CardContent className="p-0">

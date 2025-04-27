@@ -179,7 +179,7 @@ export default function AdminProblems() {
             const matchesTab = tab === "all" || problem.status?.toLowerCase() === tab.toLowerCase()
 
             return matchesSearch && matchesDifficulty && matchesTag && matchesTab
-        })
+        }).slice().reverse()
     }
 
     // Get paginated problems

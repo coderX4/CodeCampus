@@ -21,5 +21,5 @@ public class ContestDTO {
     private int participants;
     private List<ContestProblemDTO> problems;
     private List<String> emailsParticipants;
-
+    private String rules;
 }

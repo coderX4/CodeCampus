@@ -1,6 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx"
 
 export default function RulesTab({ contest, problemCount }) {
+    const specialRules = contest.rules
+        ? contest.rules.split('.').map(rule => rule.trim()).filter(rule => rule.length > 0)
+        : [];
+
     return (
         <Card>
             <CardHeader>
@@ -36,6 +40,18 @@ export default function RulesTab({ contest, problemCount }) {
                             <li>Do not use multiple accounts.</li>
                             <li>External resources like documentation are allowed, but not solutions to the specific problems.</li>
                             <li>Plagiarism will result in disqualification.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-medium">Special Instructions</h3>
+                        <ul className="list-disc pl-5 space-y-1 mt-2">
+                            {specialRules.length > 0 ? (
+                                specialRules.map((rule, index) => (
+                                    <li key={index}>{rule}</li>
+                                ))
+                            ) : (
+                                <li>No special instructions.</li>
+                            )}
                         </ul>
                     </div>
                 </div>

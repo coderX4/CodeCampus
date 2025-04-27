@@ -86,7 +86,7 @@ export default function AdminUsers() {
             }
 
             return matchesSearch && matchesRole && matchesStatus && matchesTab
-        })
+        }).slice().reverse()
     }
 
     // Get paginated users
