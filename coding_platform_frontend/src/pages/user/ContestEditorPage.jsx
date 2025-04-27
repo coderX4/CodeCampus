@@ -25,7 +25,6 @@ export default function ContestEditorPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState("")
     const [isFullScreen, setIsFullScreen] = useState(false)
-    const [layout, setLayout] = useState("horizontal") // horizontal or vertical
     const [result, setResult] = useState(null)
     const [code, setCode] = useState("")
     const [language, setLanguage] = useState("cpp")
@@ -126,10 +125,6 @@ export default function ContestEditorPage() {
                 setCode(problem.codeTemplates[newLanguage])
             }
         }
-    }
-
-    const toggleLayout = () => {
-        setLayout(layout === "horizontal" ? "vertical" : "horizontal")
     }
 
     const toggleSidebar = () => {
@@ -513,7 +508,7 @@ export default function ContestEditorPage() {
                     <div className="w-1/2 p-4 border-r overflow-y-auto">
                         <Card className="border-primary/20 shadow-sm h-full">
                             <CardContent className="p-0">
-                                <ContestProblemDescription problem={problem} layout={layout} subs={subs[problem.id] || []} />
+                                <ContestProblemDescription problem={problem} subs={subs[problem.id] || []} />
                             </CardContent>
                         </Card>
                     </div>
@@ -595,7 +590,7 @@ export default function ContestEditorPage() {
                                     onClick={() => {
                                         handleExecuteCode(false)
                                     }}
-                                    disabled={isRunning || isSubmitting}
+                                    disabled={isRunning || isSubmitting || subs[problem.id]?.some((sub) => sub.accepted === true) }
                                     className="btn-hover"
                                     aria-label="Run code"
                                 >
@@ -606,7 +601,7 @@ export default function ContestEditorPage() {
                                     onClick={() => {
                                         handleExecuteCode(true)
                                     }}
-                                    disabled={isRunning || isSubmitting}
+                                    disabled={isRunning || isSubmitting || subs[problem.id]?.some((sub) => sub.accepted === true) }
                                     className="bg-primary hover:bg-primary/90 text-primary-foreground btn-hover"
                                     aria-label="Submit solution"
                                 >

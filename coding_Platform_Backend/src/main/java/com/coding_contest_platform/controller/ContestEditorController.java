@@ -1,14 +1,12 @@
 package com.coding_contest_platform.controller;
 
 import com.coding_contest_platform.dto.contest.ContestExecutionRequest;
+import com.coding_contest_platform.dto.contest.Finish_VoilationDTO;
 import com.coding_contest_platform.dto.editor.ExecutionResponse;
 import com.coding_contest_platform.dto.editor.SubmissionDTO;
 import com.coding_contest_platform.dto.problem.TestCase;
 import com.coding_contest_platform.entity.ProblemTestCase;
-import com.coding_contest_platform.services.ContestSubmissionService;
-import com.coding_contest_platform.services.EditorService;
-import com.coding_contest_platform.services.ProblemService;
-import com.coding_contest_platform.services.UserServices;
+import com.coding_contest_platform.services.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +25,7 @@ public class ContestEditorController {
     private final EditorService editorService;
     private final ProblemService problemService;
     private final ContestSubmissionService contestSubmissionService;
+    private final ContestResultService contestResultService;
 
     @PostMapping({"/execute-run/{id}"})
     public ResponseEntity<List<ExecutionResponse>> executeCodeRun(@PathVariable String id, @RequestBody ContestExecutionRequest executionRequest) throws ExecutionException, InterruptedException {
@@ -55,13 +54,17 @@ public class ContestEditorController {
                 submitTestCases
         );
 
+        String cId = executionRequest.getContestId();
+        String uId = userServices.getIdByEmail(executionRequest.getEmail());
         boolean isSolved = contestSubmissionService.saveContestSubmission(
-                executionRequest.getContestId(),
-                userServices.getIdByEmail(executionRequest.getEmail()),
-                pId,
+                cId, uId, pId,
                 executionResponses,
                 executionRequest.getLanguage(),
                 executionRequest.getCode()
+        );
+
+        contestResultService.updateResult(
+                cId, pId, uId, isSolved
         );
 
         return ResponseEntity.ok(executionResponses);
@@ -71,5 +74,31 @@ public class ContestEditorController {
     public ResponseEntity<Map<String, List<SubmissionDTO>>> getSubmissions(@PathVariable("id") String id,@PathVariable("email") String email){
         Map<String, List<SubmissionDTO>> submissionDTOMap = contestSubmissionService.getSubmissions(id,userServices.getIdByEmail(email));
         return ResponseEntity.ok(submissionDTOMap);
+    }
+
+    @PostMapping({"/report-violation"})
+    public ResponseEntity<?> reportViolation(@RequestBody Finish_VoilationDTO finishVoilationDTO){
+        System.out.println(finishVoilationDTO);
+        contestResultService.finishContest(
+                userServices.getIdByEmail(finishVoilationDTO.getEmail()),
+                finishVoilationDTO.getContestId(),
+                finishVoilationDTO.getTimestamp(),
+                true,
+                false
+        );
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping({"/finish-test"})
+    public ResponseEntity<?> finishContest(@RequestBody Finish_VoilationDTO finishVoilationDTO){
+        System.out.println(finishVoilationDTO);
+        contestResultService.finishContest(
+                userServices.getIdByEmail(finishVoilationDTO.getEmail()),
+                finishVoilationDTO.getContestId(),
+                finishVoilationDTO.getTimestamp(),
+                false,
+                true
+        );
+        return ResponseEntity.ok().build();
     }
 }

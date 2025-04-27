@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { Link, useParams, useLocation } from "react-router-dom"
 import { ArrowLeft, AlertCircle } from "lucide-react"
@@ -8,7 +10,7 @@ import ContestInfoCard from "./ContestInfoCard.jsx"
 import ProblemsTab from "./ProblemsTab.jsx"
 import LeaderboardTab from "./LeaderboardTab.jsx"
 import RulesTab from "./RulesTab.jsx"
-import {useToast} from "@/hooks/use-toast.js";
+import { useToast } from "@/hooks/use-toast.js"
 
 export default function Contest() {
   const { id } = useParams()
@@ -16,6 +18,7 @@ export default function Contest() {
   const [activeTab, setActiveTab] = useState("problems")
   const [contestData, setContestData] = useState(null)
   const [problems, setProblems] = useState(null)
+  const [contestResult, setContestResult] = useState({})
   const [timeRemaining, setTimeRemaining] = useState(null)
   const [countdown, setCountdown] = useState("")
   const [isLoading, setIsLoading] = useState(true)
@@ -31,8 +34,9 @@ export default function Contest() {
       setIsLoading(false)
     } else {
       fetchContestDetails()
+      fetchResultData()
     }
-  }, [id, location.state,reload])
+  }, [id, location.state, reload])
 
   // Fetch all contest details including problems in a single request
   const fetchContestDetails = async () => {
@@ -75,12 +79,56 @@ export default function Contest() {
       setContestData(data)
       setProblems(updatedProblems)
       const emailParticipants = data.emailsParticipants
-      if(emailParticipants.includes(loggedUser.email)){
+      if (emailParticipants.includes(loggedUser.email)) {
         setRegistered(true)
       }
     } catch (err) {
       console.error("Error fetching contest details:", err)
       setError(err.message || "Failed to fetch contest details")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const fetchResultData = async () => {
+    setIsLoading(true)
+    setError("")
+
+    const storedUser = sessionStorage.getItem("user")
+    const loggedUser = storedUser ? JSON.parse(storedUser) : null
+
+    if (!loggedUser || !loggedUser.token) {
+      setError("Authentication required. Please log in again.")
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8083/api/contest/getResult/${loggedUser.email}/${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${loggedUser.token}`,
+        },
+      })
+
+      if (response.status === 403) {
+        setError("Access denied: You do not have permission to access this resource.")
+        setIsLoading(false)
+        return
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || "Failed to fetch contest result details")
+      }
+
+      const data = await response.json()
+      setContestResult(data)
+      console.log(data)
+    } catch (err) {
+      console.error("Error fetching contest result details:", err)
+      setError(err.message || "Failed to fetch contest result details")
     } finally {
       setIsLoading(false)
     }
@@ -200,7 +248,7 @@ export default function Contest() {
     )
   }
 
-  const handleRegister = async () =>{
+  const handleRegister = async () => {
     setError("")
 
     const storedUser = sessionStorage.getItem("user")
@@ -239,7 +287,6 @@ export default function Contest() {
       setError(err.message || "Failed to register in contest.")
     }
   }
-
   return (
       <main className="flex-1">
         <div className="container py-4">
@@ -260,6 +307,7 @@ export default function Contest() {
                 timeRemaining={timeRemaining}
                 handleRegister={handleRegister}
                 registered={registered}
+                contestResult={contestResult}
             />
 
             <ContestInfoCard contest={contestData} />
@@ -272,7 +320,12 @@ export default function Contest() {
               </TabsList>
 
               <TabsContent value="problems" className="space-y-6">
-                <ProblemsTab contestStatus={contestStatus} countdown={countdown} problems={problems || []} />
+                <ProblemsTab
+                    contestStatus={contestStatus}
+                    countdown={countdown}
+                    problems={problems || []}
+                    contestResult={contestResult}
+                />
               </TabsContent>
 
               <TabsContent value="leaderboard" className="space-y-6">

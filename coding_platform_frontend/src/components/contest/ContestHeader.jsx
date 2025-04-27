@@ -1,11 +1,20 @@
+"use client"
+
 import { Badge } from "@/components/ui/badge.jsx"
 import { Button } from "@/components/ui/button.jsx"
 import { Clock } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast.js"
 
-export default function ContestHeader({ contest, contestStatus, countdown, timeRemaining ,handleRegister, registered}) {
-
+export default function ContestHeader({
+                                          contest,
+                                          contestStatus,
+                                          countdown,
+                                          timeRemaining,
+                                          handleRegister,
+                                          registered,
+                                          contestResult,
+                                      }) {
     // Toast notifications
     const { toast } = useToast()
     // Get difficulty badge color
@@ -45,10 +54,8 @@ export default function ContestHeader({ contest, contestStatus, countdown, timeR
                 {contestStatus === "upcoming" && (
                     <>
                         {timeRemaining?.diff <= 5 * 60 * 1000 ? (
-                            <Button disabled={timeRemaining?.diff <= 5 * 60 * 1000}>
-                                Enter Contest
-                            </Button>
-                        ): (
+                            <Button disabled={timeRemaining?.diff <= 5 * 60 * 1000}>Enter Contest</Button>
+                        ) : (
                             <Button disabled={registered === true} onClick={handleRegister}>
                                 {registered ? "Registered" : "Register"}
                             </Button>
@@ -57,8 +64,8 @@ export default function ContestHeader({ contest, contestStatus, countdown, timeR
                 )}
                 {contestStatus === "ongoing" && (
                     <Button
-                        asChild={registered}
-                        disabled={!registered}
+                        asChild={!registered || contestResult?.violation || contestResult?.submitted ? false : true}
+                        disabled={!registered || contestResult?.violation || contestResult?.submitted}
                         onClick={
                             !registered
                                 ? () => {
@@ -66,18 +73,26 @@ export default function ContestHeader({ contest, contestStatus, countdown, timeR
                                         variant: "destructive",
                                         title: "Registration Required",
                                         description: "You must register for this contest before you can enter it.",
-                                    })
+                                    });
                                 }
                                 : undefined
                         }
                     >
-                        {registered ? <Link to={`/contest-editor/contest/${contest.id}`}>Enter Contest</Link> : "Enter Contest"}
+                        {registered ? (
+                            contestResult?.violation || contestResult?.submitted ? (
+                                "Submitted"
+                            ) : (
+                                <Link to={`/contest-editor/contest/${contest.id}`}>Enter Contest</Link>
+                            )
+                        ) : (
+                            "Not Registered"
+                        )}
                     </Button>
                 )}
                 {contestStatus === "past" && (
-                    <Button variant="secondary" asChild>
-                        <Link to={`/contest/${contest.id}/results`}>View Results</Link>
-                    </Button>
+                    <div className="text-xl font-bold">
+                        Scored :  {contestResult.totalPoints} pts
+                    </div>
                 )}
             </div>
         </div>

@@ -1,8 +1,11 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Badge } from "@/components/ui/badge.jsx"
 import { Button } from "@/components/ui/button.jsx"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.jsx"
-import { Clock, Users, Calendar } from "lucide-react"
+import { Clock, Users, Calendar, AlertCircle } from "lucide-react"
 
 export default function ContestCard({
                                         id,
@@ -15,6 +18,45 @@ export default function ContestCard({
                                         participants,
                                         difficulty,
                                     }) {
+    const [isCompleted, setIsCompleted] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
+
+    // Check if user has already completed this contest
+    useEffect(() => {
+        const checkContestCompletion = async () => {
+            setIsLoading(true)
+            const storedUser = sessionStorage.getItem("user")
+
+            if (!storedUser) {
+                setIsLoading(false)
+                return
+            }
+
+            const user = JSON.parse(storedUser)
+
+            try {
+                const response = await fetch(`http://localhost:8083/api/contest/check-completion/${id}`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${user.token}`,
+                    },
+                })
+
+                if (response.ok) {
+                    const data = await response.json()
+                    setIsCompleted(data.completed || data.violation || data.submitted)
+                }
+            } catch (error) {
+                console.error("Failed to check contest completion status:", error)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        checkContestCompletion()
+    }, [id])
+
     // Format date for display
     const formatDate = (dateString) => {
         if (!dateString) return "TBA"
@@ -44,6 +86,54 @@ export default function ContestCard({
                 return ""
         }
     }
+
+    // Determine button text and link based on contest status and completion
+    const getButtonConfig = () => {
+        if (isLoading) {
+            return {
+                text: "Loading...",
+                disabled: true,
+                link: "#",
+                variant: "outline",
+            }
+        }
+
+        if (isCompleted) {
+            return {
+                text: "View Results",
+                disabled: false,
+                link: `/dashboard/contest/${id}`,
+                variant: "outline",
+            }
+        }
+
+        if (status === "ongoing") {
+            return {
+                text: "Enter Contest",
+                disabled: false,
+                link: `/dashboard/contest/${id}`,
+                variant: "default",
+            }
+        }
+
+        if (status === "upcoming") {
+            return {
+                text: "Not Started",
+                disabled: true,
+                link: `/dashboard/contest/${id}`,
+                variant: "outline",
+            }
+        }
+
+        return {
+            text: "View Details",
+            disabled: false,
+            link: `/dashboard/contest/${id}`,
+            variant: "outline",
+        }
+    }
+
+    const buttonConfig = getButtonConfig()
 
     return (
         <Card className="h-full flex flex-col">
@@ -76,6 +166,12 @@ export default function ContestCard({
                             <span>{participants} participants</span>
                         </div>
                     )}
+                    {isCompleted && (
+                        <div className="flex items-center text-sm text-amber-600 mt-2">
+                            <AlertCircle className="h-4 w-4 mr-2" />
+                            <span>You've completed this contest</span>
+                        </div>
+                    )}
                 </div>
             </CardContent>
             <CardFooter className="border-t pt-4">
@@ -92,8 +188,8 @@ export default function ContestCard({
                     >
                         {status === "upcoming" ? "Upcoming" : status === "ongoing" ? "Ongoing" : "Past"}
                     </Badge>
-                    <Button asChild>
-                        <Link to={`/dashboard/contest/${id}`}>View Details</Link>
+                    <Button asChild variant={buttonConfig.variant} disabled={buttonConfig.disabled}>
+                        <Link to={buttonConfig.link}>{buttonConfig.text}</Link>
                     </Button>
                 </div>
             </CardFooter>
