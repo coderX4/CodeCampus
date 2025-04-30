@@ -231,7 +231,7 @@ export default function Sidebar() {
 
                 <div className="flex flex-row gap-2">
                     <Button
-                        variant="ghost"
+                        variant="default"
                         size="sm"
                         className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                         asChild
@@ -243,7 +243,7 @@ export default function Sidebar() {
                     </Button>
 
                     <Button
-                        variant="ghost"
+                        variant="destructive"
                         size="sm"
                         className="w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                         onClick={logoutUser}

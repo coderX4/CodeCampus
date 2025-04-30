@@ -1,5 +1,6 @@
 package com.coding_contest_platform.services;
 
+import com.coding_contest_platform.dto.problem.ActiveProblemDTO;
 import com.coding_contest_platform.dto.problem.ProblemRequest;
 import com.coding_contest_platform.entity.Problem;
 import com.coding_contest_platform.entity.ProblemData;
@@ -31,4 +32,6 @@ public interface ProblemService {
     List<Problem> getActiveProblems();
 
     void saveSubmission(String id, boolean isAccepted);
+
+    List<ActiveProblemDTO> getActiveProblems(String email);
 }

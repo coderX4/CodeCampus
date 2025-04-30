@@ -73,7 +73,9 @@ public class AuthController {
         String formattedDate = date.format(dateFormatter);
 
         User user = new User(uname, request.getEmail(),
-                passwordEncoder.encode(request.getPassword()), Role.USER, Provider.SYSTEM, "active", formattedDate, formattedDate);
+                passwordEncoder.encode(request.getPassword()), Role.USER, Provider.SYSTEM,
+                "active", formattedDate, formattedDate
+        );
         userRepository.save(user);
 
         // Generate JWT token and store it in an HTTP-only cookie

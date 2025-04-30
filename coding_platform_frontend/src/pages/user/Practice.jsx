@@ -2,12 +2,10 @@ import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input.jsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx"
 import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
-import { Badge } from "@/components/ui/badge.jsx"
 import { Button } from "@/components/ui/button.jsx"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card.jsx"
-import { Link } from "react-router-dom"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx"
 import { AlertTriangle, RefreshCw } from "lucide-react"
+import ProblemCard from "@/components/dashboard/ProblemCard.jsx";
 
 export default function Practice() {
   const [problems, setProblems] = useState([])
@@ -37,7 +35,7 @@ export default function Practice() {
     }
 
     try {
-      const response = await fetch("http://localhost:8083/api/problems/getactiveproblems", {
+      const response = await fetch(`http://localhost:8083/api/problems/getactiveproblemsdto/${loggedUser.email}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -257,56 +255,6 @@ export default function Practice() {
         </div>
     )
   }
-
-  function ProblemCard({ id, title, difficulty, tags, acceptance, solved }) {
-    return (
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">{id}.</span>
-                <h3 className="text-lg font-semibold">{title}</h3>
-              </div>
-              <Badge
-                  className={
-                    difficulty === "easy"
-                        ? "bg-green-100 text-green-800 hover:bg-green-100"
-                        : difficulty === "medium"
-                            ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
-                            : "bg-red-100 text-red-800 hover:bg-red-100"
-                  }
-                  variant="outline"
-              >
-                {difficulty}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary">
-                    {tag}
-                  </Badge>
-              ))}
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-between pt-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">Acceptance: {acceptance}</span>
-              {solved && (
-                  <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">
-                    Solved
-                  </Badge>
-              )}
-            </div>
-            <Button size="sm" asChild>
-              <Link to={`/editor/problem/${id}`}>Solve</Link>
-            </Button>
-          </CardFooter>
-        </Card>
-    )
-  }
-
   // Create an array of tab values based on common problem categories
   const tabValues = ["all", "arrays", "strings", "linked-lists", "trees", "dynamic-programming", "graphs"]
 

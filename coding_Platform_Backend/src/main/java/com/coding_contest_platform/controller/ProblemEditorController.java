@@ -24,9 +24,9 @@ public class ProblemEditorController {
     private final ProblemService problemService;
     private final UserSubmissionService userSubmissionService;
 
-    @GetMapping({"/getproblem/{id}"})
-    public ResponseEntity<?> getProblem(@PathVariable String id) {
-        return ResponseEntity.ok(editorService.getProblem(id));
+    @GetMapping({"/getproblem/{email}/{id}"})
+    public ResponseEntity<?> getProblem(@PathVariable("id") String id, @PathVariable("email") String email) {
+        return ResponseEntity.ok(editorService.getProblem(id,email));
     }
 
     @PostMapping({"/execute-run/{id}"})

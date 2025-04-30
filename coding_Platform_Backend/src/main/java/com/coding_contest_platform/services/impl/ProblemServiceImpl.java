@@ -1,14 +1,9 @@
 package com.coding_contest_platform.services.impl;
 
+import com.coding_contest_platform.dto.problem.ActiveProblemDTO;
 import com.coding_contest_platform.dto.problem.ProblemRequest;
-import com.coding_contest_platform.entity.ProblemData;
-import com.coding_contest_platform.entity.ProblemSequence;
-import com.coding_contest_platform.entity.ProblemTestCase;
-import com.coding_contest_platform.repository.ProblemDataRepository;
-import com.coding_contest_platform.repository.ProblemRepository;
-import com.coding_contest_platform.entity.Problem;
-import com.coding_contest_platform.repository.ProblemSequenceRepository;
-import com.coding_contest_platform.repository.ProblemTestCaseRepository;
+import com.coding_contest_platform.entity.*;
+import com.coding_contest_platform.repository.*;
 import com.coding_contest_platform.services.ProblemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,6 +22,7 @@ public class ProblemServiceImpl implements ProblemService {
     private final ProblemSequenceRepository problemSequenceRepository;
     private final ProblemDataRepository problemDataRepository;
     private final ProblemTestCaseRepository problemTestCaseRepository;
+    private final UserSubmissionsRepository userSubmissionsRepository;
 
     @Override
     public String generateCustomId(String difficulty, List<String> tags) {
@@ -158,5 +155,48 @@ public class ProblemServiceImpl implements ProblemService {
         problemRepository.save(problem);
     }
 
+    private ActiveProblemDTO getActiveProblemDTO(Problem problem, List<String> problemsSolved, List<String> problemsAttempted) {
+        ActiveProblemDTO activeProblemDTO = new ActiveProblemDTO();
+        activeProblemDTO.setId(problem.getId());
+        activeProblemDTO.setTitle(problem.getTitle());
+        activeProblemDTO.setDifficulty(problem.getDifficulty());
+        activeProblemDTO.setTags(problem.getTags());
+        activeProblemDTO.setAcceptance(problem.getAcceptance());
+        activeProblemDTO.setStatus(problem.getStatus());
+        if(problemsSolved.contains(problem.getId())){
+            activeProblemDTO.setSolved(true);
+            activeProblemDTO.setAttempted(false);
+        }
+        else if(problemsAttempted.contains(problem.getId())){
+            activeProblemDTO.setAttempted(true);
+            activeProblemDTO.setSolved(false);
+        }
+        else{
+            activeProblemDTO.setAttempted(false);
+            activeProblemDTO.setSolved(false);
+        }
+        return activeProblemDTO;
+    }
+
+    @Override
+    public List<ActiveProblemDTO> getActiveProblems(String email) {
+        UserSubmissions userSubmissions = userSubmissionsRepository.findByEmail(email);
+        List<String> problemsSolved, problemsAttempted;
+        if(userSubmissions == null){
+            problemsSolved = new ArrayList<>();
+            problemsAttempted = new ArrayList<>();
+        }
+        else{
+            problemsSolved = userSubmissions.getProblemsSolved();
+            problemsAttempted = userSubmissions.getProblemAttempted();
+        }
+        List<Problem> problems = problemRepository.findByStatus("active");
+        List<ActiveProblemDTO> activeProblemDTOList = new ArrayList<>();
+        for (Problem problem : problems) {
+            ActiveProblemDTO activeProblemDTO = getActiveProblemDTO(problem, problemsSolved, problemsAttempted);
+            activeProblemDTOList.add(activeProblemDTO);
+        }
+        return activeProblemDTOList;
+    }
 
 }
