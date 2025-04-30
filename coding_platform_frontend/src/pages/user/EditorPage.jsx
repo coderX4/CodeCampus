@@ -9,6 +9,7 @@ import ConsoleOutputPanel from "@/components/editor/ConsoleOutputPanel"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogTrigger } from "@/components/ui/dialog"
 import  EditorSettingsDialog  from "@/components/editor/EditorSettingsDialog"
+import {Badge} from "@/components/ui/badge.jsx";
 
 export default function EditorPage() {
   const { id } = useParams()
@@ -89,7 +90,7 @@ export default function EditorPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8083/api/editor/getproblem/${id}`, {
+      const response = await fetch(`http://localhost:8083/api/editor/getproblem/${loggedUser.email}/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -343,6 +344,18 @@ export default function EditorPage() {
                         }`}
                     >
                       {problem.difficulty}
+                    </div>
+                    <div>
+                      {problem.solved && (
+                          <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200">
+                            Solved
+                          </Badge>
+                      )}
+                      {problem.attempted && (
+                          <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
+                            Attempted
+                          </Badge>
+                      )}
                     </div>
                     <span className="text-sm text-muted-foreground">Acceptance: {problem.acceptance}</span>
                   </div>

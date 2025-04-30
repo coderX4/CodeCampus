@@ -6,9 +6,11 @@ import com.coding_contest_platform.dto.problem.TestCase;
 import com.coding_contest_platform.entity.Problem;
 import com.coding_contest_platform.entity.ProblemData;
 import com.coding_contest_platform.entity.ProblemTestCase;
+import com.coding_contest_platform.entity.UserSubmissions;
 import com.coding_contest_platform.repository.ProblemDataRepository;
 import com.coding_contest_platform.repository.ProblemRepository;
 import com.coding_contest_platform.repository.ProblemTestCaseRepository;
+import com.coding_contest_platform.repository.UserSubmissionsRepository;
 import com.coding_contest_platform.services.EditorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +29,7 @@ public class EditorServiceImpl implements EditorService {
     private final ProblemRepository problemRepository;
     private final ProblemDataRepository problemDataRepository;
     private final ProblemTestCaseRepository problemTestCaseRepository;
+    private final UserSubmissionsRepository userSubmissionsRepository;
 
     @Value("${piston.java.version}")
     private String javaVersion;
@@ -39,11 +42,33 @@ public class EditorServiceImpl implements EditorService {
     private final RestTemplate restTemplate = new RestTemplate();
 
 
+//    @Override
+//    public EditorResponse getProblem(String id) {
+//        Problem problem = problemRepository.findOneById(id);
+//        ProblemData problemData = problemDataRepository.findOneById(id);
+//        ProblemTestCase problemTestCase = problemTestCaseRepository.findOneById(id);
+//        return new EditorResponse(
+//                id,
+//                problem.getTitle(),
+//                problem.getDifficulty(),
+//                problem.getAcceptance(),
+//                problemData.getDescription(),
+//                problemData.getApproach(),
+//                problemData.getCodeTemplates(),
+//                problemTestCase.getTestCases()
+//        );
+//    }
+
     @Override
-    public EditorResponse getProblem(String id) {
+    public EditorResponse getProblem(String id, String email) {
         Problem problem = problemRepository.findOneById(id);
         ProblemData problemData = problemDataRepository.findOneById(id);
         ProblemTestCase problemTestCase = problemTestCaseRepository.findOneById(id);
+        UserSubmissions userSubmissions = userSubmissionsRepository.findByEmail(email);
+        List<String> problemsSolved = userSubmissions.getProblemsSolved();
+        List<String> problemsAttempted = userSubmissions.getProblemAttempted();
+        boolean solved = problemsSolved.contains(id);
+        boolean attempted = problemsAttempted.contains(id);
         return new EditorResponse(
                 id,
                 problem.getTitle(),
@@ -52,7 +77,9 @@ public class EditorServiceImpl implements EditorService {
                 problemData.getDescription(),
                 problemData.getApproach(),
                 problemData.getCodeTemplates(),
-                problemTestCase.getTestCases()
+                problemTestCase.getTestCases(),
+                solved,
+                attempted
         );
     }
 

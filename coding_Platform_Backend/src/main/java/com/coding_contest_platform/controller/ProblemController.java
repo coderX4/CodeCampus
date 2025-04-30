@@ -68,4 +68,10 @@ public class ProblemController {
     public ResponseEntity<?> getActiveProblems() {
         return ResponseEntity.ok(problemService.getActiveProblems());
     }
+
+    //users window
+    @GetMapping({"/getactiveproblemsdto/{email}"})
+    public ResponseEntity<?> getActiveProblemsDTO(@PathVariable("email") String email) {
+        return ResponseEntity.ok(problemService.getActiveProblems(email));
+    }
 }

@@ -91,7 +91,6 @@ public class ContestEditorController {
 
     @PostMapping({"/finish-test"})
     public ResponseEntity<?> finishContest(@RequestBody Finish_VoilationDTO finishVoilationDTO){
-        System.out.println(finishVoilationDTO);
         contestResultService.finishContest(
                 userServices.getIdByEmail(finishVoilationDTO.getEmail()),
                 finishVoilationDTO.getContestId(),

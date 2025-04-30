@@ -20,4 +20,6 @@ public class EditorResponse {
     private String approach;
     private Map<String, String> codeTemplates;
     private Map<String, List<TestCase>> testCases;
+    private boolean solved;
+    private boolean attempted;
 }

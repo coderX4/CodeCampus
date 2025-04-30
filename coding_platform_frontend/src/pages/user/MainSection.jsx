@@ -1,4 +1,4 @@
-import { useState } from "react"
+import {useEffect, useState} from "react"
 import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button.jsx"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx"
@@ -7,11 +7,59 @@ import { Progress } from "@/components/ui/progress.jsx"
 import { CheckCircle, Clock, Trophy, Users } from "lucide-react"
 import StatsCard from "@/components/dashboard/stats-card.jsx"
 import RecentSubmissions from "@/components/dashboard/recent-submissions.jsx"
-import Footer from "@/components/layout/footer.jsx";
 
 export default function MainSection() {
+  const [mainSectionData, setMainSectionData] = useState(null)
   const [activeTab, setActiveTab] = useState("overview")
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
 
+  const fetchMainSectionData = async () => {
+    setIsLoading(true)
+    setError("")
+
+    const storedUser = sessionStorage.getItem("user")
+    const loggedUser = storedUser ? JSON.parse(storedUser) : null
+
+    if (!loggedUser || !loggedUser.token) {
+      setError("Authentication required. Please log in again.")
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8083/api/users/getUserData/${loggedUser.email}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${loggedUser.token}`,
+        },
+      })
+
+      if (response.status === 403) {
+        setError("Access denied: You do not have permission to access this resource.")
+        setIsLoading(false)
+        return
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || "Failed to fetch problems")
+      }
+
+      const data = await response.json()
+      setMainSectionData(data)
+    } catch (err) {
+      console.error("Error fetching problems:", err)
+      setError(err.message || "Failed to fetch problems")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchMainSectionData()
+  }, []);
   // Mock data
   const recentSubmissions = [
     {
