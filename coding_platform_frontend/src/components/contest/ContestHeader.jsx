@@ -1,5 +1,3 @@
-"use client"
-
 import { Badge } from "@/components/ui/badge.jsx"
 import { Button } from "@/components/ui/button.jsx"
 import { Clock } from "lucide-react"
@@ -91,7 +89,7 @@ export default function ContestHeader({
                 )}
                 {contestStatus === "past" && (
                     <div className="text-xl font-bold">
-                        Scored :  {contestResult.totalPoints} pts
+                        Scored :  {contestResult.finalScore} pts
                     </div>
                 )}
             </div>

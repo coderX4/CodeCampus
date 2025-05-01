@@ -1,5 +1,6 @@
 package com.coding_contest_platform.entity;
 
+import com.coding_contest_platform.helper.Department;
 import com.coding_contest_platform.helper.Provider;
 import com.coding_contest_platform.helper.Role;
 import lombok.*;
@@ -25,6 +26,8 @@ public class User {
 
     private Role role;
 
+    private Department department;
+
     private Provider provider;
 
     private String status;
@@ -33,15 +36,24 @@ public class User {
 
     private String lastActive;
 
-    public User(String uname, String email, String encode, Role role,Provider provider, String status, String joinDate, String lastActive) {
+    private int problems;
+
+    private int contests;
+
+    public User(String uname, String email, String encode, Role role,
+                Department department,Provider provider, String status,
+                String joinDate, String lastActive, int problems, int contests) {
         this.uname = uname;
         this.email = email;
         this.password = encode;
         this.role = role;
+        this.department = department;
         this.provider = provider;
         this.status = status;
         this.joinDate = joinDate;
         this.lastActive = lastActive;
+        this.problems = problems;
+        this.contests = contests;
     }
 }
 

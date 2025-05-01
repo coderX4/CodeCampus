@@ -94,12 +94,21 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
                     ...entry,
                     timeTaken: calculateTimeTaken(startTime, entry.finishTime),
                 }))
+
+                // Updated sorting logic: prioritize finalScore first, then timeTaken
                 updatedData.sort((a, b) => {
-                    if (b.score !== a.score) {
-                        return b.score - a.score
+                    // First priority: finalScore (higher is better)
+                    if (b.finalScore !== a.finalScore) {
+                        return b.finalScore - a.finalScore
                     }
-                    return a.timeTaken - b.timeTaken
+
+                    // Second priority: timeTaken (lower is better)
+                    // Convert time strings to comparable values (seconds)
+                    const timeA = convertTimeToSeconds(a.timeTaken)
+                    const timeB = convertTimeToSeconds(b.timeTaken)
+                    return timeA - timeB
                 })
+
                 setLeaderBoard(updatedData)
             } catch (err) {
                 console.error("Error fetching contest results:", err)
@@ -117,6 +126,14 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
 
         return () => clearInterval(intervalId) // cleanup interval on unmount or id change
     }, [id, startTime])
+
+    // Add this helper function to convert time string to seconds for comparison
+    function convertTimeToSeconds(timeString) {
+        if (!timeString) return 0
+
+        const [hours, minutes, seconds] = timeString.split(":").map(Number)
+        return hours * 3600 + minutes * 60 + seconds
+    }
 
     // Function to render rank badge/icon for top 3 positions
     const getRankIndicator = (position) => {
@@ -171,9 +188,10 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
                                 <TableHead className="w-16 text-center">Rank</TableHead>
                                 <TableHead>Participant</TableHead>
                                 <TableHead className="text-center">Solved</TableHead>
-                                <TableHead className="text-center">Score</TableHead>
+                                <TableHead className="text-center">Score / Max Score</TableHead>
                                 <TableHead className="text-center">Finish Time</TableHead>
                                 <TableHead className="text-center">Time Taken</TableHead>
+                                <TableHead className="text-center">Final Score</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -201,9 +219,12 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
                                             {entry.solved}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="text-center font-semibold">{entry.score}</TableCell>
+                                    <TableCell className="text-center font-semibold">
+                                        {entry.score} / {entry.maxScore}
+                                    </TableCell>
                                     <TableCell className="text-center">{entry.finishTime}</TableCell>
                                     <TableCell className="text-center font-mono">{entry.timeTaken}</TableCell>
+                                    <TableCell className="text-center font-mono">{entry.finalScore}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

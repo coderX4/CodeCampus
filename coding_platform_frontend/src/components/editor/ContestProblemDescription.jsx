@@ -83,12 +83,12 @@ export default function ContestProblemDescription({ problem, layout, subs }) {
                                                     <div>
                                                         {submission.accepted ? (
                                                             <span className="px-2 py-1 text-xs rounded-full bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-400">
-                                Accepted
-                              </span>
+                                                                Accepted
+                                                              </span>
                                                         ) : (
                                                             <span className="px-2 py-1 text-xs rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400">
-                                Attempted
-                              </span>
+                                                                Attempted
+                                                              </span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -98,12 +98,12 @@ export default function ContestProblemDescription({ problem, layout, subs }) {
                                                     <div className="flex justify-between items-center mb-2">
                                                         <h4 className="text-sm font-medium">Submitted Code</h4>
                                                         <span className="text-xs text-muted-foreground">
-                              {passedTests}/{totalTests} test cases passed
-                            </span>
+                                                          {passedTests}/{totalTests} test cases passed
+                                                        </span>
                                                     </div>
                                                     <pre className="text-sm overflow-auto bg-muted p-3 rounded-md max-h-60">
-                            <code>{submission.code}</code>
-                          </pre>
+                                                        <code>{submission.code}</code>
+                                                      </pre>
                                                 </div>
 
                                                 {/* Test cases toggle button */}
@@ -138,34 +138,34 @@ export default function ContestProblemDescription({ problem, layout, subs }) {
                                                                             <XCircle className="h-3.5 w-3.5" />
                                                                         )}
                                                                         <span>
-                                      Test Case {testIndex + 1}: {testCase.correct ? "Passed" : "Failed"}
-                                    </span>
+                                                                          Test Case {testIndex + 1}: {testCase.correct ? "Passed" : "Failed"}
+                                                                        </span>
                                                                     </div>
                                                                     <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                                                                         <div>
                                                                             <div className="font-medium mb-1">Input:</div>
                                                                             <pre className="bg-muted p-2 rounded-md whitespace-pre-wrap">
-                                        {testCase.input}
-                                      </pre>
+                                                                                {testCase.input}
+                                                                              </pre>
                                                                         </div>
                                                                         <div>
                                                                             <div className="font-medium mb-1">Expected Output:</div>
                                                                             <pre className="bg-muted p-2 rounded-md whitespace-pre-wrap">
-                                        {testCase.expectedOutput}
-                                      </pre>
+                                                                            {testCase.expectedOutput}
+                                                                          </pre>
                                                                         </div>
                                                                         <div className="md:col-span-2">
                                                                             <div className="font-medium mb-1">Your Output:</div>
                                                                             <pre className="bg-muted p-2 rounded-md whitespace-pre-wrap">
-                                        {testCase.actualOutput}
-                                      </pre>
+                                                                            {testCase.actualOutput}
+                                                                          </pre>
                                                                         </div>
                                                                         {testCase.error && (
                                                                             <div className="md:col-span-2">
                                                                                 <div className="font-medium mb-1 text-red-600">Error:</div>
                                                                                 <pre className="bg-red-50 dark:bg-red-900/10 p-2 rounded-md whitespace-pre-wrap text-red-800 dark:text-red-400">
-                                          {testCase.error}
-                                        </pre>
+                                                                                  {testCase.error}
+                                                                                </pre>
                                                                             </div>
                                                                         )}
                                                                     </div>

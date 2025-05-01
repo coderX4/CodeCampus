@@ -1,6 +1,5 @@
 package com.coding_contest_platform.controller;
 
-
 import com.coding_contest_platform.dto.login_signup.AdminRegisterRequest;
 import com.coding_contest_platform.helper.Provider;
 import com.coding_contest_platform.helper.Role;
@@ -10,6 +9,7 @@ import com.coding_contest_platform.security.JwtService;
 import com.coding_contest_platform.dto.login_signup.AuthRequest;
 import com.coding_contest_platform.dto.login_signup.AuthResponse;
 import com.coding_contest_platform.dto.login_signup.RegisterRequest;
+import com.coding_contest_platform.services.UserServices;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +33,7 @@ public class AuthController {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final UserServices userServices;
 
 
     /** REGISTER NEW USER */
@@ -41,22 +42,14 @@ public class AuthController {
         if (userRepository.findByEmail(request.getEmail()) != null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Email already exists"));
         }
-
-        String uname = request.getFirstName() + " " + request.getLastName();
-
-        LocalDate date = LocalDate.now(); // Get current date
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy"); // Define format
-        String formattedDate = date.format(dateFormatter);
-
-        User user = new User(uname, request.getEmail(),
-                passwordEncoder.encode(request.getPassword()), Role.ADMIN, Provider.SYSTEM,"active",formattedDate,formattedDate);
-        userRepository.save(user);
-
+        request.setRole("ADMIN");
+        request.setDepartment("ADMIN");
+        User user = userServices.createUser(request,Provider.SYSTEM);
         // Generate JWT token and store it in an HTTP-only cookie
         String token = jwtService.generateToken(user);
         setCookie(response, token);
 
-        return ResponseEntity.ok(new AuthResponse(token, uname, request.getEmail(),user.getRole()));
+        return ResponseEntity.ok(new AuthResponse(token, user.getUname(), user.getEmail(),user.getRole()));
     }
 
     /** REGISTER NEW USER */
@@ -73,9 +66,11 @@ public class AuthController {
         String formattedDate = date.format(dateFormatter);
 
         User user = new User(uname, request.getEmail(),
-                passwordEncoder.encode(request.getPassword()), Role.USER, Provider.SYSTEM,
-                "active", formattedDate, formattedDate
+                passwordEncoder.encode(request.getPassword()), Role.USER,
+                userServices.assignDepartment(request.getDepartment()),
+                Provider.SYSTEM, "active", formattedDate, formattedDate,0,0
         );
+
         userRepository.save(user);
 
         // Generate JWT token and store it in an HTTP-only cookie

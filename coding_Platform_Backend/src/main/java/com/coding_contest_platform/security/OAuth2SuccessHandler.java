@@ -1,5 +1,6 @@
 package com.coding_contest_platform.security;
 
+import com.coding_contest_platform.helper.Department;
 import com.coding_contest_platform.helper.Provider;
 import com.coding_contest_platform.helper.Role;
 import com.coding_contest_platform.entity.User;
@@ -48,7 +49,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
             User user = userRepository.findByEmail(email);
             if (user == null) {
-                user = new User(name, email, "GOOGLE_AUTH", Role.USER, Provider.GOOGLE, "active", formattedDate, formattedDate);
+                user = new User(name, email, "GOOGLE_AUTH", Role.USER, Department.CSE,Provider.GOOGLE, "active", formattedDate, formattedDate,0,0);
                 userRepository.save(user);
             }
             // Redirect to frontend, where it will call /oauth-success
@@ -65,7 +66,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
             User user = userRepository.findByEmail(email);
             if (user == null) {
-                user = new User(name, email, "GITHUB_AUTH", Role.USER,Provider.GITHUB, "active", formattedDate, formattedDate);
+                user = new User(name, email, "GITHUB_AUTH", Role.USER,Department.CSE, Provider.GITHUB, "active", formattedDate, formattedDate,0,0);
                 userRepository.save(user);
             }
             // Redirect to frontend, where it will call /oauth-success

@@ -16,5 +16,7 @@ public class ContestResultDTO {
     private String completionTime;
     private Map<String, Integer> points;
     private int totalPoints;
+    private int maxPoints;
     private int problemsSolved;
+    private int finalScore;
 }

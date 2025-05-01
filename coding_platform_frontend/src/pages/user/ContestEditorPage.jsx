@@ -44,6 +44,7 @@ export default function ContestEditorPage() {
     // Add loading state variables at the top of the component with other state variables
     const [isRunning, setIsRunning] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [countdown, setCountdown] = useState("")
 
     // Toast notifications
     const { toast } = useToast()
@@ -63,37 +64,80 @@ export default function ContestEditorPage() {
     useEffect(() => {
         if (!contestData) return
 
-        // For demo purposes, set a timer that's 2 hours from now
-        const endTime = new Date()
-        endTime.setHours(endTime.getHours() + 2)
-
-        const updateTimer = () => {
+        const calculateTimeRemaining = () => {
             const now = new Date()
-            const diff = endTime - now
 
-            if (diff <= 0) {
-                setTimeRemaining({ hours: 0, minutes: 0, seconds: 0 })
+            // Parse start date and time
+            const [year, month, day] = contestData.startDate.split("-").map(Number)
+            const [hours, minutes] = contestData.startTime.split(":").map(Number)
+            const startDateTime = new Date(year, month - 1, day, hours, minutes)
+
+            // Parse duration to get end time
+            const durationHours = Number.parseInt(contestData.duration.split(" ")[0], 10)
+            const endDateTime = new Date(startDateTime)
+            endDateTime.setHours(endDateTime.getHours() + durationHours)
+
+            // Determine status and time remaining
+            if (now < startDateTime) {
+                // Upcoming contest
+                const diff = startDateTime - now
+                setTimeRemaining({ status: "upcoming", diff })
+            } else if (now >= startDateTime && now <= endDateTime) {
+                // Ongoing contest
+                const diff = endDateTime - now
+                setTimeRemaining({ status: "ongoing", diff })
+            } else {
+                // Past contest - time's up
+                setTimeRemaining({ status: "past", diff: 0 })
+
+                // Handle test end
                 toast({
                     variant: "destructive",
                     title: "Contest Ended",
                     description: "The contest has ended. You will be redirected to the dashboard.",
                 })
-                setTimeout(() => navigate("/dashboard"), 3000)
-                return
-            }
 
-            const hours = Math.floor(diff / (1000 * 60 * 60))
+                // Exit fullscreen and navigate back
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch((err) => {
+                        console.error(`Error attempting to exit fullscreen: ${err.message}`)
+                    })
+                }
+
+                // Submit final results and navigate back after a short delay
+                setTimeout(() => navigate(`/dashboard/contest/${id}`), 3000)
+            }
+        }
+
+        calculateTimeRemaining()
+        const interval = setInterval(calculateTimeRemaining, 1000)
+        return () => clearInterval(interval)
+    }, [contestData, id, navigate, toast])
+
+    // Add this useEffect to format the countdown display
+    useEffect(() => {
+        if (!timeRemaining) return
+
+        const formatCountdown = () => {
+            const { diff } = timeRemaining
+            if (diff <= 0) return ""
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
             const seconds = Math.floor((diff % (1000 * 60)) / 1000)
 
-            setTimeRemaining({ hours, minutes, seconds })
+            let countdownText = ""
+            if (days > 0) countdownText += `${days}d `
+            if (hours > 0 || days > 0) countdownText += `${hours}h `
+            if (minutes > 0 || hours > 0 || days > 0) countdownText += `${minutes}m `
+            countdownText += `${seconds}s`
+
+            return countdownText
         }
 
-        updateTimer()
-        const timerId = setInterval(updateTimer, 1000)
-
-        return () => clearInterval(timerId)
-    }, [contestData, navigate, toast])
+        setCountdown(formatCountdown())
+    }, [timeRemaining])
 
     // Scroll to console when result changes
     useEffect(() => {
@@ -371,9 +415,15 @@ export default function ContestEditorPage() {
     }
 
     const formatTimeRemaining = () => {
-        if (!timeRemaining) return "Loading..."
+        if (!timeRemaining || !timeRemaining.diff) return "Loading..."
 
-        const { hours, minutes, seconds } = timeRemaining
+        const { diff } = timeRemaining
+        if (diff <= 0) return "00:00:00"
+
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
         return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
     }
 
@@ -590,7 +640,7 @@ export default function ContestEditorPage() {
                                     onClick={() => {
                                         handleExecuteCode(false)
                                     }}
-                                    disabled={isRunning || isSubmitting || subs[problem.id]?.some((sub) => sub.accepted === true) }
+                                    disabled={isRunning || isSubmitting || subs[problem.id]?.some((sub) => sub.accepted === true)}
                                     className="btn-hover"
                                     aria-label="Run code"
                                 >
@@ -601,7 +651,7 @@ export default function ContestEditorPage() {
                                     onClick={() => {
                                         handleExecuteCode(true)
                                     }}
-                                    disabled={isRunning || isSubmitting || subs[problem.id]?.some((sub) => sub.accepted === true) }
+                                    disabled={isRunning || isSubmitting || subs[problem.id]?.some((sub) => sub.accepted === true)}
                                     className="bg-primary hover:bg-primary/90 text-primary-foreground btn-hover"
                                     aria-label="Submit solution"
                                 >

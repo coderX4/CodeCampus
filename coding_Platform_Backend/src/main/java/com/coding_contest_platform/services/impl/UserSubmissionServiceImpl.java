@@ -3,8 +3,10 @@ package com.coding_contest_platform.services.impl;
 import com.coding_contest_platform.dto.MainSectionDTO;
 import com.coding_contest_platform.dto.editor.ExecutionResponse;
 import com.coding_contest_platform.dto.editor.SubmissionDTO;
+import com.coding_contest_platform.entity.User;
 import com.coding_contest_platform.entity.UserSubmissions;
 import com.coding_contest_platform.repository.ProblemRepository;
+import com.coding_contest_platform.repository.UserRepository;
 import com.coding_contest_platform.repository.UserSubmissionsRepository;
 import com.coding_contest_platform.services.UserSubmissionService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import java.util.Map;
 public class UserSubmissionServiceImpl implements UserSubmissionService {
     private final UserSubmissionsRepository userSubmissionsRepository;
     private final ProblemRepository problemRepository;
+    private final UserRepository userRepository;
 
     @Override
     public List<SubmissionDTO> getSubmissions(String email, String id){
@@ -43,6 +46,7 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
 
     @Override
     public boolean saveSubmissions(String email, String pId, List<ExecutionResponse> executionResponseList, String language, String code){
+        User user = userRepository.findByEmail(email);
         UserSubmissions userSubmissions = userSubmissionsRepository.findByEmail(email);
         String difficulty = problemRepository.findOneById(pId).getDifficulty();
         LocalDateTime dateTime = LocalDateTime.now();
@@ -76,6 +80,9 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
             if(submissionDTO.isAccepted()){
                 score = assignPoints(difficulty);
                 problemSolved.add(pId);
+
+                user.setProblems(problemSolved.size());
+                userRepository.save(user);
             }
             else{
                 problemAttempted.add(pId);
@@ -108,6 +115,9 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
                 if(problemAttempted.contains(pId)){
                     problemAttempted.remove(String.valueOf(pId));
                 }
+
+                user.setProblems(problemSolved.size());
+                userRepository.save(user);
             }
             else{
                 if(!problemAttempted.contains(pId)){

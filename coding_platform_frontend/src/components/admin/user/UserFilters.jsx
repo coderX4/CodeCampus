@@ -6,10 +6,12 @@ export default function UserFilters({
                                         searchQuery,
                                         setSearchQuery,
                                         roleFilter,
+                                        departmentFilter,
                                         setRoleFilter,
                                         statusFilter,
                                         setStatusFilter,
-                                    }) {
+                                        setDepartmentFilter,
+}) {
     return (
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex w-full max-w-sm items-center space-x-2">
@@ -29,7 +31,27 @@ export default function UserFilters({
                     <SelectContent>
                         <SelectItem value="all">All Roles</SelectItem>
                         <SelectItem value="ADMIN">Admin</SelectItem>
+                        <SelectItem value="MODERATOR">Moderator</SelectItem>
                         <SelectItem value="USER">User</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                    <SelectTrigger className="h-9 w-[130px]">
+                        <SelectValue placeholder="Filter by department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Dept.</SelectItem>
+                        <SelectItem value="ADMIN">Administration</SelectItem>
+                        <SelectItem value="CSE">Computer Science and Engineering</SelectItem>
+                        <SelectItem value="DS">Data Science</SelectItem>
+                        <SelectItem value="AI">Artificial Intelligence</SelectItem>
+                        <SelectItem value="ML">Machine Learning</SelectItem>
+                        <SelectItem value="AIML">AIML</SelectItem>
+                        <SelectItem value="CSBS">CSBS</SelectItem>
+                        <SelectItem value="ME">Mechanical</SelectItem>
+                        <SelectItem value="BIOTECH">Bio. Tech</SelectItem>
+                        <SelectItem value="ECE">Electrical(ECE)</SelectItem>
+                        <SelectItem value="IOT">Internet of Thing</SelectItem>
                     </SelectContent>
                 </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>

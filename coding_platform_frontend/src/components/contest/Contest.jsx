@@ -27,6 +27,13 @@ export default function Contest() {
 
   // Try to get contest data from location state or fetch it
   useEffect(() => {
+    // Exit fullscreen if currently in fullscreen mode
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch((err) => {
+        console.error(`Error attempting to exit fullscreen: ${err.message}`);
+      });
+    }
+
     if (location.state?.contest) {
       setContestData(location.state.contest)
       setIsLoading(false)
@@ -35,7 +42,6 @@ export default function Contest() {
       fetchResultData()
     }
   }, [id, location.state, reload])
-
   // Fetch all contest details including problems in a single request
   const fetchContestDetails = async () => {
     setIsLoading(true)

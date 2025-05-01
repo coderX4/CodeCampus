@@ -12,5 +12,7 @@ public class ContestLeaderBoardDTO {
     private String email;
     private int solved;
     private int score;
+    private int maxScore;
     private String finishTime;
+    private int finalScore;
 }

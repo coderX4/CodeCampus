@@ -12,6 +12,7 @@ export default function AdminUsers() {
     const [selectedUsers, setSelectedUsers] = useState([])
     const [roleFilter, setRoleFilter] = useState("all")
     const [statusFilter, setStatusFilter] = useState("all")
+    const [departmentFilter, setDepartmentFilter] = useState("all")
     const [users, setUsers] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
@@ -63,7 +64,7 @@ export default function AdminUsers() {
     // Reset to first page when filters change
     useEffect(() => {
         setCurrentPage(1)
-    }, [searchQuery, roleFilter, statusFilter, activeTab])
+    }, [searchQuery, roleFilter, statusFilter,departmentFilter, activeTab])
 
     // Filter users based on search query, role, status, and active tab
     const getFilteredUsers = (tab) => {
@@ -73,6 +74,7 @@ export default function AdminUsers() {
                 user.email?.toLowerCase().includes(searchQuery.toLowerCase())
 
             const matchesRole = roleFilter === "all" || user.role === roleFilter
+            const matchesDepartment = departmentFilter === "all" || user.department === departmentFilter
             const matchesStatus = statusFilter === "all" || user.status === statusFilter
 
             // Provider filtering based on tab
@@ -85,7 +87,7 @@ export default function AdminUsers() {
                 matchesTab = user.provider === tab
             }
 
-            return matchesSearch && matchesRole && matchesStatus && matchesTab
+            return matchesSearch && matchesRole && matchesStatus  && matchesDepartment && matchesTab
         }).slice().reverse()
     }
 
@@ -429,9 +431,11 @@ export default function AdminUsers() {
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
                     roleFilter={roleFilter}
+                    departmentFilter={departmentFilter}
                     setRoleFilter={setRoleFilter}
                     statusFilter={statusFilter}
                     setStatusFilter={setStatusFilter}
+                    setDepartmentFilter={setDepartmentFilter}
                 />
 
                 <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">

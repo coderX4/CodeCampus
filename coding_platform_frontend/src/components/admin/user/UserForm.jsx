@@ -12,6 +12,7 @@ export default function UserForm({ editingUser, onCancel, onSuccess, onError }) 
         email: "",
         password: "",
         role: "USER",
+        department: "CSE",
     })
     // Initialize form data when editing user
     useEffect(() => {
@@ -24,6 +25,7 @@ export default function UserForm({ editingUser, onCancel, onSuccess, onError }) 
                 email: editingUser.email || "",
                 password: "", // Don't set password for editing
                 role: editingUser.role || "USER",
+                department: editingUser.department || "CSE",
             })
         }
     }, [editingUser])
@@ -53,12 +55,13 @@ export default function UserForm({ editingUser, onCancel, onSuccess, onError }) 
 
             // For updates, only include password if it was changed
             const body =
-                editingUser && !formData.password
-                    ? {
+                editingUser && !formData.password ?
+                    {
                         firstName: formData.firstName,
                         lastName: formData.lastName,
                         email: formData.email,
                         role: formData.role,
+                        department: formData.department,
                     }
                     : formData
 
@@ -118,21 +121,21 @@ export default function UserForm({ editingUser, onCancel, onSuccess, onError }) 
                             />
                         </div>
                     </div>
-                    <div className="space-y-2">
-                        <label htmlFor="email" className="text-sm font-medium">
-                            Email
-                        </label>
-                        <Input
-                            id="email"
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleFormChange}
-                            placeholder="Enter email address"
-                            disabled={editingUser != null}
-                        />
-                    </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                            <label htmlFor="email" className="text-sm font-medium">
+                                Email
+                            </label>
+                            <Input
+                                id="email"
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleFormChange}
+                                placeholder="Enter email address"
+                                disabled={editingUser != null}
+                            />
+                        </div>
                         <div className="space-y-2">
                             <label htmlFor="password" className="text-sm font-medium">
                                 {editingUser ? "New Password (leave blank to keep current)" : "Password"}
@@ -147,6 +150,9 @@ export default function UserForm({ editingUser, onCancel, onSuccess, onError }) 
                                 required={!editingUser}
                             />
                         </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
                             <label htmlFor="role" className="text-sm font-medium">
                                 Role
@@ -161,6 +167,33 @@ export default function UserForm({ editingUser, onCancel, onSuccess, onError }) 
                                 <SelectContent>
                                     <SelectItem value="USER">User</SelectItem>
                                     <SelectItem value="ADMIN">Admin</SelectItem>
+                                    <SelectItem value="MODERATOR">Moderator</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <label htmlFor="department" className="text-sm font-medium">
+                                Department
+                            </label>
+                            <Select
+                                value={formData.department}
+                                onValueChange={(value) => setFormData((prev) => ({ ...prev, department: value }))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select department" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ADMIN">Administration</SelectItem>
+                                    <SelectItem value="CSE">Computer Science and Engineering</SelectItem>
+                                    <SelectItem value="DS">Data Science</SelectItem>
+                                    <SelectItem value="AI">Artificial Intelligence</SelectItem>
+                                    <SelectItem value="ML">Machine Learning</SelectItem>
+                                    <SelectItem value="AIML">AIML</SelectItem>
+                                    <SelectItem value="CSBS">CSBS</SelectItem>
+                                    <SelectItem value="ME">Mechanical</SelectItem>
+                                    <SelectItem value="BIOTECH">Bio. Tech</SelectItem>
+                                    <SelectItem value="ECE">Electrical(ECE)</SelectItem>
+                                    <SelectItem value="IOT">Internet of Thing</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
