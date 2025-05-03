@@ -15,7 +15,7 @@ public class GlobalLeaderBoardDTO {
     private Department department;
     private int problems; // no. of problems participated in
     private int contests; // no. of contest participated in
-    private int problemScore; // from user submission
+    private int problemFinalScore; // from user submission
     private int contestFinalScore;
     private int finalLeaderBoardScore; // leader score (global)
 }

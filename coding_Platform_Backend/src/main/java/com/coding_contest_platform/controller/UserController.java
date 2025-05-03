@@ -28,9 +28,9 @@ public class UserController {
         return "Hello World";
     }
 
-    @GetMapping({"/getUserData/{email}"})
-    public ResponseEntity<MainSectionDTO> getUserData(@PathVariable("email") String email) {
-        MainSectionDTO mainSectionDTO = userSubmissionService.sendMainSection(email);
-        return ResponseEntity.ok(mainSectionDTO);
-    }
+//    @GetMapping({"/getUserData/{email}"})
+//    public ResponseEntity<MainSectionDTO> getUserData(@PathVariable("email") String email) {
+//        MainSectionDTO mainSectionDTO = userSubmissionService.sendMainSection(email);
+//        return ResponseEntity.ok(mainSectionDTO);
+//    }
 }

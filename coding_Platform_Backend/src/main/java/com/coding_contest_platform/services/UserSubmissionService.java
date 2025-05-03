@@ -11,5 +11,5 @@ public interface UserSubmissionService {
 
     boolean saveSubmissions(String email, String pId, List<ExecutionResponse> executionResponseList, String language, String code);
 
-    MainSectionDTO sendMainSection(String email);
+    //MainSectionDTO sendMainSection(String email);
 }

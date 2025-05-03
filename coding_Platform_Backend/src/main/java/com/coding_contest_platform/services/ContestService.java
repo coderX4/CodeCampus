@@ -6,6 +6,7 @@ import com.coding_contest_platform.entity.Contest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ContestService {
     Contest createContest(Contest contest);
@@ -25,4 +26,5 @@ public interface ContestService {
     @Transactional
     void addParticipant(String id, String email);
 
+    Map<String, String> listOfContests();
 }

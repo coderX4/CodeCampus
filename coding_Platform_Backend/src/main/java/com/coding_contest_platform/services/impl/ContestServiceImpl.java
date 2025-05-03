@@ -171,4 +171,13 @@ public class ContestServiceImpl implements ContestService {
         }
         contestRepository.save(contest);
     }
+
+    @Override
+    public Map<String, String> listOfContests(){
+        Map<String,String> mapContest = new HashMap<>();
+        for(Contest contest : contestRepository.findAll()){
+            mapContest.put(contest.getId(),contest.getTitle());
+        }
+        return mapContest;
+    }
 }

@@ -18,7 +18,6 @@ public class UserSubmissions {
     @Id
     private String email; // mail of the user
     private Map<String, List<SubmissionDTO>> submission; // key=>String(Problem id)
-    private int totalScore;
     private List<String> problemsSolved;
     private List<String> problemAttempted;
 }

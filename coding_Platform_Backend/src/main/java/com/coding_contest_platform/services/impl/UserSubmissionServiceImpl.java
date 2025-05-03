@@ -82,12 +82,12 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
                 problemSolved.add(pId);
 
                 user.setProblems(problemSolved.size());
+                user.setProblemFinalScore(score);
                 userRepository.save(user);
             }
             else{
                 problemAttempted.add(pId);
             }
-            userSubmissions.setTotalScore(score);
             userSubmissions.setProblemsSolved(problemSolved);
             userSubmissions.setProblemAttempted(problemAttempted);
             userSubmissionsRepository.save(userSubmissions);
@@ -95,7 +95,7 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
         }
         else{
             Map<String, List<SubmissionDTO>> submission = userSubmissions.getSubmission();
-            int score = userSubmissions.getTotalScore();
+            int score = user.getProblemFinalScore();
             List<String> problemSolved = userSubmissions.getProblemsSolved();
             List<String> problemAttempted = userSubmissions.getProblemAttempted();
             if(submission.containsKey(pId)){
@@ -117,6 +117,7 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
                 }
 
                 user.setProblems(problemSolved.size());
+                user.setProblemFinalScore(score);
                 userRepository.save(user);
             }
             else{
@@ -124,25 +125,23 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
                     problemAttempted.add(pId);
                 }
             }
-            userSubmissions.setTotalScore(score);
             userSubmissions.setProblemsSolved(problemSolved);
-
             userSubmissions.setSubmission(submission);
             userSubmissionsRepository.save(userSubmissions);
             return submissionDTO.isAccepted();
         }
     }
 
-    @Override
-    public MainSectionDTO sendMainSection(String email){
-        UserSubmissions userSubmissions = userSubmissionsRepository.findByEmail(email);
-        if(userSubmissions == null){
-            return new MainSectionDTO();
-        }
-        MainSectionDTO mainSectionDTO = new MainSectionDTO();
-        mainSectionDTO.setTotalScore(userSubmissions.getTotalScore());
-        mainSectionDTO.setProblemsSolved(userSubmissions.getProblemsSolved());
-        mainSectionDTO.setProblemsAttempted(userSubmissions.getProblemAttempted());
-        return mainSectionDTO;
-    }
+//    @Override
+//    public MainSectionDTO sendMainSection(String email){
+//        UserSubmissions userSubmissions = userSubmissionsRepository.findByEmail(email);
+//        if(userSubmissions == null){
+//            return new MainSectionDTO();
+//        }
+//        MainSectionDTO mainSectionDTO = new MainSectionDTO();
+//        mainSectionDTO.setTotalScore(userSubmissions.getTotalScore());
+//        mainSectionDTO.setProblemsSolved(userSubmissions.getProblemsSolved());
+//        mainSectionDTO.setProblemsAttempted(userSubmissions.getProblemAttempted());
+//        return mainSectionDTO;
+//    }
 }
