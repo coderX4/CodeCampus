@@ -9,52 +9,43 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
     const [leaderBoard, setLeaderBoard] = useState([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState("")
+    const [contestEndTime, setContestEndTime] = useState(null)
 
-    function calculateTimeTaken(startTime, finishTime) {
-        if (!startTime || !finishTime) return "00:00:00" // return default if no input
+    // Calculate contest end time when component mounts or when relevant props change
+    useEffect(() => {
+        if (contestStatus === "ongoing" && startTime && countdown) {
+            try {
+                // Parse the startTime (format: "HH:MM")
+                const today = new Date()
+                const [startHours, startMinutes] = startTime.split(":").map(Number)
+                const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), startHours, startMinutes, 0)
 
-        const today = new Date() // using today's date for parsing
+                // Parse the countdown (format: "HH:MM:SS" or "MM:SS")
+                let countdownHours = 0
+                let countdownMinutes = 0
+                let countdownSeconds = 0
 
-        // Parse startTime (example: "10:40")
-        const [startHours, startMinutes] = startTime.split(":").map(Number)
-        const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), startHours, startMinutes, 0)
+                const countdownParts = countdown.split(":")
+                if (countdownParts.length === 3) {
+                    // Format is "HH:MM:SS"
+                    ;[countdownHours, countdownMinutes, countdownSeconds] = countdownParts.map(Number)
+                } else if (countdownParts.length === 2) {
+                    // Format is "MM:SS"
+                    ;[countdownMinutes, countdownSeconds] = countdownParts.map(Number)
+                }
 
-        // Parse finishTime manually (example: "11:05:59 AM")
-        const [timePart, meridian] = finishTime.split(" ")
-        const [finishHoursRaw, finishMinutes, finishSeconds] = timePart.split(":").map(Number)
+                // Calculate total seconds for the contest duration
+                const durationInSeconds = countdownHours * 3600 + countdownMinutes * 60 + countdownSeconds
 
-        let finishHours = finishHoursRaw
-        if (meridian === "PM" && finishHours !== 12) {
-            finishHours += 12
-        } else if (meridian === "AM" && finishHours === 12) {
-            finishHours = 0
+                // Calculate the end time by adding the duration to the start time
+                const endTime = new Date(startDate.getTime() + durationInSeconds * 1000)
+
+                setContestEndTime(endTime)
+            } catch (error) {
+                console.error("Error calculating contest end time:", error)
+            }
         }
-
-        const finishDate = new Date(
-            today.getFullYear(),
-            today.getMonth(),
-            today.getDate(),
-            finishHours,
-            finishMinutes,
-            finishSeconds,
-        )
-
-        let diff = (finishDate.getTime() - startDate.getTime()) / 1000 // in seconds
-
-        if (diff < 0) diff += 24 * 3600 // if finished after midnight
-
-        // Convert seconds to hh:mm:ss
-        const hours = Math.floor(diff / 3600)
-        const minutes = Math.floor((diff % 3600) / 60)
-        const seconds = Math.floor(diff % 60)
-
-        // Format hours, minutes, and seconds to always be two digits
-        const formattedHours = String(hours).padStart(2, "0")
-        const formattedMinutes = String(minutes).padStart(2, "0")
-        const formattedSeconds = String(seconds).padStart(2, "0")
-
-        return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`
-    }
+    }, [contestStatus, startTime, countdown])
 
     useEffect(() => {
         let intervalId
@@ -90,17 +81,8 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
                 }
 
                 const data = await response.json()
-                const updatedData = data.map((entry) => ({
-                    ...entry,
-                    timeTaken: calculateTimeTaken(startTime, entry.finishTime),
-                }))
-                updatedData.sort((a, b) => {
-                    if (b.score !== a.score) {
-                        return b.score - a.score
-                    }
-                    return a.timeTaken - b.timeTaken
-                })
-                setLeaderBoard(updatedData)
+                // No need to sort or format time as data is already sorted and formatted from backend
+                setLeaderBoard(data)
             } catch (err) {
                 console.error("Error fetching contest results:", err)
                 setError(err.message || "Failed to fetch contest result")
@@ -109,14 +91,42 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
             }
         }
 
-        fetchLeaderBoard() // fetch once immediately
+        // Check if contest is over + 2 minutes before fetching
+        const checkAndFetchLeaderboard = () => {
+            const now = new Date()
+
+            // If contest status is "past" or "ended", show the leaderboard immediately
+            if (contestStatus === "past" || contestStatus === "ended") {
+                fetchLeaderBoard()
+            }
+            // If contest is active, check if it's ending soon or just ended
+            else if (contestStatus === "ongoing" && contestEndTime) {
+                // If contest is ending within 2 minutes or has just ended (within 2 minutes)
+                if (now.getTime() >= contestEndTime.getTime() - 2 * 60 * 1000) {
+                    // If it's been at least 2 minutes since the contest ended
+                    if (now.getTime() >= contestEndTime.getTime() + 2 * 60 * 1000) {
+                        fetchLeaderBoard()
+                    } else {
+                        // Contest is ending soon or just ended, but not 2 minutes yet
+                        setIsLoading(true)
+                        setLeaderBoard([])
+                    }
+                }
+            } else if (contestStatus === "upcoming") {
+                // For upcoming contests, clear leaderboard
+                setIsLoading(false)
+                setLeaderBoard([])
+            }
+        }
+
+        checkAndFetchLeaderboard() // Check once immediately
 
         intervalId = setInterval(() => {
-            fetchLeaderBoard()
-        }, 60000) // every minute
+            checkAndFetchLeaderboard()
+        }, 30000) // Check every 30 seconds
 
         return () => clearInterval(intervalId) // cleanup interval on unmount or id change
-    }, [id, startTime])
+    }, [id, contestStatus, contestEndTime])
 
     // Function to render rank badge/icon for top 3 positions
     const getRankIndicator = (position) => {
@@ -131,6 +141,13 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
                 return <span className="font-semibold">{position + 1}</span>
         }
     }
+
+    // Determine if we should show the "calculating results" message
+    const isCalculatingResults =
+        contestStatus === "ongoing" &&
+        contestEndTime &&
+        new Date().getTime() >= contestEndTime.getTime() &&
+        new Date().getTime() < contestEndTime.getTime() + 2 * 60 * 1000
 
     return (
         <Card className="shadow-md">
@@ -149,6 +166,16 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
                         <p className="text-center text-muted-foreground text-lg">
                             Leaderboard will be available once the contest begins.
                             {countdown && <span className="block mt-2 font-medium text-primary">Contest starts in {countdown}</span>}
+                        </p>
+                    </div>
+                ) : isCalculatingResults ? (
+                    <div className="flex flex-col items-center justify-center py-16">
+                        <Trophy className="h-20 w-20 text-muted-foreground mb-6 opacity-30" />
+                        <p className="text-center text-muted-foreground text-lg">
+                            Contest has ended. Leaderboard results will be available in a few minutes.
+                            <span className="block mt-2 font-medium text-primary">
+                Please wait while we calculate the final results...
+              </span>
                         </p>
                     </div>
                 ) : isLoading ? (
@@ -171,9 +198,10 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
                                 <TableHead className="w-16 text-center">Rank</TableHead>
                                 <TableHead>Participant</TableHead>
                                 <TableHead className="text-center">Solved</TableHead>
-                                <TableHead className="text-center">Score</TableHead>
+                                <TableHead className="text-center">Score / Max Score</TableHead>
                                 <TableHead className="text-center">Finish Time</TableHead>
                                 <TableHead className="text-center">Time Taken</TableHead>
+                                <TableHead className="text-center">Final Score</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -201,9 +229,12 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
                                             {entry.solved}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="text-center font-semibold">{entry.score}</TableCell>
-                                    <TableCell className="text-center">{entry.finishTime}</TableCell>
-                                    <TableCell className="text-center font-mono">{entry.timeTaken}</TableCell>
+                                    <TableCell className="text-center font-semibold">
+                                        {entry.score} / {entry.maxScore}
+                                    </TableCell>
+                                    <TableCell className="text-center font-mono">{entry.finishTime ? entry.finishTime : "---"}</TableCell>
+                                    <TableCell className="text-center font-mono">{entry.timeTaken ? entry.timeTaken : "---"}</TableCell>
+                                    <TableCell className="text-center font-semibold">{entry.finalScore}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

@@ -1,6 +1,7 @@
 package com.coding_contest_platform.controller;
 
 import com.coding_contest_platform.dto.login_signup.AdminRegisterRequest;
+import com.coding_contest_platform.helper.Department;
 import com.coding_contest_platform.helper.Provider;
 import com.coding_contest_platform.helper.Role;
 import com.coding_contest_platform.entity.User;
@@ -34,46 +35,12 @@ public class AdminController {
 
     @PostMapping({"/createuser"})
     public ResponseEntity<User> saveUsers(@RequestBody AdminRegisterRequest request) {
-
-        String uname = request.getFirstName() + " " + request.getLastName();
-        Role role;
-        if (request.getRole().equals("ADMIN")) {
-            role = Role.ADMIN;
-        }
-        else {
-            role = Role.USER;
-        }
-
-        LocalDate date = LocalDate.now(); // Get current date
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy"); // Define format
-        String formattedDate = date.format(dateFormatter);
-
-        User user = new User(uname, request.getEmail(),
-                passwordEncoder.encode(request.getPassword()), role, Provider.SYSTEM,"active",formattedDate,formattedDate);
-
-        return ResponseEntity.ok(userRepository.save(user));
+        return ResponseEntity.ok(usersService.createUser(request,Provider.SYSTEM));
     }
 
     @PutMapping({"/updateuser/{email}"})
     public ResponseEntity<User> updateUser(@PathVariable("email") String email,@RequestBody AdminRegisterRequest request){
-        User user = userRepository.findByEmail(email);
-
-        String uname = request.getFirstName() + " " + request.getLastName();
-        Role role;
-        if (request.getRole().equals("ADMIN")) {
-            role = Role.ADMIN;
-        }
-        else {
-            role = Role.USER;
-        }
-        user.setUname(uname);
-        user.setRole(role);
-        String password = request.getPassword();
-        if(password != null){
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
-        }
-        userRepository.save(user);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(usersService.updateUser(email,request));
     }
 
     @PostMapping({"/action/{action}"})

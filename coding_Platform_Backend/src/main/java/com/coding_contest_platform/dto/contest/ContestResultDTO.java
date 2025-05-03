@@ -13,8 +13,12 @@ import java.util.Map;
 public class ContestResultDTO {
     private boolean violation;
     private boolean submitted;
-    private String completionTime;
+    private String completionTime; //
     private Map<String, Integer> points;
-    private int totalPoints;
-    private int problemsSolved;
+    private int totalPoints; //
+    private int maxPoints; //
+    private int problemsSolved; //
+    private int finalScore; //
+    private int[] timeDifference;
+    private String timeTaken;
 }

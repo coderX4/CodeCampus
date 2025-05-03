@@ -57,14 +57,8 @@ public class ContestController {
 
     @GetMapping({"/getResult/{email}/{id}"})
     public ResponseEntity<ContestResultDTO> getContestResult(@PathVariable("email") String email ,@PathVariable("id") String id) {
-        ContestResultDTO contestResultDTO = contestResultService.sendResult(userServices.getIdByEmail(email),id);
-        if(contestResultDTO==null){
-            contestResultDTO = new ContestResultDTO();
-            return ResponseEntity.ok(contestResultDTO);
-        }
-        else{
-            return ResponseEntity.ok(contestResultDTO);
-        }
+        ContestResultDTO contestResultDTO = contestResultService.sendResult(userServices.getIdByEmail(email),email,id);
+        return ResponseEntity.ok(contestResultDTO);
     }
 
     @GetMapping({"/getLeaderBoardsResult/{id}"})

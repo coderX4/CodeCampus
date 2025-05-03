@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom"
+import { Outlet, useLocation } from "react-router-dom"
 import { Code, Moon, Sun, Settings, Save, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button.jsx"
 import { useTheme } from "@/components/theme-provider.jsx"
@@ -17,10 +17,12 @@ export default function ContestEditorLayout() {
     const { theme, setTheme } = useTheme()
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
     const [showFinishDialog, setShowFinishDialog] = useState(false)
+    const location = useLocation()
+    const timeRemaining = location.state?.timeRemaining
+    const countdown = location.state?.countdown
 
     const storedUser = sessionStorage.getItem("user")
     const user = storedUser ? JSON.parse(storedUser) : { uname: "User" }
-
     useEffect(() => {
         const elem = document.documentElement
         let hasExited = false
@@ -131,16 +133,15 @@ export default function ContestEditorLayout() {
         } catch (error) {
             console.error("Failed to report test completion:", error)
         }
-
-        // Exit fullscreen before navigating back
-        if (document.fullscreenElement) {
-            document.exitFullscreen().catch((err) => {
-                console.error(`Error attempting to exit fullscreen: ${err.message}`)
-            })
-        }
-
         window.history.back()
     }
+
+    useEffect(() => {
+        if (timeRemaining && timeRemaining.status === "past") {
+            // Time's up, finish the test
+            handleFinishTest()
+        }
+    }, [timeRemaining])
 
     return (
         <div className="flex min-h-screen flex-col bg-background">
@@ -198,7 +199,7 @@ export default function ContestEditorLayout() {
                         <Button variant="outline" onClick={() => setShowFinishDialog(false)}>
                             Cancel
                         </Button>
-                        <Button variant="destructive" onClick={handleFinishTest}>
+                        <Button variant="destructive" onClick={() => handleFinishTest()}>
                             Yes, Finish Test
                         </Button>
                     </DialogFooter>

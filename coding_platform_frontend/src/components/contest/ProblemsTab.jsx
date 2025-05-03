@@ -100,14 +100,14 @@ export default function ProblemsTab({ contestStatus, countdown, problems, contes
                                 <div className="mt-6 p-4 border rounded-lg bg-muted/20">
                                     <div className="flex justify-between items-center">
                                         <div>
-                                            <h3 className="font-medium">Total Score</h3>
+                                            <h3 className="font-medium">Problem Score</h3>
                                             <p className={`text-sm ${contestResult?.violation ? "text-red-500" : "text-green-600"}`}>
                                                 {contestResult?.violation ? "Completed with violations" : "Successfully submitted"}
                                                 {contestResult?.completionTime && ` at ${contestResult.completionTime}`}
                                             </p>
                                         </div>
                                         <div className="text-xl font-bold">
-                                            {contestResult.totalPoints} pts
+                                            {contestResult.totalPoints} / {contestResult.maxPoints}
                                         </div>
                                     </div>
                                 </div>

@@ -27,6 +27,7 @@ export default function UserTable({ users, selectedUsers, onSelectUser, onSelect
                         <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                             <th className="h-12 px-4 text-left align-middle font-medium">User</th>
                             <th className="h-12 px-4 text-left align-middle font-medium">Role</th>
+                            <th className="h-12 px-4 text-left align-middle font-medium">Department</th>
                             <th className="h-12 px-4 text-left align-middle font-medium">Provider</th>
                             <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
                             <th className="h-12 px-4 text-left align-middle font-medium">Join Date</th>
@@ -64,7 +65,10 @@ export default function UserTable({ users, selectedUsers, onSelectUser, onSelect
                                     </div>
                                 </td>
                                 <td className="p-4 align-middle">
-                                    <Badge variant={user.role === "ADMIN" ? "default" : "secondary"}>{user.role}</Badge>
+                                    <Badge variant={user.role === "ADMIN" ? "default" : user.role === "MODERATOR" ? "outline" : "secondary"}>{user.role}</Badge>
+                                </td>
+                                <td className="p-4 align-middle">
+                                    <Badge variant={user.department === "USER" ? "default" : "secondary"}>{user.department}</Badge>
                                 </td>
                                 <td className="p-4 align-middle">
                                     <Badge

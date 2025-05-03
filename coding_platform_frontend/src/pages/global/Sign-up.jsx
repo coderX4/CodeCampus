@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input.jsx"
 import { Checkbox } from "@/components/ui/checkbox.jsx"
 import { Github } from "lucide-react"
 import {useAuth} from "@/utils/AuthContext.jsx";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.jsx";
 export default function SignUp() {
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
         email: "",
         password: "",
+        department: "",
         agreeToTerms: false,
     })
     const [successMessage, setSuccessMessage] = useState("");
@@ -57,6 +59,7 @@ export default function SignUp() {
             lastName: trimmedlastname,
             email: trimmedEmail,
             password: trimmedPassword,
+            department: formData.department,
             agreeToTerms: true,
         })
 
@@ -77,6 +80,7 @@ export default function SignUp() {
                     lastName: "",
                     email: "",
                     password: "",
+                    department: "CSE",
                     agreeToTerms: false,
                 });
                 setSuccessMessage("Registration Successful!");
@@ -182,6 +186,32 @@ export default function SignUp() {
                                         onChange={handleChange}
                                         required
                                     />
+                                </div>
+                                <div className="space-y-2">
+                                    <label htmlFor="department" className="text-sm font-medium">
+                                        Department
+                                    </label>
+                                    <Select
+                                        value={formData.department}
+                                        onValueChange={(value) => setFormData((prev) => ({ ...prev, department: value }))}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select department" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="ADMIN">Administration</SelectItem>
+                                            <SelectItem value="CSE">Computer Science and Engineering</SelectItem>
+                                            <SelectItem value="DS">Data Science</SelectItem>
+                                            <SelectItem value="AI">Artificial Intelligence</SelectItem>
+                                            <SelectItem value="ML">Machine Learning</SelectItem>
+                                            <SelectItem value="AIML">AIML</SelectItem>
+                                            <SelectItem value="CSBS">CSBS</SelectItem>
+                                            <SelectItem value="ME">Mechanical</SelectItem>
+                                            <SelectItem value="BIOTECH">Bio. Tech</SelectItem>
+                                            <SelectItem value="ECE">Electrical(ECE)</SelectItem>
+                                            <SelectItem value="IOT">Internet of Thing</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
