@@ -52,7 +52,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 user = new User(name, email, "GOOGLE_AUTH",
                         Role.USER, Department.CSE,Provider.GOOGLE,
                         "active", formattedDate, formattedDate,
-                        0,0,0,
+                        0,0,0,0,
                         new long[]{0,0},0);
                 userRepository.save(user);
             }
@@ -73,7 +73,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 user = new User(name, email, "GITHUB_AUTH",
                         Role.USER,Department.CSE, Provider.GITHUB,
                         "active", formattedDate, formattedDate,
-                        0,0,0,
+                        0,0,0,0,
                         new long[]{0,0},0);
                 userRepository.save(user);
             }

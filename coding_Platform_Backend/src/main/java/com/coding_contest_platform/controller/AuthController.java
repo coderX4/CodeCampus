@@ -69,7 +69,7 @@ public class AuthController {
                 passwordEncoder.encode(request.getPassword()), Role.USER,
                 userServices.assignDepartment(request.getDepartment()),
                 Provider.SYSTEM, "active", formattedDate, formattedDate,
-                0,0,0,
+                0,0,0,0,
                 new long[]{0,0},0
         );
 

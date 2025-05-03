@@ -4,11 +4,9 @@ import com.coding_contest_platform.dto.leaderboard.GlobalLeaderBoardDTO;
 import com.coding_contest_platform.entity.Contest;
 import com.coding_contest_platform.entity.Problem;
 import com.coding_contest_platform.entity.User;
-import com.coding_contest_platform.entity.UserSubmissions;
 import com.coding_contest_platform.repository.ContestRepository;
 import com.coding_contest_platform.repository.ProblemRepository;
 import com.coding_contest_platform.repository.UserRepository;
-import com.coding_contest_platform.repository.UserSubmissionsRepository;
 import com.coding_contest_platform.services.LeaderBoardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,12 +19,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LeaderBoardServiceImpl implements LeaderBoardService {
     private final UserRepository userRepository;
-    private final UserSubmissionsRepository UserSubmissionsRepository;
     private final ProblemRepository problemRepository;
     private final ContestRepository contestRepository;
-    private final UserSubmissionsRepository userSubmissionsRepository;
 
-    public int[] getNumberProblemsAndMaxProblemScore() {
+    private int[] getNumberProblemsAndMaxProblemScore() {
         List<Problem> problems = problemRepository.findByStatus("active");;
         int maxTotalProblemScore = 0;
         for (Problem problem : problems) {
@@ -48,12 +44,12 @@ public class LeaderBoardServiceImpl implements LeaderBoardService {
         return new int[]{maxTotalProblemScore,problems.size()};
     }
 
-    public int getNumberOfContests() {
+    private int getNumberOfContests() {
         List<Contest> contestList = contestRepository.findAll();
         return contestList.size();
     }
 
-    public int calcLeaderBoardScore(int finalContestScore,
+    private int calcLeaderBoardScore(int finalContestScore,
                                     int totalProblemScore,
                                     int totalProblemsSolved,
                                     int totalContestsParticipated) {
@@ -91,7 +87,7 @@ public class LeaderBoardServiceImpl implements LeaderBoardService {
     @Override
     public void updateLeaderBoardScore(String email) {
         User user = userRepository.findByEmail(email);
-        int totalProblemScore = userSubmissionsRepository.findByEmail(email).getTotalScore();
+        int totalProblemScore = user.getProblemFinalScore();
         int finalContestScore = user.getContestFinalScore();
         int totalProblemsSolved = user.getProblems();
         int totalContestsParticipated = user.getContests();
@@ -111,15 +107,26 @@ public class LeaderBoardServiceImpl implements LeaderBoardService {
     public List<GlobalLeaderBoardDTO> getGlobalLeaderBoardDTO() {
         List<GlobalLeaderBoardDTO> globalLeaderBoardDTOList = new ArrayList<>();
         for (User user : userRepository.findAll()) {
-            UserSubmissions userSubmissions = userSubmissionsRepository.findByEmail(user.getEmail());
             GlobalLeaderBoardDTO globalLeaderBoardDTO = new GlobalLeaderBoardDTO(
                     user.getUname(), user.getEmail(), user.getDepartment(),
                     user.getProblems(), user.getContests(),
-                    userSubmissions.getTotalScore(),
-                    user.getContestFinalScore(), user.getFinalLeaderBoardScore()
+                    user.getProblemFinalScore(), user.getContestFinalScore(),
+                    user.getFinalLeaderBoardScore()
             );
             globalLeaderBoardDTOList.add(globalLeaderBoardDTO);
         }
+        globalLeaderBoardDTOList.sort((a, b) -> {
+            // 1. Sort by finalScore descending
+            int leaderBoardScoreCompare = Integer.compare(b.getFinalLeaderBoardScore(), a.getFinalLeaderBoardScore());
+            if (leaderBoardScoreCompare != 0) return leaderBoardScoreCompare;
+
+            //2. Sort by contest finalScores descending
+            int contestScoreCompare = Integer.compare(b.getContestFinalScore(), a.getContestFinalScore());
+            if (contestScoreCompare != 0) return contestScoreCompare;
+
+            //3. Sort by problem finalScores descending
+            return Integer.compare(b.getProblemFinalScore(), a.getProblemFinalScore());
+        });
         return globalLeaderBoardDTOList;
     }
 }

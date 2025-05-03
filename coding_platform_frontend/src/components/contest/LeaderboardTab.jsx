@@ -1,15 +1,22 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx"
-import { Trophy, Medal, Award } from "lucide-react"
+import { Trophy, Medal, Award, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table.jsx"
 import { Badge } from "@/components/ui/badge.jsx"
+import { Button } from "@/components/ui/button.jsx"
 
-export default function LeaderboardTab({ contestStatus, countdown, id, startTime }) {
+export default function LeaderboardTab({ contestStatus, countdown, id, startTime, highlightUser: propsHighlightUser }) {
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1)
+    const usersPerPage = 10
     const [leaderBoard, setLeaderBoard] = useState([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState("")
     const [contestEndTime, setContestEndTime] = useState(null)
+
+    const [currentUserEmail, setCurrentUserEmail] = useState("")
+    const [highlightUser, setHighlightUser] = useState(propsHighlightUser || false)
 
     // Calculate contest end time when component mounts or when relevant props change
     useEffect(() => {
@@ -128,6 +135,27 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
         return () => clearInterval(intervalId) // cleanup interval on unmount or id change
     }, [id, contestStatus, contestEndTime])
 
+    useEffect(() => {
+        if (leaderBoard.length > 0) {
+            const storedUser = sessionStorage.getItem("user")
+            const loggedUser = storedUser ? JSON.parse(storedUser) : null
+
+            if (loggedUser && loggedUser.email) {
+                setCurrentUserEmail(loggedUser.email)
+                setHighlightUser(true) // Always set to true when we have user data
+
+                // Find user's position in the leaderboard
+                const userIndex = leaderBoard.findIndex((entry) => entry.email === loggedUser.email)
+
+                if (userIndex !== -1) {
+                    // Calculate which page the user is on
+                    const userPage = Math.floor(userIndex / usersPerPage) + 1
+                    setCurrentPage(userPage)
+                }
+            }
+        }
+    }, [leaderBoard, usersPerPage])
+
     // Function to render rank badge/icon for top 3 positions
     const getRankIndicator = (position) => {
         switch (position) {
@@ -148,6 +176,18 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
         contestEndTime &&
         new Date().getTime() >= contestEndTime.getTime() &&
         new Date().getTime() < contestEndTime.getTime() + 2 * 60 * 1000
+
+    // Get paginated leaderboard data
+    const getPaginatedLeaderboard = () => {
+        const indexOfLastUser = currentPage * usersPerPage
+        const indexOfFirstUser = indexOfLastUser - usersPerPage
+        return leaderBoard.slice(indexOfFirstUser, indexOfLastUser)
+    }
+
+    // Handle page change
+    const handlePageChange = (page) => {
+        setCurrentPage(page)
+    }
 
     return (
         <Card className="shadow-md">
@@ -205,10 +245,19 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {leaderBoard.map((entry, index) => (
-                                <TableRow key={entry.email} className={index < 3 ? "bg-muted/10 font-medium" : ""}>
+                            {getPaginatedLeaderboard().map((entry, index) => (
+                                <TableRow
+                                    key={entry.email}
+                                    className={`${index + (currentPage - 1) * usersPerPage < 3 ? "bg-muted/10 font-medium" : ""} ${
+                                        highlightUser && entry.email === currentUserEmail
+                                            ? "bg-primary/15 outline outline-2 outline-primary shadow-md relative transform translate-y-[-2px] border-b-4 border-primary"
+                                            : ""
+                                    }`}
+                                >
                                     <TableCell className="text-center">
-                                        <div className="flex justify-center items-center">{getRankIndicator(index)}</div>
+                                        <div className="flex justify-center items-center">
+                                            {getRankIndicator(index + (currentPage - 1) * usersPerPage)}
+                                        </div>
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
@@ -239,6 +288,84 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
                             ))}
                         </TableBody>
                     </Table>
+                )}
+                {leaderBoard.length > 0 && (
+                    <div className="flex items-center justify-between py-4">
+                        <div className="text-sm text-muted-foreground">
+                            Showing {Math.min((currentPage - 1) * usersPerPage + 1, leaderBoard.length)} to{" "}
+                            {Math.min(currentPage * usersPerPage, leaderBoard.length)} of {leaderBoard.length} participants
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handlePageChange(1)}
+                                disabled={currentPage === 1}
+                                aria-label="First page"
+                            >
+                                <ChevronsLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                aria-label="Previous page"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+
+                            <div className="flex items-center gap-1">
+                                {Array.from({ length: Math.min(5, Math.ceil(leaderBoard.length / usersPerPage)) }, (_, i) => {
+                                    // Show pages around current page
+                                    let pageNum
+                                    const totalPages = Math.ceil(leaderBoard.length / usersPerPage)
+
+                                    if (totalPages <= 5) {
+                                        pageNum = i + 1
+                                    } else if (currentPage <= 3) {
+                                        pageNum = i + 1
+                                    } else if (currentPage >= totalPages - 2) {
+                                        pageNum = totalPages - 4 + i
+                                    } else {
+                                        pageNum = currentPage - 2 + i
+                                    }
+
+                                    return (
+                                        <Button
+                                            key={pageNum}
+                                            variant={currentPage === pageNum ? "default" : "outline"}
+                                            size="sm"
+                                            onClick={() => handlePageChange(pageNum)}
+                                            aria-label={`Page ${pageNum}`}
+                                            aria-current={currentPage === pageNum ? "page" : undefined}
+                                        >
+                                            {pageNum}
+                                        </Button>
+                                    )
+                                })}
+                            </div>
+
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === Math.ceil(leaderBoard.length / usersPerPage)}
+                                aria-label="Next page"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handlePageChange(Math.ceil(leaderBoard.length / usersPerPage))}
+                                disabled={currentPage === Math.ceil(leaderBoard.length / usersPerPage)}
+                                aria-label="Last page"
+                            >
+                                <ChevronsRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
                 )}
             </CardContent>
         </Card>

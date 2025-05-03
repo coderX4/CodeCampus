@@ -29,13 +29,14 @@ public class User {
     private String lastActive;
     private int problems; // no. of problems participated in
     private int contests; // no. of contest participated in
+    private int problemFinalScore;
     private int contestFinalScore; // used to get current total score
     private long[] totalContestScore; // used to calculate weight and sumScore of total contest score
     private int finalLeaderBoardScore; // leader score (global)
     public User(String uname, String email, String encode, Role role,
                 Department department,Provider provider, String status,
                 String joinDate, String lastActive,
-                int problems, int contests,
+                int problems, int contests, int problemFinalScore,
                 int contestFinalScore, long[] totalContestScore, int finalLeaderBoardScore) {
         this.uname = uname;
         this.email = email;
@@ -48,6 +49,7 @@ public class User {
         this.lastActive = lastActive;
         this.problems = problems;
         this.contests = contests;
+        this.problemFinalScore = problemFinalScore;
         this.contestFinalScore = contestFinalScore;
         this.totalContestScore = totalContestScore;
         this.finalLeaderBoardScore = finalLeaderBoardScore;
