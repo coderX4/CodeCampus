@@ -49,7 +49,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
             User user = userRepository.findByEmail(email);
             if (user == null) {
-                user = new User(name, email, "GOOGLE_AUTH", Role.USER, Department.CSE,Provider.GOOGLE, "active", formattedDate, formattedDate,0,0);
+                user = new User(name, email, "GOOGLE_AUTH",
+                        Role.USER, Department.CSE,Provider.GOOGLE,
+                        "active", formattedDate, formattedDate,
+                        0,0,0,
+                        new long[]{0,0},0);
                 userRepository.save(user);
             }
             // Redirect to frontend, where it will call /oauth-success
@@ -66,7 +70,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
             User user = userRepository.findByEmail(email);
             if (user == null) {
-                user = new User(name, email, "GITHUB_AUTH", Role.USER,Department.CSE, Provider.GITHUB, "active", formattedDate, formattedDate,0,0);
+                user = new User(name, email, "GITHUB_AUTH",
+                        Role.USER,Department.CSE, Provider.GITHUB,
+                        "active", formattedDate, formattedDate,
+                        0,0,0,
+                        new long[]{0,0},0);
                 userRepository.save(user);
             }
             // Redirect to frontend, where it will call /oauth-success

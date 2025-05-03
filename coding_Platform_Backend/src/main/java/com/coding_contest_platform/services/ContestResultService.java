@@ -14,9 +14,7 @@ public interface ContestResultService {
     @Transactional
     void finishContest(String uId, String cId, String timestamp, boolean voilation, boolean submitted);
 
-    ContestResultDTO sendResult(String uId, String cId);
-
-    Map<String, ContestResultDTO> getContestResults(String cId);
+    ContestResultDTO sendResult(String uId, String email, String cId);
 
     List<ContestLeaderBoardDTO> getContestLeaderBoard(String cId);
 }

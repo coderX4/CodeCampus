@@ -89,7 +89,7 @@ export default function ContestHeader({
                 )}
                 {contestStatus === "past" && (
                     <div className="text-xl font-bold">
-                        Scored :  {contestResult.finalScore} pts
+                        Contest Score :  {contestResult.finalScore} pts
                     </div>
                 )}
             </div>

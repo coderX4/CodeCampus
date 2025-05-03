@@ -85,7 +85,7 @@ public class UserServiceImpl implements UserServices {
         User user = new User(uname, request.getEmail(),
                 passwordEncoder.encode(request.getPassword()), assignRole(request.getRole()),
                 assignDepartment(request.getDepartment()), provider,"active",
-                formattedDate,formattedDate,0,0
+                formattedDate,formattedDate,0,0,0,new long[]{0,0},0
         );
         userRepository.save(user);
         return user;

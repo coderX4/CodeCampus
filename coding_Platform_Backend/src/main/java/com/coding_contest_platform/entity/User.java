@@ -15,34 +15,28 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {
-
     @Id
     private String id;
     private String uname;
-
     @Indexed(unique = true)
     private String email;
     private String password;
-
     private Role role;
-
     private Department department;
-
     private Provider provider;
-
     private String status;
-
     private String joinDate;
-
     private String lastActive;
-
-    private int problems;
-
-    private int contests;
-
+    private int problems; // no. of problems participated in
+    private int contests; // no. of contest participated in
+    private int contestFinalScore; // used to get current total score
+    private long[] totalContestScore; // used to calculate weight and sumScore of total contest score
+    private int finalLeaderBoardScore; // leader score (global)
     public User(String uname, String email, String encode, Role role,
                 Department department,Provider provider, String status,
-                String joinDate, String lastActive, int problems, int contests) {
+                String joinDate, String lastActive,
+                int problems, int contests,
+                int contestFinalScore, long[] totalContestScore, int finalLeaderBoardScore) {
         this.uname = uname;
         this.email = email;
         this.password = encode;
@@ -54,6 +48,9 @@ public class User {
         this.lastActive = lastActive;
         this.problems = problems;
         this.contests = contests;
+        this.contestFinalScore = contestFinalScore;
+        this.totalContestScore = totalContestScore;
+        this.finalLeaderBoardScore = finalLeaderBoardScore;
     }
 }
 

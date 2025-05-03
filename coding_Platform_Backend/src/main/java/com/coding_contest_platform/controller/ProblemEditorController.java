@@ -6,6 +6,7 @@ import com.coding_contest_platform.dto.editor.SubmissionDTO;
 import com.coding_contest_platform.dto.problem.TestCase;
 import com.coding_contest_platform.entity.ProblemTestCase;
 import com.coding_contest_platform.services.EditorService;
+import com.coding_contest_platform.services.LeaderBoardService;
 import com.coding_contest_platform.services.ProblemService;
 import com.coding_contest_platform.services.UserSubmissionService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class ProblemEditorController {
     private final EditorService editorService;
     private final ProblemService problemService;
     private final UserSubmissionService userSubmissionService;
+    private final LeaderBoardService leaderBoardService;
 
     @GetMapping({"/getproblem/{email}/{id}"})
     public ResponseEntity<?> getProblem(@PathVariable("id") String id, @PathVariable("email") String email) {
@@ -55,9 +57,9 @@ public class ProblemEditorController {
                 executionRequest.getLanguage(),
                 submitTestCases
         );
-
+        String email = executionRequest.getEmail();
         boolean isAccepted = userSubmissionService.saveSubmissions(
-                executionRequest.getEmail(),
+                email,
                 id,
                 executionResponses,
                 executionRequest.getLanguage(),
@@ -65,6 +67,10 @@ public class ProblemEditorController {
         );
 
         problemService.saveSubmission(id, isAccepted);
+
+        if(isAccepted){
+            leaderBoardService.updateLeaderBoardScore(email);
+        }
 
         return ResponseEntity.ok(executionResponses);
     }

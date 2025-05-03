@@ -7,6 +7,7 @@ import com.coding_contest_platform.dto.editor.SubmissionDTO;
 import com.coding_contest_platform.dto.problem.TestCase;
 import com.coding_contest_platform.entity.ProblemTestCase;
 import com.coding_contest_platform.services.*;
+import com.coding_contest_platform.services.LeaderBoardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,7 @@ public class ContestEditorController {
     private final ProblemService problemService;
     private final ContestSubmissionService contestSubmissionService;
     private final ContestResultService contestResultService;
+    private final LeaderBoardService leaderBoardService;
 
     @PostMapping({"/execute-run/{id}"})
     public ResponseEntity<List<ExecutionResponse>> executeCodeRun(@PathVariable String id, @RequestBody ContestExecutionRequest executionRequest) throws ExecutionException, InterruptedException {
@@ -91,13 +93,15 @@ public class ContestEditorController {
 
     @PostMapping({"/finish-test"})
     public ResponseEntity<?> finishContest(@RequestBody Finish_VoilationDTO finishVoilationDTO){
+        String email = finishVoilationDTO.getEmail();
         contestResultService.finishContest(
-                userServices.getIdByEmail(finishVoilationDTO.getEmail()),
+                userServices.getIdByEmail(email),
                 finishVoilationDTO.getContestId(),
                 finishVoilationDTO.getTimestamp(),
                 false,
                 true
         );
+        leaderBoardService.updateLeaderBoardScore(email);
         return ResponseEntity.ok().build();
     }
 }

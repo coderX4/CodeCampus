@@ -68,7 +68,9 @@ public class AuthController {
         User user = new User(uname, request.getEmail(),
                 passwordEncoder.encode(request.getPassword()), Role.USER,
                 userServices.assignDepartment(request.getDepartment()),
-                Provider.SYSTEM, "active", formattedDate, formattedDate,0,0
+                Provider.SYSTEM, "active", formattedDate, formattedDate,
+                0,0,0,
+                new long[]{0,0},0
         );
 
         userRepository.save(user);
