@@ -7,6 +7,7 @@ import { Clock, Code, Trophy, Users, CheckCircle, ArrowRight, Github } from "luc
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx"
 import { Badge } from "@/components/ui/badge.jsx"
 import {useAuth} from "@/utils/AuthContext.jsx";
+import {baseUrl} from "@/utils/index.js";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -91,7 +92,7 @@ export default function Home() {
     const loginData = { email, password };
 
     try {
-      const response = await fetch(`http://localhost:8083/api/auth/login`, {
+      const response = await fetch(baseUrl+`/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -124,11 +125,11 @@ export default function Home() {
   };
 
   const handleGoogleLogin = async () => {
-    window.open("http://localhost:8083/oauth2/authorization/google", "_self");
+    window.open(baseUrl+"/oauth2/authorization/google", "_self");
   };
 
   const handleGithubLogin = async () => {
-    window.open("http://localhost:8083/oauth2/authorization/github", "_self");
+    window.open(baseUrl+"/oauth2/authorization/github", "_self");
   };
 
   return (

@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Trophy } from "lucide-react"
 import LeaderboardTable from "../../components/shared/LeaderboardTable.jsx"
 import ContestLeaderboardTab from "../../components/shared/ContestLeaderboardTab.jsx"
+import {baseUrl} from "@/utils/index.js";
 
 export default function Leaderboard() {
   const [leaderBoard, setLeaderBoard] = useState([])
@@ -39,7 +40,7 @@ export default function Leaderboard() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8083/api/leaderboard/getglobal`, {
+      const response = await fetch(baseUrl+`/api/leaderboard/getglobal`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -104,9 +105,6 @@ export default function Leaderboard() {
     if (departmentFilter !== leaderBoard[userIndex].department) {
       setDepartmentFilter(leaderBoard[userIndex].department)
     }
-
-    // Update the pagination in the LeaderboardTable component
-    // We'll pass this information to the LeaderboardTable component
   }
 
   useEffect(() => {

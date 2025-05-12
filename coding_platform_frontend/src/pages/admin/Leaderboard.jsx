@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, RefreshCw, Download, Filter, Trophy } from "lucide-react"
 import LeaderboardTable from "@/components/shared/LeaderboardTable.jsx"
 import ContestLeaderboardTab from "@/components/shared/ContestLeaderboardTab.jsx"
+import {baseUrl} from "@/utils/index.js";
 
 export default function AdminLeaderboard() {
     const [activeTab, setActiveTab] = useState("global")
@@ -34,7 +35,7 @@ export default function AdminLeaderboard() {
         }
 
         try {
-            const response = await fetch(`http://localhost:8083/api/leaderboard/getglobal`, {
+            const response = await fetch(baseUrl+`/api/leaderboard/getglobal`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",

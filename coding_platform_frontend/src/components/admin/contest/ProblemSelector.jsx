@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox.jsx"
 import { Button } from "@/components/ui/button.jsx"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx"
 import { useToast } from "@/hooks/use-toast.js"
+import {baseUrl} from "@/utils/index.js";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table.jsx"
 
 export default function ProblemSelector({ selectedProblems, setSelectedProblems }) {
@@ -36,7 +37,7 @@ export default function ProblemSelector({ selectedProblems, setSelectedProblems 
         }
 
         try {
-            const response = await fetch("http://localhost:8083/api/problems/getproblems", {
+            const response = await fetch(baseUrl+"/api/problems/getproblems", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",

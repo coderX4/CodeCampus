@@ -6,6 +6,7 @@ import {CreateContestForm,ContestFilters,ContestTable} from "@/components/admin/
 import LiveClock from "@/components/shared/LiveClock.jsx"
 import { determineContestStatus } from "@/utils/contestUtils.js"
 import { useToast } from "@/hooks/use-toast.js"
+import {baseUrl} from "@/utils/index.js";
 
 export default function AdminContests() {
     const [activeTab, setActiveTab] = useState("upcoming")
@@ -39,7 +40,7 @@ export default function AdminContests() {
         }
 
         try {
-            const response = await fetch("http://localhost:8083/api/contest/getcontests", {
+            const response = await fetch(baseUrl+"/api/contest/getcontests", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -250,8 +251,8 @@ export default function AdminContests() {
                 isEditing = false
             }
             const url = isEditing
-                ? `http://localhost:8083/api/contest/update/${editingContest.id}`
-                : "http://localhost:8083/api/contest/createcontest"
+                ? baseUrl+`/api/contest/update/${editingContest.id}`
+                : baseUrl+"/api/contest/createcontest"
 
             const method = isEditing ? "PUT" : "POST"
 
@@ -307,7 +308,7 @@ export default function AdminContests() {
         const loggedUser = storedUser ? JSON.parse(storedUser) : null
 
         try {
-            const response = await fetch(`http://localhost:8083/api/contest/delete/${contest.id}`, {
+            const response = await fetch(baseUrl+`/api/contest/delete/${contest.id}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button.jsx"
 import { Textarea } from "@/components/ui/textarea.jsx"
 import { X, Mail, Send } from "lucide-react"
 import { Badge } from "@/components/ui/badge.jsx"
+import {baseUrl} from "@/utils/index.js";
 
 export default function SendEmailForm({ recipients, onCancel, onSuccess, onError }) {
     const [isLoading, setIsLoading] = useState(false)
@@ -37,7 +38,7 @@ export default function SendEmailForm({ recipients, onCancel, onSuccess, onError
             }
 
             // Send the email
-            const response = await fetch("http://localhost:8083/api/admin/sendmail", {
+            const response = await fetch(baseUrl+"/api/admin/sendmail", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

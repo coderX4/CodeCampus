@@ -74,6 +74,7 @@ public class AuthController {
         );
 
         userRepository.save(user);
+        userServices.makeProgressDTOMap(user);
 
         // Generate JWT token and store it in an HTTP-only cookie
         String token = jwtService.generateToken(user);

@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public class ProblemServiceImpl implements ProblemService {
     private final ProblemDataRepository problemDataRepository;
     private final ProblemTestCaseRepository problemTestCaseRepository;
     private final UserSubmissionsRepository userSubmissionsRepository;
+    private final ProblemTagsListRepository problemTagsListRepository;
 
     @Override
     public String generateCustomId(String difficulty, List<String> tags) {
@@ -73,7 +75,6 @@ public class ProblemServiceImpl implements ProblemService {
                 customId,
                 problemRequest.getTestCases()
         );
-
         // Save problem in DB
         problemRepository.save(problem);
 
@@ -81,7 +82,21 @@ public class ProblemServiceImpl implements ProblemService {
 
         problemTestCaseRepository.save(problemTestCase);
 
+        //Problem Tag List
+        assignProblemToTagsList(problemRequest.getTags());
+
         return problemRequest;
+    }
+
+
+    private void assignProblemToTagsList(List<String> tags){
+        ProblemTagsList problemTagsList = problemTagsListRepository.findOneById("1");
+        Map<String, Integer> mapProblemTagsList = problemTagsList.getProblemTagsList();
+        for (String tag : tags) {
+            mapProblemTagsList.put(tag, mapProblemTagsList.get(tag) + 1);
+        }
+        problemTagsList.setProblemTagsList(mapProblemTagsList);
+        problemTagsListRepository.save(problemTagsList);
     }
 
     @Override
@@ -124,6 +139,8 @@ public class ProblemServiceImpl implements ProblemService {
         ProblemTestCase problemTestCase = problemTestCaseRepository.findOneById(id);
         problemTestCase.setTestCases(problemRequest.getTestCases());
         problemTestCaseRepository.save(problemTestCase);
+
+        assignProblemToTagsList(problem.getTags());
 
         return problemRequest;
     }

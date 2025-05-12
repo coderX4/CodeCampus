@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../..
 import { Input } from "../../ui/input.jsx"
 import { Button } from "../../ui/button.jsx"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select.jsx"
+import {baseUrl} from "@/utils/index.js";
 
 export default function UserForm({ editingUser, onCancel, onSuccess, onError }) {
     const [isLoading, setIsLoading] = useState(false)
@@ -48,8 +49,8 @@ export default function UserForm({ editingUser, onCancel, onSuccess, onError }) 
         try {
             // Determine if we're creating or updating a user
             const url = editingUser
-                ? `http://localhost:8083/api/admin/updateuser/${editingUser.email}`
-                : "http://localhost:8083/api/admin/createuser"
+                ? baseUrl+`/api/admin/updateuser/${editingUser.email}`
+                : baseUrl+"/api/admin/createuser"
 
             const method = editingUser ? "PUT" : "POST"
 

@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.j
 import { Plus, AlertTriangle, RefreshCw, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import {ProblemFilters,ProblemTable,ProblemForm,ProblemViewDialog} from "@/components/admin/adminindex.js"
 import { useToast } from "@/hooks/use-toast.js"
+import {baseUrl} from "@/utils/index.js";
 
 export default function AdminProblems() {
     // State for UI controls
@@ -45,7 +46,7 @@ export default function AdminProblems() {
         }
 
         try {
-            const response = await fetch("http://localhost:8083/api/problems/getproblems", {
+            const response = await fetch(baseUrl+"/api/problems/getproblems", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -89,7 +90,7 @@ export default function AdminProblems() {
         }
 
         try {
-            const response = await fetch(`http://localhost:8083/api/problems/getproblemformdata/${id}`, {
+            const response = await fetch(baseUrl+`/api/problems/getproblemformdata/${id}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -219,8 +220,8 @@ export default function AdminProblems() {
                 isEditing = false
             }
             const url = isEditing
-                ? `http://localhost:8083/api/problems/update/${editingProblem.id}`
-                : "http://localhost:8083/api/problems/addproblem"
+                ? baseUrl+`/api/problems/update/${editingProblem.id}`
+                : baseUrl+"/api/problems/addproblem"
 
             const method = isEditing ? "PUT" : "POST"
 
@@ -279,7 +280,7 @@ export default function AdminProblems() {
         const loggedUser = storedUser ? JSON.parse(storedUser) : null
 
         try {
-            const response = await fetch(`http://localhost:8083/api/problems/delete/${problem.id}`, {
+            const response = await fetch(baseUrl+`/api/problems/delete/${problem.id}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",

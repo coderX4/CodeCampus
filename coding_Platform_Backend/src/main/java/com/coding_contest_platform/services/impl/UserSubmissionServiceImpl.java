@@ -1,11 +1,14 @@
 package com.coding_contest_platform.services.impl;
 
-import com.coding_contest_platform.dto.MainSectionDTO;
 import com.coding_contest_platform.dto.editor.ExecutionResponse;
 import com.coding_contest_platform.dto.editor.SubmissionDTO;
+import com.coding_contest_platform.dto.mainsection.ProgressDTO;
+import com.coding_contest_platform.dto.mainsection.RecentSubmissionDTO;
+import com.coding_contest_platform.entity.Problem;
 import com.coding_contest_platform.entity.User;
 import com.coding_contest_platform.entity.UserSubmissions;
 import com.coding_contest_platform.repository.ProblemRepository;
+import com.coding_contest_platform.repository.ProblemTagsListRepository;
 import com.coding_contest_platform.repository.UserRepository;
 import com.coding_contest_platform.repository.UserSubmissionsRepository;
 import com.coding_contest_platform.services.UserSubmissionService;
@@ -14,10 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +25,7 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
     private final UserSubmissionsRepository userSubmissionsRepository;
     private final ProblemRepository problemRepository;
     private final UserRepository userRepository;
+    private final ProblemTagsListRepository problemTagsListRepository;
 
     @Override
     public List<SubmissionDTO> getSubmissions(String email, String id){
@@ -48,7 +49,9 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
     public boolean saveSubmissions(String email, String pId, List<ExecutionResponse> executionResponseList, String language, String code){
         User user = userRepository.findByEmail(email);
         UserSubmissions userSubmissions = userSubmissionsRepository.findByEmail(email);
-        String difficulty = problemRepository.findOneById(pId).getDifficulty();
+        Problem problem = problemRepository.findOneById(pId);
+        String difficulty = problem.getDifficulty();
+        List<String> tagList = problem.getTags();
         LocalDateTime dateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy [HH:mm:ss]");
         String formattedDateTime = dateTime.format(formatter);
@@ -84,12 +87,18 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
                 user.setProblems(problemSolved.size());
                 user.setProblemFinalScore(score);
                 userRepository.save(user);
+                saveProgressDTO(user, tagList);
             }
             else{
                 problemAttempted.add(pId);
             }
             userSubmissions.setProblemsSolved(problemSolved);
             userSubmissions.setProblemAttempted(problemAttempted);
+
+            RecentSubmissionDTO recentSubmissionDTO = saveRecentSubmissionDTO(problem, submissionDTO);
+            LinkedList<RecentSubmissionDTO> recentSubmissionDTOSList = new LinkedList<RecentSubmissionDTO>();
+            recentSubmissionDTOSList.addFirst(recentSubmissionDTO);
+            userSubmissions.setRecentSubmissionsDTOList(recentSubmissionDTOSList);
             userSubmissionsRepository.save(userSubmissions);
             return submissionDTO.isAccepted();
         }
@@ -119,6 +128,7 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
                 user.setProblems(problemSolved.size());
                 user.setProblemFinalScore(score);
                 userRepository.save(user);
+                saveProgressDTO(user, tagList);
             }
             else{
                 if(!problemAttempted.contains(pId)){
@@ -127,21 +137,39 @@ public class UserSubmissionServiceImpl implements UserSubmissionService {
             }
             userSubmissions.setProblemsSolved(problemSolved);
             userSubmissions.setSubmission(submission);
+
+            RecentSubmissionDTO recentSubmissionDTO = saveRecentSubmissionDTO(problem, submissionDTO);
+            LinkedList<RecentSubmissionDTO> recentSubmissionDTOSList = userSubmissions.getRecentSubmissionsDTOList();
+            recentSubmissionDTOSList.addLast(recentSubmissionDTO);
+            if(recentSubmissionDTOSList.size() > 10){
+                recentSubmissionDTOSList.removeFirst();
+            }
+            userSubmissions.setRecentSubmissionsDTOList(recentSubmissionDTOSList);
             userSubmissionsRepository.save(userSubmissions);
             return submissionDTO.isAccepted();
         }
     }
 
-//    @Override
-//    public MainSectionDTO sendMainSection(String email){
-//        UserSubmissions userSubmissions = userSubmissionsRepository.findByEmail(email);
-//        if(userSubmissions == null){
-//            return new MainSectionDTO();
-//        }
-//        MainSectionDTO mainSectionDTO = new MainSectionDTO();
-//        mainSectionDTO.setTotalScore(userSubmissions.getTotalScore());
-//        mainSectionDTO.setProblemsSolved(userSubmissions.getProblemsSolved());
-//        mainSectionDTO.setProblemsAttempted(userSubmissions.getProblemAttempted());
-//        return mainSectionDTO;
-//    }
+    private void saveProgressDTO(User user, List<String> tags){
+        Map<String, ProgressDTO> progressDTOMap = user.getProgressDTOMap();
+        Map<String, Integer> mapProblemsListTag = problemTagsListRepository.findOneById("1").getProblemTagsList();
+        for(String tag : tags){
+            ProgressDTO progressDTO = progressDTOMap.get(tag);
+            progressDTO.setTotal(mapProblemsListTag.get(tag));
+            progressDTO.setCompleted(progressDTO.getCompleted() + 1);
+            progressDTOMap.put(tag, progressDTO);
+        }
+        user.setProgressDTOMap(progressDTOMap);
+        userRepository.save(user);
+    }
+
+    private RecentSubmissionDTO saveRecentSubmissionDTO(Problem problem,SubmissionDTO submissionDTO){
+        RecentSubmissionDTO recentSubmissionDTO = new RecentSubmissionDTO();
+        recentSubmissionDTO.setProblemId(problem.getId());
+        recentSubmissionDTO.setProblem(problem.getTitle());
+        recentSubmissionDTO.setStatus(submissionDTO.isAccepted());
+        recentSubmissionDTO.setLanguage(submissionDTO.getLanguage());
+        recentSubmissionDTO.setTime(submissionDTO.getDateTime());
+        return recentSubmissionDTO;
+    }
 }

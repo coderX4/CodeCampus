@@ -1,5 +1,6 @@
 package com.coding_contest_platform.entity;
 
+import com.coding_contest_platform.dto.mainsection.ProgressDTO;
 import com.coding_contest_platform.helper.Department;
 import com.coding_contest_platform.helper.Provider;
 import com.coding_contest_platform.helper.Role;
@@ -8,6 +9,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.Map;
 
 @Document(collection = "users")
 @TypeAlias("Users")
@@ -27,12 +30,15 @@ public class User {
     private String status;
     private String joinDate;
     private String lastActive;
-    private int problems; // no. of problems participated in
+    private int problems; // no. of problems solved
     private int contests; // no. of contest participated in
     private int problemFinalScore;
     private int contestFinalScore; // used to get current total score
     private long[] totalContestScore; // used to calculate weight and sumScore of total contest score
     private int finalLeaderBoardScore; // leader score (global)
+
+    private Map<String, ProgressDTO> progressDTOMap;
+
     public User(String uname, String email, String encode, Role role,
                 Department department,Provider provider, String status,
                 String joinDate, String lastActive,

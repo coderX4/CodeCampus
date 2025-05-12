@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge.jsx"
 import { Dialog, DialogTrigger } from "@/components/ui/dialog"
 import { Card, CardContent } from "@/components/ui/card.jsx"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx"
+import {baseUrl} from "@/utils/index.js";
 
 export default function ContestEditorPage() {
     const { id } = useParams()
@@ -189,7 +190,7 @@ export default function ContestEditorPage() {
         }
 
         try {
-            const response = await fetch(`http://localhost:8083/api/contest/getcontestdetails/${id}`, {
+            const response = await fetch(baseUrl+`/api/contest/getcontestdetails/${id}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -241,7 +242,7 @@ export default function ContestEditorPage() {
         }
 
         try {
-            const response = await fetch(`http://localhost:8083/api/contesteditor/getsubmissions/${loggedUser.email}/${id}`, {
+            const response = await fetch(baseUrl+`/api/contesteditor/getsubmissions/${loggedUser.email}/${id}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -298,8 +299,8 @@ export default function ContestEditorPage() {
             }
 
             const urls = isSubmit
-                ? "http://localhost:8083/api/contesteditor/execute-submit/"
-                : "http://localhost:8083/api/contesteditor/execute-run/"
+                ? baseUrl+"/api/contesteditor/execute-submit/"
+                : baseUrl+"/api/contesteditor/execute-run/"
             const response = await fetch(urls + `${problem.id}`, {
                 method: "POST",
                 headers: {
@@ -618,8 +619,8 @@ export default function ContestEditorPage() {
                                                 {result.status}
                                                 {result.runtime && (
                                                     <span className="text-sm ml-2 text-muted-foreground">
-                            Runtime: {result.runtime} • Memory: {result.memory}
-                          </span>
+                                                        Runtime: {result.runtime} • Memory: {result.memory}
+                                                      </span>
                                                 )}
                                             </div>
                                         ) : (

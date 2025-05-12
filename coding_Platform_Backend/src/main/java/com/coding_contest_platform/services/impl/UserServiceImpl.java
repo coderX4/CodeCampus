@@ -1,11 +1,17 @@
 package com.coding_contest_platform.services.impl;
 
 import com.coding_contest_platform.dto.login_signup.AdminRegisterRequest;
+import com.coding_contest_platform.dto.mainsection.MainSectionDTO;
+import com.coding_contest_platform.dto.mainsection.ProgressDTO;
+import com.coding_contest_platform.dto.mainsection.RecentSubmissionDTO;
+import com.coding_contest_platform.dto.mainsection.UpCommingContest;
+import com.coding_contest_platform.entity.Contest;
 import com.coding_contest_platform.entity.User;
+import com.coding_contest_platform.entity.UserSubmissions;
 import com.coding_contest_platform.helper.Department;
 import com.coding_contest_platform.helper.Provider;
 import com.coding_contest_platform.helper.Role;
-import com.coding_contest_platform.repository.UserRepository;
+import com.coding_contest_platform.repository.*;
 import com.coding_contest_platform.services.UserServices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -14,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -22,15 +28,11 @@ public class UserServiceImpl implements UserServices {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final ProblemRepository problemRepository;
+    private final UserSubmissionsRepository userSubmissionsRepository;
+    private final ProblemTagsListRepository problemTagsListRepository;
+    private final ContestRepository contestRepository;
 
-    @Override
-    public User saveUsers(User user) {
-        User newUser = new User();
-        newUser.setUname(user.getUname());
-        newUser.setEmail(user.getEmail());
-        newUser.setPassword(user.getPassword());
-        return userRepository.save(newUser); // Collection is created automatically if it doesn't exist
-    }
 
     @Override
     public List<User> getAllUsers() {
@@ -88,6 +90,7 @@ public class UserServiceImpl implements UserServices {
                 formattedDate,formattedDate,0,0,0,0,new long[]{0,0},0
         );
         userRepository.save(user);
+        makeProgressDTOMap(user);
         return user;
     }
 
@@ -111,5 +114,59 @@ public class UserServiceImpl implements UserServices {
         }
         userRepository.save(user);
         return user;
+    }
+
+    @Transactional
+    @Override
+    public void makeProgressDTOMap(User user){
+        Map<String, Integer> problemTagList = problemTagsListRepository.findOneById("1").getProblemTagsList();
+        Map<String, ProgressDTO> progressDTOMap = new HashMap<>();
+        for (Map.Entry<String, Integer> entry : problemTagList.entrySet()) {
+            ProgressDTO progressDTO = new ProgressDTO();
+            progressDTO.setTopic(entry.getKey());
+            progressDTO.setTotal(entry.getValue());
+            progressDTO.setCompleted(0);
+            progressDTOMap.put(entry.getKey(), progressDTO);
+        }
+        user.setProgressDTOMap(progressDTOMap);
+        userRepository.save(user);
+    }
+
+    private List<UpCommingContest> getUpCommingContests(){
+        List<UpCommingContest> upCommingContests = new ArrayList<>();
+        for(Contest contest : contestRepository.findAll()){
+            UpCommingContest upCommingContest = new UpCommingContest(
+                    contest.getId(), contest.getTitle(), contest.getDescription(),
+                    contest.getStartDate(), contest.getStartTime(), contest.getDuration(),
+                    contest.getDifficulty(),contest.getParticipants()
+            );
+            upCommingContests.add(upCommingContest);
+        }
+        return upCommingContests;
+    }
+
+    private List<ProgressDTO> getProgressDTOList(Map<String, ProgressDTO> progressDTOMap){
+        return new ArrayList<>(progressDTOMap.values());
+    }
+
+
+    @Override
+    public MainSectionDTO sendMainSection(String email){
+        User user = userRepository.findByEmail(email);
+        Map<String, ProgressDTO> map = user.getProgressDTOMap();
+        List<ProgressDTO> progressDTOList = getProgressDTOList(map);
+        LinkedList<RecentSubmissionDTO> recentSubmissionDTOList;
+        UserSubmissions userSubmissions = userSubmissionsRepository.findByEmail(email);
+        if(userSubmissions == null){
+            recentSubmissionDTOList = new LinkedList<>();
+        }
+        else{
+            recentSubmissionDTOList = userSubmissions.getRecentSubmissionsDTOList();
+        }
+        List<UpCommingContest> contestList = getUpCommingContests();
+        return new MainSectionDTO(
+                user.getProblems(), user.getContests(), 0, 0, progressDTOList,
+                recentSubmissionDTOList, contestList
+        );
     }
 }

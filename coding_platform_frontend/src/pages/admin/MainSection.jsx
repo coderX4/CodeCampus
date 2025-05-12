@@ -1,302 +1,353 @@
-import { useState } from "react"
-import { Link } from "react-router-dom"
-import { Button } from "@/components/ui/button.jsx"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx"
-import { Progress } from "@/components/ui/progress.jsx"
-import {
-    FileQuestion,
-    Users,
-    BrainCircuit,
-    BarChartIcon as ChartNoAxesCombined,
-    BarChart,
-    AlertTriangle,
-} from "lucide-react"
-import StatsCard from "@/components/dashboard/stats-card.jsx"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Progress } from "@/components/ui/progress"
+import { useToast } from "@/hooks/use-toast"
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "@/utils/AuthContext"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
+import { ArrowUpRight, Users, FileCode, Trophy, Clock } from "lucide-react"
 
-export default function AdminMainSection() {
-    const [activeTab, setActiveTab] = useState("overview")
+export default function MainSection() {
+    const { user } = useAuth()
+    const { toast } = useToast()
+    const navigate = useNavigate()
+    const [loading, setLoading] = useState(true)
+    const [stats, setStats] = useState({
+        totalUsers: 0,
+        totalProblems: 0,
+        totalContests: 0,
+        activeContests: 0,
+        submissions: {
+            total: 0,
+            accepted: 0,
+            rejected: 0,
+            pending: 0,
+        },
+    })
+    const [recentUsers, setRecentUsers] = useState([])
+    const [recentSubmissions, setRecentSubmissions] = useState([])
+    const [problemStats, setProblemStats] = useState([])
 
-    // Mock data for admin dashboard
-    const recentActivities = [
-        {
-            id: 1,
-            action: "New user registered",
-            user: "Emily Rodriguez",
-            time: "10 minutes ago",
-            type: "user",
-        },
-        {
-            id: 2,
-            action: "New problem added",
-            user: "Admin (You)",
-            time: "1 hour ago",
-            type: "problem",
-        },
-        {
-            id: 3,
-            action: "Contest created",
-            user: "Admin (You)",
-            time: "3 hours ago",
-            type: "contest",
-        },
-        {
-            id: 4,
-            action: "User reported issue",
-            user: "Michael Chen",
-            time: "5 hours ago",
-            type: "alert",
-        },
-        {
-            id: 5,
-            action: "Leaderboard updated",
-            user: "System",
-            time: "Yesterday",
-            type: "leaderboard",
-        },
+    useEffect(() => {
+        // In a real implementation, these would be API calls
+        // Simulating data fetching
+        setTimeout(() => {
+            setStats({
+                totalUsers: 1250,
+                totalProblems: 345,
+                totalContests: 28,
+                activeContests: 3,
+                submissions: {
+                    total: 8750,
+                    accepted: 5230,
+                    rejected: 3100,
+                    pending: 420,
+                },
+            })
+
+            setRecentUsers([
+                { id: 1, name: "Alex Johnson", email: "alex@example.com", joinDate: "2023-05-01", problemsSolved: 45 },
+                { id: 2, name: "Maria Garcia", email: "maria@example.com", joinDate: "2023-05-02", problemsSolved: 32 },
+                { id: 3, name: "James Wilson", email: "james@example.com", joinDate: "2023-05-03", problemsSolved: 28 },
+                { id: 4, name: "Sarah Lee", email: "sarah@example.com", joinDate: "2023-05-04", problemsSolved: 19 },
+                { id: 5, name: "David Kim", email: "david@example.com", joinDate: "2023-05-05", problemsSolved: 37 },
+            ])
+
+            setRecentSubmissions([
+                {
+                    id: 1,
+                    userId: 3,
+                    problemId: 12,
+                    status: "Accepted",
+                    language: "JavaScript",
+                    timestamp: "2023-05-05T14:30:00",
+                },
+                { id: 2, userId: 5, problemId: 8, status: "Rejected", language: "Python", timestamp: "2023-05-05T14:15:00" },
+                { id: 3, userId: 2, problemId: 15, status: "Accepted", language: "Java", timestamp: "2023-05-05T14:00:00" },
+                { id: 4, userId: 1, problemId: 22, status: "Pending", language: "C++", timestamp: "2023-05-05T13:45:00" },
+                { id: 5, userId: 4, problemId: 5, status: "Accepted", language: "Python", timestamp: "2023-05-05T13:30:00" },
+            ])
+
+            setProblemStats([
+                { difficulty: "Easy", count: 120, color: "#10b981" },
+                { difficulty: "Medium", count: 150, color: "#f59e0b" },
+                { difficulty: "Hard", count: 75, color: "#ef4444" },
+            ])
+
+            setLoading(false)
+        }, 1000)
+    }, [])
+
+    const submissionData = [
+        { name: "Accepted", value: stats.submissions.accepted, color: "#10b981" },
+        { name: "Rejected", value: stats.submissions.rejected, color: "#ef4444" },
+        { name: "Pending", value: stats.submissions.pending, color: "#f59e0b" },
     ]
 
-    const pendingTasks = [
-        {
-            id: 1,
-            task: "Review reported problem #42",
-            priority: "High",
-            deadline: "Today",
-        },
-        {
-            id: 2,
-            task: "Finalize weekend contest",
-            priority: "High",
-            deadline: "Tomorrow",
-        },
-        {
-            id: 3,
-            task: "Update problem difficulty ratings",
-            priority: "Medium",
-            deadline: "This week",
-        },
-        {
-            id: 4,
-            task: "Respond to support tickets",
-            priority: "Medium",
-            deadline: "This week",
-        },
+    const activityData = [
+        { day: "Mon", submissions: 120 },
+        { day: "Tue", submissions: 145 },
+        { day: "Wed", submissions: 132 },
+        { day: "Thu", submissions: 178 },
+        { day: "Fri", submissions: 190 },
+        { day: "Sat", submissions: 112 },
+        { day: "Sun", submissions: 95 },
     ]
 
-    const getActivityIcon = (type) => {
-        switch (type) {
-            case "user":
-                return <Users className="h-5 w-5 text-blue-500" />
-            case "problem":
-                return <FileQuestion className="h-5 w-5 text-green-500" />
-            case "contest":
-                return <BrainCircuit className="h-5 w-5 text-purple-500" />
-            case "leaderboard":
-                return <BarChart className="h-5 w-5 text-orange-500" />
-            case "alert":
-                return <AlertTriangle className="h-5 w-5 text-red-500" />
-            default:
-                return <div className="h-5 w-5 bg-gray-200 rounded-full" />
-        }
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                    <p className="mt-4 text-muted-foreground">Loading dashboard data...</p>
+                </div>
+            </div>
+        )
     }
 
     return (
-        <div className="flex-1 overflow-auto">
-            <main className="grid flex-1 items-start gap-4 p-4 md:gap-8 md:p-6">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" className="btn-hover">
-                            System Status
-                        </Button>
-                        <Button size="sm" className="btn-hover">
-                            <Link to="/admin-dashboard/users">Manage Users</Link>
-                        </Button>
-                    </div>
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+            <div className="flex items-center justify-between">
+                <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
+                <div className="flex items-center space-x-2">
+                    <span className="text-sm text-muted-foreground">Welcome back, {user?.displayName || "Admin"}</span>
                 </div>
+            </div>
 
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                    <TabsList>
-                        <TabsTrigger value="overview">Overview</TabsTrigger>
-                        <TabsTrigger value="activity">Recent Activity</TabsTrigger>
-                        <TabsTrigger value="tasks">Pending Tasks</TabsTrigger>
-                    </TabsList>
+            <Tabs defaultValue="overview" className="space-y-4">
+                <TabsList>
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                    <TabsTrigger value="activity">Recent Activity</TabsTrigger>
+                </TabsList>
 
-                    <TabsContent value="overview" className="space-y-4">
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            <StatsCard
-                                title="Total Users"
-                                value="1,245"
-                                description="+12 this week"
-                                icon={<Users className="h-4 w-4 text-muted-foreground" />}
-                            />
-                            <StatsCard
-                                title="Problems"
-                                value="328"
-                                description="+5 this week"
-                                icon={<FileQuestion className="h-4 w-4 text-muted-foreground" />}
-                            />
-                            <StatsCard
-                                title="Active Contests"
-                                value="3"
-                                description="2 upcoming"
-                                icon={<BrainCircuit className="h-4 w-4 text-muted-foreground" />}
-                            />
-                            <StatsCard
-                                title="Support Tickets"
-                                value="8"
-                                description="3 urgent"
-                                icon={<AlertTriangle className="h-4 w-4 text-muted-foreground" />}
-                            />
-                        </div>
-
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                            <Card className="lg:col-span-4 card-hover">
-                                <CardHeader>
-                                    <CardTitle>Platform Usage</CardTitle>
-                                    <CardDescription>User activity over the past 30 days</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center justify-between">
-                                                <div className="text-sm font-medium">Problem Submissions</div>
-                                                <div className="text-sm text-muted-foreground">4,325</div>
-                                            </div>
-                                            <Progress value={85} className="h-2" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center justify-between">
-                                                <div className="text-sm font-medium">Contest Participation</div>
-                                                <div className="text-sm text-muted-foreground">1,876</div>
-                                            </div>
-                                            <Progress value={65} className="h-2" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center justify-between">
-                                                <div className="text-sm font-medium">New User Registrations</div>
-                                                <div className="text-sm text-muted-foreground">245</div>
-                                            </div>
-                                            <Progress value={40} className="h-2" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center justify-between">
-                                                <div className="text-sm font-medium">Daily Active Users</div>
-                                                <div className="text-sm text-muted-foreground">876</div>
-                                            </div>
-                                            <Progress value={72} className="h-2" />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="lg:col-span-3 card-hover">
-                                <CardHeader>
-                                    <CardTitle>Quick Actions</CardTitle>
-                                    <CardDescription>Common administrative tasks</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-2">
-                                        <Button className="w-full justify-start btn-hover" variant="outline" asChild>
-                                            <Link to="/admin-dashboard/users">
-                                                <Users className="mr-2 h-4 w-4" />
-                                                Add New User
-                                            </Link>
-                                        </Button>
-                                        <Button className="w-full justify-start btn-hover" variant="outline" asChild>
-                                            <Link to="/admin-dashboard/problems">
-                                                <FileQuestion className="mr-2 h-4 w-4" />
-                                                Create Problem
-                                            </Link>
-                                        </Button>
-                                        <Button className="w-full justify-start btn-hover" variant="outline" asChild>
-                                            <Link to="/admin-dashboard/contests">
-                                                <BrainCircuit className="mr-2 h-4 w-4" />
-                                                Schedule Contest
-                                            </Link>
-                                        </Button>
-                                        <Button className="w-full justify-start btn-hover" variant="outline" asChild>
-                                            <Link to="/admin-dashboard/leaderboard">
-                                                <ChartNoAxesCombined className="mr-2 h-4 w-4" />
-                                                Update Leaderboard
-                                            </Link>
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </TabsContent>
-
-                    <TabsContent value="activity" className="space-y-4">
-                        <Card className="card-hover">
-                            <CardHeader>
-                                <CardTitle>Recent Activity</CardTitle>
-                                <CardDescription>Latest actions on the platform</CardDescription>
+                <TabsContent value="overview" className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                                <Users className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-4">
-                                    {recentActivities.map((activity) => (
-                                        <div
-                                            key={activity.id}
-                                            className="flex items-center gap-4 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                                        >
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                                                {getActivityIcon(activity.type)}
-                                            </div>
-                                            <div className="space-y-1 flex-1">
-                                                <p className="text-sm font-medium">{activity.action}</p>
-                                                <p className="text-xs text-muted-foreground">By {activity.user}</p>
-                                            </div>
-                                            <div className="text-sm text-muted-foreground">{activity.time}</div>
+                                <div className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</div>
+                                <p className="text-xs text-muted-foreground">+12% from last month</p>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Problems</CardTitle>
+                                <FileCode className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{stats.totalProblems.toLocaleString()}</div>
+                                <p className="text-xs text-muted-foreground">+{Math.floor(Math.random() * 10)}% from last month</p>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Contests</CardTitle>
+                                <Trophy className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{stats.totalContests}</div>
+                                <div className="text-xs text-muted-foreground">{stats.activeContests} active contests</div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Submissions</CardTitle>
+                                <Clock className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{stats.submissions.total.toLocaleString()}</div>
+                                <div className="mt-2">
+                                    <Progress value={(stats.submissions.accepted / stats.submissions.total) * 100} className="h-2" />
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                    {Math.round((stats.submissions.accepted / stats.submissions.total) * 100)}% success rate
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                        <Card className="col-span-4">
+                            <CardHeader>
+                                <CardTitle>Problem Distribution</CardTitle>
+                                <CardDescription>Breakdown of problems by difficulty level</CardDescription>
+                            </CardHeader>
+                            <CardContent className="pl-2">
+                                <div className="h-[200px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={problemStats}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="difficulty" />
+                                            <YAxis />
+                                            <Tooltip />
+                                            <Bar dataKey="count" fill="#8884d8">
+                                                {problemStats.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="col-span-3">
+                            <CardHeader>
+                                <CardTitle>Submission Results</CardTitle>
+                                <CardDescription>Distribution of submission outcomes</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="h-[200px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={submissionData}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={60}
+                                                outerRadius={80}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                            >
+                                                {submissionData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <div className="flex justify-center space-x-4 mt-2">
+                                    {submissionData.map((entry) => (
+                                        <div key={entry.name} className="flex items-center">
+                                            <div className="w-3 h-3 mr-1" style={{ backgroundColor: entry.color }}></div>
+                                            <span className="text-xs">{entry.name}</span>
                                         </div>
                                     ))}
                                 </div>
                             </CardContent>
                         </Card>
-                    </TabsContent>
+                    </div>
+                </TabsContent>
 
-                    <TabsContent value="tasks" className="space-y-4">
-                        <Card className="card-hover">
+                <TabsContent value="analytics" className="space-y-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Weekly Submission Activity</CardTitle>
+                            <CardDescription>Number of submissions per day over the past week</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pl-2">
+                            <div className="h-[300px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={activityData}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="day" />
+                                        <YAxis />
+                                        <Tooltip />
+                                        <Bar dataKey="submissions" fill="#8884d8" />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="activity" className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <Card>
                             <CardHeader>
-                                <CardTitle>Pending Tasks</CardTitle>
-                                <CardDescription>Tasks requiring your attention</CardDescription>
+                                <CardTitle>Recent Users</CardTitle>
+                                <CardDescription>Newly registered users on the platform</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {pendingTasks.map((task) => (
-                                        <div
-                                            key={task.id}
-                                            className="flex items-center gap-4 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                                        >
-                                            <div className="space-y-1 flex-1">
-                                                <p className="text-sm font-medium">{task.task}</p>
-                                                <p className="text-xs text-muted-foreground">Deadline: {task.deadline}</p>
+                                    {recentUsers.map((user) => (
+                                        <div key={user.id} className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-4">
+                                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                                    {user.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium">{user.name}</p>
+                                                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                                                </div>
                                             </div>
-                                            <div>
+                                            <div className="text-sm text-muted-foreground">
+                                                {new Date(user.joinDate).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                            <CardFooter>
+                                <button className="text-sm text-primary flex items-center" onClick={() => navigate("/admin/users")}>
+                                    View all users
+                                    <ArrowUpRight className="ml-1 h-4 w-4" />
+                                </button>
+                            </CardFooter>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Recent Submissions</CardTitle>
+                                <CardDescription>Latest code submissions on the platform</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    {recentSubmissions.map((submission) => (
+                                        <div key={submission.id} className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-4">
+                                                <div
+                                                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                                        submission.status === "Accepted"
+                                                            ? "bg-green-100 text-green-600"
+                                                            : submission.status === "Rejected"
+                                                                ? "bg-red-100 text-red-600"
+                                                                : "bg-yellow-100 text-yellow-600"
+                                                    }`}
+                                                >
+                                                    {submission.status.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium">Problem #{submission.problemId}</p>
+                                                    <p className="text-xs text-muted-foreground">{submission.language}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-sm">
                         <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                task.priority === "High"
-                                    ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                                    : task.priority === "Medium"
-                                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                                        : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                            className={`px-2 py-1 rounded-full text-xs ${
+                                submission.status === "Accepted"
+                                    ? "bg-green-100 text-green-600"
+                                    : submission.status === "Rejected"
+                                        ? "bg-red-100 text-red-600"
+                                        : "bg-yellow-100 text-yellow-600"
                             }`}
                         >
-                          {task.priority}
+                          {submission.status}
                         </span>
                                             </div>
-                                            <Button size="sm" variant="outline" className="btn-hover">
-                                                Complete
-                                            </Button>
                                         </div>
                                     ))}
                                 </div>
                             </CardContent>
+                            <CardFooter>
+                                <button className="text-sm text-primary flex items-center">
+                                    View all submissions
+                                    <ArrowUpRight className="ml-1 h-4 w-4" />
+                                </button>
+                            </CardFooter>
                         </Card>
-                    </TabsContent>
-                </Tabs>
-            </main>
+                    </div>
+                </TabsContent>
+            </Tabs>
         </div>
     )
 }
-

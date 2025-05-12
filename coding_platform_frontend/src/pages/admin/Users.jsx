@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.j
 import { Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import {UserForm,UserFilters,UserTable,UserBulkActions,SendEmailForm} from "@/components/admin/adminindex.js"
 import { AlertTriangle, RefreshCw } from "lucide-react"
+import {baseUrl} from "@/utils/index.js";
 
 export default function AdminUsers() {
     const [activeTab, setActiveTab] = useState("all")
@@ -32,7 +33,7 @@ export default function AdminUsers() {
         const loggeduser = storedUser ? JSON.parse(storedUser) : null
 
         try {
-            const response = await fetch("http://localhost:8083/api/admin/getallusers", {
+            const response = await fetch(baseUrl+"/api/admin/getallusers", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -174,7 +175,7 @@ export default function AdminUsers() {
             const selectedDetails = users.filter((user) => selectedUsers.includes(user.id))
             const selectedEmails = selectedDetails.map((user) => user.email)
 
-            const response = await fetch(`http://localhost:8083/api/admin/action/${action}`, {
+            const response = await fetch(baseUrl+`/api/admin/action/${action}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

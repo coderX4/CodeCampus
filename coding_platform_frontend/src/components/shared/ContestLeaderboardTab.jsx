@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button.jsx"
 import LeaderboardTable from "./LeaderboardTable.jsx"
 import { determineContestStatus } from "@/utils/contestUtils.js"
 import ContestInfoCard from "@/components/contest/ContestInfoCard.jsx"
+import {baseUrl} from "@/utils/index.js";
 
 export default function ContestLeaderboardTab({ highlightUser = false, isAdmin = false }) {
     const [currentUserEmail, setCurrentUserEmail] = useState("")
@@ -35,7 +36,7 @@ export default function ContestLeaderboardTab({ highlightUser = false, isAdmin =
         }
 
         try {
-            const response = await fetch("http://localhost:8083/api/contest/getcontests", {
+            const response = await fetch(baseUrl+"/api/contest/getcontests", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -91,7 +92,7 @@ export default function ContestLeaderboardTab({ highlightUser = false, isAdmin =
         }
 
         try {
-            const response = await fetch(`http://localhost:8083/api/contest/getLeaderBoardsResult/${contestId}`, {
+            const response = await fetch(baseUrl+`/api/contest/getLeaderBoardsResult/${contestId}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",

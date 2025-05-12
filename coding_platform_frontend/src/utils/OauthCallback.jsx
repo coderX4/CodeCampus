@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/utils/AuthContext.jsx";
+import {baseUrl} from "@/utils/index.js";
 
 const OauthCallback = () => {
     const { email } = useParams();
@@ -10,7 +11,7 @@ const OauthCallback = () => {
     useEffect(() => {
         const handleOAuthLogin = async () => {
             try {
-                const response = await fetch(`http://localhost:8083/api/auth/oauth-success/${email}`, {
+                const response = await fetch(baseUrl+`/api/auth/oauth-success/${email}`, {
                     method: "GET",
                     credentials: "include", // Ensure cookies are sent
                     headers: { "Content-Type": "application/json" },
