@@ -1,10 +1,13 @@
 package com.coding_contest_platform.security;
 
+import com.coding_contest_platform.dto.mainsection.ProgressDTO;
 import com.coding_contest_platform.helper.Department;
 import com.coding_contest_platform.helper.Provider;
 import com.coding_contest_platform.helper.Role;
 import com.coding_contest_platform.entity.User;
+import com.coding_contest_platform.repository.ProblemTagsListRepository;
 import com.coding_contest_platform.repository.UserRepository;
+import com.coding_contest_platform.services.UserServices;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,13 +21,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserRepository userRepository;
+    private final ProblemTagsListRepository problemTagsListRepository;
 
     @Value("${frontend.url}")
     private String frontendUrl;
@@ -55,6 +59,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                         0,0,0,0,
                         new long[]{0,0},0);
                 userRepository.save(user);
+                makeProgressDTOMap(user);
             }
             // Redirect to frontend, where it will call /oauth-success
             response.sendRedirect(frontendUrl+"/oauth-callback/"+user.getEmail());
@@ -76,9 +81,24 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                         0,0,0,0,
                         new long[]{0,0},0);
                 userRepository.save(user);
+                makeProgressDTOMap(user);
             }
             // Redirect to frontend, where it will call /oauth-success
             response.sendRedirect(frontendUrl+"/oauth-callback/"+user.getEmail());
         }
+    }
+
+    public void makeProgressDTOMap(User user){
+        Map<String, Integer> problemTagList = problemTagsListRepository.findOneById("1").getProblemTagsList();
+        Map<String, ProgressDTO> progressDTOMap = new HashMap<>();
+        for (Map.Entry<String, Integer> entry : problemTagList.entrySet()) {
+            ProgressDTO progressDTO = new ProgressDTO();
+            progressDTO.setTopic(entry.getKey());
+            progressDTO.setTotal(entry.getValue());
+            progressDTO.setCompleted(0);
+            progressDTOMap.put(entry.getKey(), progressDTO);
+        }
+        user.setProgressDTOMap(progressDTOMap);
+        userRepository.save(user);
     }
 }

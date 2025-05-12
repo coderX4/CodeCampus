@@ -12,6 +12,7 @@ import {
     DialogDescription,
     DialogFooter,
 } from "@/components/ui/dialog.jsx"
+import {baseUrl} from "@/utils/index.js";
 
 export default function ContestEditorLayout() {
     const { theme, setTheme } = useTheme()
@@ -45,7 +46,7 @@ export default function ContestEditorLayout() {
 
             try {
                 // Send violation report to server
-                await fetch("http://localhost:8083/api/contesteditor/report-violation", {
+                await fetch(baseUrl+"/api/contesteditor/report-violation", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -113,7 +114,7 @@ export default function ContestEditorLayout() {
 
         try {
             // Send test completion report to server
-            await fetch("http://localhost:8083/api/contesteditor/finish-test", {
+            await fetch(baseUrl+"/api/contesteditor/finish-test", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle, Clock } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export default function RecentSubmissions({ submissions }) {
     return (
@@ -9,55 +9,39 @@ export default function RecentSubmissions({ submissions }) {
                 <CardTitle>Recent Submissions</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="space-y-4">
-                    {submissions.map((submission) => (
-                        <div
-                            key={submission.id}
-                            className="flex items-center gap-4 p-3 border rounded-lg transition-colors hover:bg-muted/50"
-                        >
-                            <div
-                                className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                                    submission.status === "Accepted"
-                                        ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                                        : submission.status === "Wrong Answer"
-                                            ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                                            : "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400"
-                                }`}
-                            >
-                                {submission.status === "Accepted" ? <CheckCircle className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
-                            </div>
-                            <div className="space-y-1">
-                                <Link
-                                    to={`/problem/${submission.problemId}`}
-                                    className="text-sm font-medium leading-none hover:underline"
-                                >
-                                    {submission.problem}
-                                </Link>
-                                <p className="text-xs text-muted-foreground">
-                                    {submission.language} • {submission.time}
-                                </p>
-                            </div>
-                            <div className="ml-auto text-right">
-                                <p
-                                    className={`text-sm font-medium ${
-                                        submission.status === "Accepted"
-                                            ? "text-green-600 dark:text-green-400"
-                                            : submission.status === "Wrong Answer"
-                                                ? "text-red-600 dark:text-red-400"
-                                                : "text-yellow-600 dark:text-yellow-400"
-                                    }`}
-                                >
-                                    {submission.status}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                    {submission.runtime} • {submission.memory}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
+                <div className="overflow-auto">
+                    <table className="w-full">
+                        <thead>
+                        <tr>
+                            <th className="text-left py-2 px-4">Problem</th>
+                            <th className="text-left py-2 px-4">Status</th>
+                            <th className="text-left py-2 px-4">Language</th>
+                            <th className="text-left py-2 px-4">Time</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {submissions.map((submission, index) => (
+                            <tr key={index}>
+                                <td className="py-3 px-4">
+                                    <Link to={`/editor/problem/${submission.problemId}`} className="text-primary hover:underline">
+                                        {submission.problem}
+                                    </Link>
+                                </td>
+                                <td className="py-3 px-4">
+                                    {submission.status === true ? (
+                                        <span className="bg-green-100 text-green-600 px-2 py-1 rounded-full text-xs">Solved</span>
+                                    ) : (
+                                        <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs">Failed</span>
+                                    )}
+                                </td>
+                                <td className="py-3 px-4 capitalize">{submission.language}</td>
+                                <td className="py-3 px-4">{new Date(submission.time).toLocaleString()}</td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
                 </div>
             </CardContent>
         </Card>
     )
 }
-

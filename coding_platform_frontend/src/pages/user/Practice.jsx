@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button.jsx"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx"
 import { AlertTriangle, RefreshCw } from "lucide-react"
 import ProblemCard from "@/components/dashboard/ProblemCard.jsx";
+import {baseUrl} from "@/utils/index.js";
 
 export default function Practice() {
   const [problems, setProblems] = useState([])
@@ -35,7 +36,7 @@ export default function Practice() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8083/api/problems/getactiveproblemsdto/${loggedUser.email}`, {
+      const response = await fetch(baseUrl+`/api/problems/getactiveproblemsdto/${loggedUser.email}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

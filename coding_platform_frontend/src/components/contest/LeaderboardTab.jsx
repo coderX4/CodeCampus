@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table.jsx"
 import { Badge } from "@/components/ui/badge.jsx"
 import { Button } from "@/components/ui/button.jsx"
+import {baseUrl} from "@/utils/index.js";
 
 export default function LeaderboardTab({ contestStatus, countdown, id, startTime, highlightUser: propsHighlightUser }) {
     // Pagination state
@@ -68,7 +69,7 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
             }
 
             try {
-                const response = await fetch(`http://localhost:8083/api/contest/getLeaderBoardsResult/${id}`, {
+                const response = await fetch(baseUrl+`/api/contest/getLeaderBoardsResult/${id}`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",

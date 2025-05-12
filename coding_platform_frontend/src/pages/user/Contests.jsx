@@ -5,6 +5,7 @@ import LiveClock from "@/components/shared/LiveClock.jsx"
 import { determineContestStatus } from "@/utils/contestUtils.js"
 import ContestCard from "@/components/contest/ContestCard.jsx"
 import { Button } from "@/components/ui/button.jsx"
+import {baseUrl} from "@/utils/index.js";
 
 export default function Contests() {
   const [contests, setContests] = useState([])
@@ -30,7 +31,7 @@ export default function Contests() {
     }
 
     try {
-      const response = await fetch("http://localhost:8083/api/contest/getcontests", {
+      const response = await fetch(baseUrl+"/api/contest/getcontests", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

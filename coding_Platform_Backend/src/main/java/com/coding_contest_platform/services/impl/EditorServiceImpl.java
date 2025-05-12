@@ -37,27 +37,9 @@ public class EditorServiceImpl implements EditorService {
     private String cVersion;
     @Value("${piston.cpp.version}")
     private String cppVersion;
-
-    private static final String PISTON_API_URL = "https://emkc.org/api/v2/piston/execute";
+    @Value("${piston.api.url}")
+    private String PISTON_API_URL;
     private final RestTemplate restTemplate = new RestTemplate();
-
-
-//    @Override
-//    public EditorResponse getProblem(String id) {
-//        Problem problem = problemRepository.findOneById(id);
-//        ProblemData problemData = problemDataRepository.findOneById(id);
-//        ProblemTestCase problemTestCase = problemTestCaseRepository.findOneById(id);
-//        return new EditorResponse(
-//                id,
-//                problem.getTitle(),
-//                problem.getDifficulty(),
-//                problem.getAcceptance(),
-//                problemData.getDescription(),
-//                problemData.getApproach(),
-//                problemData.getCodeTemplates(),
-//                problemTestCase.getTestCases()
-//        );
-//    }
 
     @Override
     public EditorResponse getProblem(String id, String email) {
@@ -65,22 +47,38 @@ public class EditorServiceImpl implements EditorService {
         ProblemData problemData = problemDataRepository.findOneById(id);
         ProblemTestCase problemTestCase = problemTestCaseRepository.findOneById(id);
         UserSubmissions userSubmissions = userSubmissionsRepository.findByEmail(email);
-        List<String> problemsSolved = userSubmissions.getProblemsSolved();
-        List<String> problemsAttempted = userSubmissions.getProblemAttempted();
-        boolean solved = problemsSolved.contains(id);
-        boolean attempted = problemsAttempted.contains(id);
-        return new EditorResponse(
-                id,
-                problem.getTitle(),
-                problem.getDifficulty(),
-                problem.getAcceptance(),
-                problemData.getDescription(),
-                problemData.getApproach(),
-                problemData.getCodeTemplates(),
-                problemTestCase.getTestCases(),
-                solved,
-                attempted
-        );
+        if(userSubmissions == null){
+            return new EditorResponse(
+                    id,
+                    problem.getTitle(),
+                    problem.getDifficulty(),
+                    problem.getAcceptance(),
+                    problemData.getDescription(),
+                    problemData.getApproach(),
+                    problemData.getCodeTemplates(),
+                    problemTestCase.getTestCases(),
+                    false,
+                    false
+            );
+        }
+        else{
+            List<String> problemsSolved = userSubmissions.getProblemsSolved();
+            List<String> problemsAttempted = userSubmissions.getProblemAttempted();
+            boolean solved = problemsSolved.contains(id);
+            boolean attempted = problemsAttempted.contains(id);
+            return new EditorResponse(
+                    id,
+                    problem.getTitle(),
+                    problem.getDifficulty(),
+                    problem.getAcceptance(),
+                    problemData.getDescription(),
+                    problemData.getApproach(),
+                    problemData.getCodeTemplates(),
+                    problemTestCase.getTestCases(),
+                    solved,
+                    attempted
+            );
+        }
     }
 
     @Override

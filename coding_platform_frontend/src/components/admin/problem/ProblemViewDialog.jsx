@@ -232,14 +232,14 @@ export default function ProblemViewDialog({ viewProblem, isOpen, onClose }) {
                                                             <div>
                                                                 <h5 className="text-sm font-medium mb-1">Input:</h5>
                                                                 <pre className="bg-muted p-3 rounded-md overflow-auto text-xs">
-                                  <code>{testCase.input || "No input provided"}</code>
-                                </pre>
+                                                                  <code>{testCase.input || "No input provided"}</code>
+                                                                </pre>
                                                             </div>
                                                             <div>
                                                                 <h5 className="text-sm font-medium mb-1">Expected Output:</h5>
                                                                 <pre className="bg-muted p-3 rounded-md overflow-auto text-xs">
-                                  <code>{testCase.expectedOutput || "No expected output provided"}</code>
-                                </pre>
+                                                                  <code>{testCase.expectedOutput || "No expected output provided"}</code>
+                                                                </pre>
                                                             </div>
                                                         </div>
                                                     </div>

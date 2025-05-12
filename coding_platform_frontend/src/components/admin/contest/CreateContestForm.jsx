@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea.jsx"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx"
 import { Checkbox } from "@/components/ui/checkbox.jsx"
 import ProblemSelector from "./ProblemSelector.jsx"
+import {baseUrl} from "@/utils/index.js";
 
 // Update the component to handle editing
 export default function CreateContestForm({ onCancel, onSubmit, editContest ,isDuplicateContest}) {
@@ -96,7 +97,7 @@ export default function CreateContestForm({ onCancel, onSubmit, editContest ,isD
         }
 
         try {
-            const response = await fetch("http://localhost:8083/api/problems/getproblems", {
+            const response = await fetch(baseUrl+"/api/problems/getproblems", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",

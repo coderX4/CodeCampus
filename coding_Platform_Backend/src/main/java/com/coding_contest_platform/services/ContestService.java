@@ -1,7 +1,6 @@
 package com.coding_contest_platform.services;
 
 import com.coding_contest_platform.dto.contest.ContestDTO;
-import com.coding_contest_platform.dto.contest.ContestResultDTO;
 import com.coding_contest_platform.entity.Contest;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -9,6 +9,7 @@ import ProblemsTab from "./ProblemsTab.jsx"
 import LeaderboardTab from "./LeaderboardTab.jsx"
 import RulesTab from "./RulesTab.jsx"
 import { useToast } from "@/hooks/use-toast.js"
+import {baseUrl} from "@/utils/index.js";
 
 export default function Contest() {
   const { id } = useParams()
@@ -57,7 +58,7 @@ export default function Contest() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8083/api/contest/getcontestdetails/${id}`, {
+      const response = await fetch(baseUrl+`/api/contest/getcontestdetails/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -108,7 +109,7 @@ export default function Contest() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8083/api/contest/getResult/${loggedUser.email}/${id}`, {
+      const response = await fetch(baseUrl+`/api/contest/getResult/${loggedUser.email}/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -263,7 +264,7 @@ export default function Contest() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8083/api/contest/register/${id}/${loggedUser.email}`, {
+      const response = await fetch(baseUrl+`/api/contest/register/${id}/${loggedUser.email}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

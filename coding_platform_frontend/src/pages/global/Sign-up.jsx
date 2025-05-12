@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input.jsx"
 import { Checkbox } from "@/components/ui/checkbox.jsx"
 import { Github } from "lucide-react"
 import {useAuth} from "@/utils/AuthContext.jsx";
+import {baseUrl} from "@/utils/index.js";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.jsx";
 export default function SignUp() {
     const [formData, setFormData] = useState({
@@ -64,7 +65,7 @@ export default function SignUp() {
         })
 
         try {
-            const response = await fetch(`http://localhost:8083/api/auth/register`, {
+            const response = await fetch(baseUrl+`/api/auth/register`, {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
@@ -103,11 +104,11 @@ export default function SignUp() {
     }
 
     const handleGoogleLogin = async () => {
-        window.open("http://localhost:8083/oauth2/authorization/google", "_self");
+        window.open(baseUrl+"/oauth2/authorization/google", "_self");
     }
 
     const handleGithubLogin = async () => {
-        window.open("http://localhost:8083/oauth2/authorization/github", "_self");
+        window.open(baseUrl+"/oauth2/authorization/github", "_self");
     };
 
     return (

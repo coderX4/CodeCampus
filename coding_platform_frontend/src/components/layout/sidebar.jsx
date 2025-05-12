@@ -1,5 +1,3 @@
-"use client"
-
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import {
     FileQuestion,
@@ -24,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/utils/AuthContext.jsx"
 import { useEffect, useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx"
+import {baseUrl} from "@/utils/index.js";
 
 export default function Sidebar() {
     const location = useLocation()
@@ -45,7 +44,7 @@ export default function Sidebar() {
 
     const logoutUser = () => {
         logout()
-        fetch("http://localhost:8083/api/auth/logout", {
+        fetch(baseUrl+"/api/auth/logout", {
             method: "POST",
             credentials: "include", // Ensures cookies are sent with the request
         }).then(() => navigate("/home"))

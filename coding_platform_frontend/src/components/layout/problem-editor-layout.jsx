@@ -6,6 +6,7 @@ import { useTheme } from "@/components/theme-provider.jsx"
 import { useState } from "react"
 import { useAuth } from "@/utils/AuthContext.jsx"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx"
+import {baseUrl} from "@/utils/index.js";
 
 export default function ProblemEditorLayout() {
     const { theme, setTheme } = useTheme()
@@ -18,7 +19,7 @@ export default function ProblemEditorLayout() {
 
     const logoutUser = () => {
         logout()
-        fetch("http://localhost:8083/api/auth/logout", {
+        fetch(baseUrl+"/api/auth/logout", {
             method: "POST",
             credentials: "include",
         }).then(() => navigate("/home"))

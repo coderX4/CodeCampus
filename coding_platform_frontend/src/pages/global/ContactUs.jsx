@@ -1,6 +1,4 @@
 import { useState } from "react"
-import Header from "@/components/layout/header.jsx"
-import Footer from "@/components/layout/footer.jsx"
 import { Button } from "@/components/ui/button.jsx"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx"
 import { Input } from "@/components/ui/input.jsx"

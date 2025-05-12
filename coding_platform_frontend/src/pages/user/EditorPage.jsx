@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogTrigger } from "@/components/ui/dialog"
 import  EditorSettingsDialog  from "@/components/editor/EditorSettingsDialog"
 import {Badge} from "@/components/ui/badge.jsx";
+import {baseUrl} from "@/utils/index.js";
 
 export default function EditorPage() {
   const { id } = useParams()
@@ -49,7 +50,7 @@ export default function EditorPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8083/api/editor/getsubmissions/${loggedUser.email}/${id}`, {
+      const response = await fetch(baseUrl+`/api/editor/getsubmissions/${loggedUser.email}/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -90,7 +91,7 @@ export default function EditorPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8083/api/editor/getproblem/${loggedUser.email}/${id}`, {
+      const response = await fetch(baseUrl+`/api/editor/getproblem/${loggedUser.email}/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -174,8 +175,8 @@ export default function EditorPage() {
       }
 
       const urls = isSubmit
-          ? "http://localhost:8083/api/editor/execute-submit/"
-          : "http://localhost:8083/api/editor/execute-run/"
+          ? baseUrl+"/api/editor/execute-submit/"
+          : baseUrl+"/api/editor/execute-run/"
       const response = await fetch(urls + `${problem.id}`, {
         method: "POST",
         headers: {
