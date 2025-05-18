@@ -28,7 +28,7 @@ export default function ConsoleOutputPanel({ consoleOutput, className = "" }) {
                     )}
                     {successCount > 0 && (
                         <span className="ml-2 text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded-full">
-              {successCount} {successCount === 1 ? "success" : "successes"}
+              {successCount-1} {successCount === 1 ? "success" : "successes"}
             </span>
                     )}
                 </div>

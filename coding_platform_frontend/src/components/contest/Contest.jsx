@@ -87,6 +87,9 @@ export default function Contest() {
       if (emailParticipants.includes(loggedUser.email)) {
         setRegistered(true)
       }
+      else{
+        setRegistered(false)
+      }
     } catch (err) {
       console.error("Error fetching contest details:", err)
       setError(err.message || "Failed to fetch contest details")

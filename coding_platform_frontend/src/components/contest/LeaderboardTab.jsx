@@ -19,122 +19,58 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
     const [currentUserEmail, setCurrentUserEmail] = useState("")
     const [highlightUser, setHighlightUser] = useState(propsHighlightUser || false)
 
-    // Calculate contest end time when component mounts or when relevant props change
     useEffect(() => {
-        if (contestStatus === "ongoing" && startTime && countdown) {
-            try {
-                // Parse the startTime (format: "HH:MM")
-                const today = new Date()
-                const [startHours, startMinutes] = startTime.split(":").map(Number)
-                const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), startHours, startMinutes, 0)
-
-                // Parse the countdown (format: "HH:MM:SS" or "MM:SS")
-                let countdownHours = 0
-                let countdownMinutes = 0
-                let countdownSeconds = 0
-
-                const countdownParts = countdown.split(":")
-                if (countdownParts.length === 3) {
-                    // Format is "HH:MM:SS"
-                    ;[countdownHours, countdownMinutes, countdownSeconds] = countdownParts.map(Number)
-                } else if (countdownParts.length === 2) {
-                    // Format is "MM:SS"
-                    ;[countdownMinutes, countdownSeconds] = countdownParts.map(Number)
-                }
-
-                // Calculate total seconds for the contest duration
-                const durationInSeconds = countdownHours * 3600 + countdownMinutes * 60 + countdownSeconds
-
-                // Calculate the end time by adding the duration to the start time
-                const endTime = new Date(startDate.getTime() + durationInSeconds * 1000)
-
-                setContestEndTime(endTime)
-            } catch (error) {
-                console.error("Error calculating contest end time:", error)
-            }
+        if (contestStatus === "past") {
+            fetchLeaderBoard()
         }
-    }, [contestStatus, startTime, countdown])
+        else if (contestStatus === "upcoming" || contestStatus === "ongoing") {
+            // For upcoming contests, clear leaderboard
+            setIsLoading(false)
+            setLeaderBoard([])
+        }
+    }, [id, contestStatus, contestEndTime])
 
-    useEffect(() => {
-        let intervalId
 
-        const fetchLeaderBoard = async () => {
-            const storedUser = sessionStorage.getItem("user")
-            const loggedUser = storedUser ? JSON.parse(storedUser) : null
+    const fetchLeaderBoard = async () => {
+        const storedUser = sessionStorage.getItem("user")
+        const loggedUser = storedUser ? JSON.parse(storedUser) : null
 
-            if (!loggedUser || !loggedUser.token) {
-                setError("Authentication required. Please log in again.")
+        if (!loggedUser || !loggedUser.token) {
+            setError("Authentication required. Please log in again.")
+            setIsLoading(false)
+            return
+        }
+
+        try {
+            const response = await fetch(baseUrl+`/api/contest/getLeaderBoardsResult/${id}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${loggedUser.token}`,
+                },
+            })
+
+            if (response.status === 403) {
+                setError("Access denied: You do not have permission to access this resource.")
                 setIsLoading(false)
                 return
             }
 
-            try {
-                const response = await fetch(baseUrl+`/api/contest/getLeaderBoardsResult/${id}`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${loggedUser.token}`,
-                    },
-                })
-
-                if (response.status === 403) {
-                    setError("Access denied: You do not have permission to access this resource.")
-                    setIsLoading(false)
-                    return
-                }
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}))
-                    throw new Error(errorData.message || "Failed to fetch contest result")
-                }
-
-                const data = await response.json()
-                // No need to sort or format time as data is already sorted and formatted from backend
-                setLeaderBoard(data)
-            } catch (err) {
-                console.error("Error fetching contest results:", err)
-                setError(err.message || "Failed to fetch contest result")
-            } finally {
-                setIsLoading(false)
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.message || "Failed to fetch contest result")
             }
+
+            const data = await response.json()
+            // No need to sort or format time as data is already sorted and formatted from backend
+            setLeaderBoard(data)
+        } catch (err) {
+            console.error("Error fetching contest results:", err)
+            setError(err.message || "Failed to fetch contest result")
+        } finally {
+            setIsLoading(false)
         }
-
-        // Check if contest is over + 2 minutes before fetching
-        const checkAndFetchLeaderboard = () => {
-            const now = new Date()
-
-            // If contest status is "past" or "ended", show the leaderboard immediately
-            if (contestStatus === "past" || contestStatus === "ended") {
-                fetchLeaderBoard()
-            }
-            // If contest is active, check if it's ending soon or just ended
-            else if (contestStatus === "ongoing" && contestEndTime) {
-                // If contest is ending within 2 minutes or has just ended (within 2 minutes)
-                if (now.getTime() >= contestEndTime.getTime() - 2 * 60 * 1000) {
-                    // If it's been at least 2 minutes since the contest ended
-                    if (now.getTime() >= contestEndTime.getTime() + 2 * 60 * 1000) {
-                        fetchLeaderBoard()
-                    } else {
-                        // Contest is ending soon or just ended, but not 2 minutes yet
-                        setIsLoading(true)
-                        setLeaderBoard([])
-                    }
-                }
-            } else if (contestStatus === "upcoming") {
-                // For upcoming contests, clear leaderboard
-                setIsLoading(false)
-                setLeaderBoard([])
-            }
-        }
-
-        checkAndFetchLeaderboard() // Check once immediately
-
-        intervalId = setInterval(() => {
-            checkAndFetchLeaderboard()
-        }, 30000) // Check every 30 seconds
-
-        return () => clearInterval(intervalId) // cleanup interval on unmount or id change
-    }, [id, contestStatus, contestEndTime])
+    }
 
     useEffect(() => {
         if (leaderBoard.length > 0) {
@@ -171,13 +107,6 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
         }
     }
 
-    // Determine if we should show the "calculating results" message
-    const isCalculatingResults =
-        contestStatus === "ongoing" &&
-        contestEndTime &&
-        new Date().getTime() >= contestEndTime.getTime() &&
-        new Date().getTime() < contestEndTime.getTime() + 2 * 60 * 1000
-
     // Get paginated leaderboard data
     const getPaginatedLeaderboard = () => {
         const indexOfLastUser = currentPage * usersPerPage
@@ -209,14 +138,12 @@ export default function LeaderboardTab({ contestStatus, countdown, id, startTime
                             {countdown && <span className="block mt-2 font-medium text-primary">Contest starts in {countdown}</span>}
                         </p>
                     </div>
-                ) : isCalculatingResults ? (
+                ) : contestStatus === "ongoing" ?(
                     <div className="flex flex-col items-center justify-center py-16">
                         <Trophy className="h-20 w-20 text-muted-foreground mb-6 opacity-30" />
                         <p className="text-center text-muted-foreground text-lg">
-                            Contest has ended. Leaderboard results will be available in a few minutes.
-                            <span className="block mt-2 font-medium text-primary">
-                Please wait while we calculate the final results...
-              </span>
+                            Leaderboard will be available after the contest ends.
+                            {countdown && <span className="block mt-2 font-medium text-primary">Contest ends in {countdown}</span>}
                         </p>
                     </div>
                 ) : isLoading ? (

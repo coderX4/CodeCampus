@@ -60,13 +60,17 @@ public class LeaderBoardServiceImpl implements LeaderBoardService {
 
         int maxPossibleContests = getNumberOfContests();
 
-        if (maxPossibleProblemScore == 0 || maxPossibleProblems == 0 || maxPossibleContests == 0)
+        if (maxPossibleProblemScore == 0 || maxPossibleProblems == 0)
             return 0;
 
         // Normalize ratios (0.0 to 1.0)
         double problemScoreRatio = (double) totalProblemScore / maxPossibleProblemScore;
         double normalizedProblemCount = (double) totalProblemsSolved / maxPossibleProblems;
         double normalizedContestCount = (double) totalContestsParticipated / maxPossibleContests;
+
+        if(totalContestsParticipated == 0 || maxPossibleContests == 0){
+            normalizedContestCount = 0;
+        }
 
         // Scale to 0–1000
         problemScoreRatio *= 1000;
