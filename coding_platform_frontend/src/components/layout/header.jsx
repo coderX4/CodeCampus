@@ -26,24 +26,6 @@ export default function Header() {
               Home
             </Link>
             <Link
-                to="/contests"
-                className={`text-sm font-medium ${isActive("/contests") ? "text-primary" : ""} hover:text-primary transition-colors`}
-            >
-              Contests
-            </Link>
-            <Link
-                to="/problems"
-                className={`text-sm font-medium ${isActive("/problems") ? "text-primary" : ""} hover:text-primary transition-colors`}
-            >
-              Problems
-            </Link>
-            <Link
-                to="/leaderboard"
-                className={`text-sm font-medium ${isActive("/leaderboard") ? "text-primary" : ""} hover:text-primary transition-colors`}
-            >
-              Leaderboard
-            </Link>
-            <Link
                 to="/about"
                 className={`text-sm font-medium ${isActive("/about") ? "text-primary" : ""} hover:text-primary transition-colors`}
             >
