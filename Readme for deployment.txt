@@ -1,19 +1,18 @@
 set FRONTEND_URL=http://localhost:5173
 
-set MONGODB_URL=mongodb+srv://deepghosh622:lmJp3C0bdeE4sIIx@cluster0.wsasb.mongodb.net/coding_platform?retryWrites=true&w=majority
+set MONGODB_URL=
 
-set JWT_SECRET_KEY=sLk3XuvZY1PbjaGvDzj1fZN3UXB6dlPhtzGdV+J+Z2U=
-
-set GOOGLE_CLIENT_ID=499389628604-4n8c6ippq5jg6feackn5grnnvvqnnkd9.apps.googleusercontent.com
-set GOOGLE_CLIENT_SECRET_KEY=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
+set JWT_SECRET_KEY=
+set GOOGLE_CLIENT_ID=
+set GOOGLE_CLIENT_SECRET_KEY=
 set GOOGLE_REDIRECT_URI=http://localhost:8083/login/oauth2/code/google
 
-set GITHUB_CLIENT_ID=Ov23lilySpkvnWZv2h2q
-set GITHUB_CLIENT_SECRET_KEY=5b125a01ee14ced5d52ce4528d7d525b76582bf4
+set GITHUB_CLIENT_ID=
+set GITHUB_CLIENT_SECRET_KEY=
 set GITHUB_REDIRECT_URI=http://localhost:8083/login/oauth2/code/github
 
 set MAIL_ACCOUNT=9otesapp@gmail.com
-set MAIL_ACCOUNT_APP_PASSWORD=akdenetodaustvph
+set MAIL_ACCOUNT_APP_PASSWORD=
 
 set PISTON_C_VERSION=10.2.0
 set PISTON_CPP_VERSION=10.2.0
