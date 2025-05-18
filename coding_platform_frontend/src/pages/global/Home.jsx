@@ -3,9 +3,7 @@ import {Link, useNavigate} from "react-router-dom"
 import { Button } from "@/components/ui/button.jsx"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card.jsx"
 import { Input } from "@/components/ui/input.jsx"
-import { Clock, Code, Trophy, Users, CheckCircle, ArrowRight, Github } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.jsx"
-import { Badge } from "@/components/ui/badge.jsx"
+import { Code, Trophy, Users, Github } from "lucide-react"
 import {useAuth} from "@/utils/AuthContext.jsx";
 import {baseUrl} from "@/utils/index.js";
 
@@ -15,77 +13,6 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login } = useAuth();
-
-  // Mock upcoming contests data
-  const upcomingContests = [
-    {
-      id: "1",
-      title: "Algorithms Championship",
-      description: "Test your algorithmic skills in this 3-hour contest",
-      date: "March 15, 2025",
-      time: "2:00 PM - 5:00 PM",
-      participants: 120,
-      difficulty: "Medium",
-      problems: 6,
-    },
-    {
-      id: "2",
-      title: "Data Structures Showdown",
-      description: "Master data structures challenges in this competitive event",
-      date: "March 22, 2025",
-      time: "10:00 AM - 1:00 PM",
-      participants: 85,
-      difficulty: "Hard",
-      problems: 5,
-    },
-    {
-      id: "3",
-      title: "Weekly Challenge #43",
-      description: "Solve weekly problems to improve your coding skills",
-      date: "March 11, 2025",
-      time: "10:00 AM - 1:00 PM",
-      participants: 95,
-      difficulty: "Easy-Medium",
-      problems: 5,
-    },
-  ]
-
-  // Mock leaderboard data
-  const leaderboardData = [
-    {
-      rank: 1,
-      name: "Alex Johnson",
-      username: "alexcode",
-      avatar: "/placeholder.svg?height=40&width=40",
-      solved: 145,
-      score: 9850,
-    },
-    {
-      rank: 2,
-      name: "Samantha Lee",
-      username: "samcodes",
-      avatar: "/placeholder.svg?height=40&width=40",
-      solved: 132,
-      score: 9340,
-    },
-    {
-      rank: 3,
-      name: "Michael Chen",
-      username: "mikedev",
-      avatar: "/placeholder.svg?height=40&width=40",
-      solved: 128,
-      score: 9120,
-    },
-    {
-      rank: 4,
-      name: "Emily Rodriguez",
-      username: "emilyr",
-      avatar: "/placeholder.svg?height=40&width=40",
-      solved: 120,
-      score: 8750,
-    },
-  ]
-
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
@@ -146,14 +73,9 @@ export default function Home() {
                       <p className="max-w-[600px] text-muted-foreground md:text-xl">
                         Practice DSA problems, participate in contests, and track your progress all in one place.
                       </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-4">
-                      <Button size="lg" asChild>
-                        <Link to="/practice">Explore Problems</Link>
-                      </Button>
-                      <Button variant="outline" size="lg" asChild>
-                        <Link to="/contests">View Contests</Link>
-                      </Button>
+                      <blockquote className="mt-6 italic text-muted-foreground text-base">
+                        "Code is like humor. When you have to explain it, it’s bad." – Cory House
+                      </blockquote>
                     </div>
                   </div>
                   <Card className="w-full max-w-md mx-auto">
@@ -254,135 +176,6 @@ export default function Home() {
                 </div>
               </div>
           </section>
-
-          {/* Upcoming Contests Section */}
-          <section className="w-full py-12 md:py-24 lg:py-32">
-            <div className="container px-4 md:px-6">
-              <div className="flex flex-col items-center justify-center space-y-4 text-center mb-8">
-                <div className="space-y-2">
-                  <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Upcoming Contests</h2>
-                  <p className="max-w-[700px] text-muted-foreground md:text-xl">
-                    Don't miss out on these exciting coding challenges
-                  </p>
-                </div>
-              </div>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {upcomingContests.map((contest) => (
-                    <Card key={contest.id} className="flex flex-col h-full">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-xl">{contest.title}</CardTitle>
-                          <Badge variant="outline">{contest.difficulty}</Badge>
-                        </div>
-                        <CardDescription>{contest.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex-grow">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span>
-                          {contest.date} • {contest.time}
-                        </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                            <span>{contest.participants} participants</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Trophy className="h-4 w-4 text-muted-foreground" />
-                            <span>{contest.problems} problems</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                      <CardFooter>
-                        <Button className="w-full" asChild>
-                          <Link to={`/contest/${contest.id}`}>Register</Link>
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                ))}
-              </div>
-              <div className="flex justify-center mt-8">
-                <Button variant="outline" size="lg" asChild>
-                  <Link to="/contests" className="flex items-center gap-2">
-                    View All Contests <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </section>
-
-          {/* Leaderboard Preview Section */}
-          <section className="w-full py-12 md:py-24 lg:py-32 bg-muted">
-            <div className="container px-4 md:px-6">
-              <div className="flex flex-col items-center justify-center space-y-4 text-center mb-8">
-                <div className="space-y-2">
-                  <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Leaderboard</h2>
-                  <p className="max-w-[700px] text-muted-foreground md:text-xl">
-                    Top performers across all challenges and contests
-                  </p>
-                </div>
-              </div>
-              <Card className="w-full max-w-4xl mx-auto">
-                <CardHeader>
-                  <CardTitle>Global Rankings</CardTitle>
-                  <CardDescription>Top performers across all challenges</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center text-sm font-medium text-muted-foreground">
-                      <div className="w-16 text-center">Rank</div>
-                      <div className="flex-1">User</div>
-                      <div className="w-24 text-center">Problems</div>
-                      <div className="w-24 text-center">Score</div>
-                    </div>
-                    <div className="space-y-4">
-                      {leaderboardData.map((user) => (
-                          <div key={user.rank} className="flex justify-between items-center p-4 rounded-lg hover:bg-muted">
-                            <div className="w-16 text-center font-bold">
-                              {user.rank === 1 ? (
-                                  <Trophy className="h-6 w-6 text-yellow-500 mx-auto" />
-                              ) : user.rank === 2 ? (
-                                  <Trophy className="h-6 w-6 text-gray-400 mx-auto" />
-                              ) : user.rank === 3 ? (
-                                  <Trophy className="h-6 w-6 text-amber-700 mx-auto" />
-                              ) : (
-                                  user.rank
-                              )}
-                            </div>
-                            <div className="flex items-center gap-3 flex-1">
-                              <Avatar>
-                                <AvatarImage src={user.avatar} alt={user.name} />
-                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="font-medium">{user.name}</p>
-                                <p className="text-sm text-muted-foreground">@{user.username}</p>
-                              </div>
-                            </div>
-                            <div className="w-24 text-center">
-                              <div className="flex items-center justify-center gap-1">
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                                <span>{user.solved}</span>
-                              </div>
-                            </div>
-                            <div className="w-24 text-center font-bold">{user.score}</div>
-                          </div>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-center">
-                  <Button variant="outline" asChild>
-                    <Link to="/leaderboard" className="flex items-center gap-2">
-                      View Full Leaderboard <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
-          </section>
-
           {/* Features Section */}
           <section className="w-full py-12 md:py-24 lg:py-32">
             <div className="container px-4 md:px-6">

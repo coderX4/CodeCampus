@@ -24,8 +24,28 @@ import AdminContests from "@/pages/admin/Contests.jsx"
 import AdminLeaderboard from "@/pages/admin/Leaderboard.jsx"
 import ContestEditorLayout from "@/components/layout/contest-editor-layout.jsx";
 import ContestEditorPage from "@/pages/user/ContestEditorPage.jsx";
+import {useEffect} from "react";
 
 function App() {
+    useEffect(() => {
+        const restartBackend = async () => {
+            try {
+                const response = await fetch("/.netlify/functions/restartBackend", {
+                    method: "POST",
+                });
+
+                if (response.ok) {
+                    console.log("Backend restart triggered successfully.");
+                } else {
+                    console.error("Failed to trigger backend restart.");
+                }
+            } catch (error) {
+                console.error("Error restarting backend:", error);
+            }
+        };
+
+        restartBackend();
+    }, []);
     return (
         <>
             <Routes>
@@ -33,8 +53,6 @@ function App() {
                 <Route path="/" element={<HomeLayout />}>
                     <Route index element={<Home />} />
                     <Route path="home" element={<Home />} /> {/* Redirect /home to / */}
-                    <Route path="contests" element={<Contests />} />
-                    <Route path="leaderboard" element={<Leaderboard />} />
                     <Route path="about" element={<AboutUs />} />
                     <Route path="contact" element={<ContactUs />} />
                     <Route path="signup" element={<SignUp />} />

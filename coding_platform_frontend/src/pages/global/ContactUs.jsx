@@ -137,10 +137,10 @@ export default function ContactUs() {
                                         <Mail className="h-6 w-6 text-primary mt-1" />
                                         <div>
                                             <h3 className="font-bold">Email Us</h3>
-                                            <p className="text-muted-foreground mb-1">For general inquiries:</p>
-                                            <p>info@codecampus.edu</p>
+                                            <p className="text-muted-foreground mb-1">Developer Mail:</p>
+                                            <p>deepghosh146@gmail</p>
                                             <p className="text-muted-foreground mb-1 mt-2">For support:</p>
-                                            <p>support@codecampus.edu</p>
+                                            <p>9otesapp@gmail.com</p>
                                         </div>
                                     </div>
 
@@ -148,8 +148,8 @@ export default function ContactUs() {
                                         <Phone className="h-6 w-6 text-primary mt-1" />
                                         <div>
                                             <h3 className="font-bold">Call Us</h3>
-                                            <p className="text-muted-foreground mb-1">Monday to Friday, 9am to 5pm EST</p>
-                                            <p>(555) 123-4567</p>
+                                            <p className="text-muted-foreground mb-1">Monday to Friday, 9am to 5pm IST</p>
+                                            <p>+91 9311084135</p>
                                         </div>
                                     </div>
 
@@ -158,9 +158,8 @@ export default function ContactUs() {
                                         <div>
                                             <h3 className="font-bold">Visit Us</h3>
                                             <p className="text-muted-foreground mb-1">Our headquarters:</p>
-                                            <p>123 Tech Campus Drive</p>
-                                            <p>Suite 456</p>
-                                            <p>Boston, MA 02110</p>
+                                            <p>Delhi</p>
+                                            <p>India, New Delhi</p>
                                         </div>
                                     </div>
                                 </div>
