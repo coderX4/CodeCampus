@@ -78,13 +78,12 @@ public class ProblemServiceImpl implements ProblemService {
         // Save problem in DB
         problemRepository.save(problem);
 
-        problemDataRepository.save(problemData);
-
-        problemTestCaseRepository.save(problemTestCase);
-
         //Problem Tag List
         assignProblemToTagsList(problemRequest.getTags());
 
+        problemDataRepository.save(problemData);
+
+        problemTestCaseRepository.save(problemTestCase);
         return problemRequest;
     }
 

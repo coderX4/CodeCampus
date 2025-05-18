@@ -1,5 +1,6 @@
 package com.coding_contest_platform.services.impl;
 
+import com.coding_contest_platform.dto.leaderboard.GlobalLeaderBoardDTO;
 import com.coding_contest_platform.dto.login_signup.AdminRegisterRequest;
 import com.coding_contest_platform.dto.mainsection.MainSectionDTO;
 import com.coding_contest_platform.dto.mainsection.ProgressDTO;
@@ -28,7 +29,6 @@ public class UserServiceImpl implements UserServices {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final ProblemRepository problemRepository;
     private final UserSubmissionsRepository userSubmissionsRepository;
     private final ProblemTagsListRepository problemTagsListRepository;
     private final ContestRepository contestRepository;
@@ -149,6 +149,39 @@ public class UserServiceImpl implements UserServices {
         return new ArrayList<>(progressDTOMap.values());
     }
 
+    private int getRankOfUser(String email) {
+        List<GlobalLeaderBoardDTO> globalLeaderBoardDTOList = new ArrayList<>();
+        for (User user : userRepository.findAll()) {
+            GlobalLeaderBoardDTO globalLeaderBoardDTO = new GlobalLeaderBoardDTO(
+                    user.getUname(), user.getEmail(), user.getDepartment(),
+                    user.getProblems(), user.getContests(),
+                    user.getProblemFinalScore(), user.getContestFinalScore(),
+                    user.getFinalLeaderBoardScore()
+            );
+            globalLeaderBoardDTOList.add(globalLeaderBoardDTO);
+        }
+        globalLeaderBoardDTOList.sort((a, b) -> {
+            // 1. Sort by finalScore descending
+            int leaderBoardScoreCompare = Integer.compare(b.getFinalLeaderBoardScore(), a.getFinalLeaderBoardScore());
+            if (leaderBoardScoreCompare != 0) return leaderBoardScoreCompare;
+
+            //2. Sort by contest finalScores descending
+            int contestScoreCompare = Integer.compare(b.getContestFinalScore(), a.getContestFinalScore());
+            if (contestScoreCompare != 0) return contestScoreCompare;
+
+            //3. Sort by problem finalScores descending
+            return Integer.compare(b.getProblemFinalScore(), a.getProblemFinalScore());
+        });
+        int rank = 0;
+        for(GlobalLeaderBoardDTO globalLeaderBoardDTO : globalLeaderBoardDTOList){
+            if(globalLeaderBoardDTO.getEmail().equals(email)){
+                rank = globalLeaderBoardDTOList.indexOf(globalLeaderBoardDTO) + 1;
+                return rank;
+            }
+        }
+        return rank;
+    }
+
 
     @Override
     public MainSectionDTO sendMainSection(String email){
@@ -164,8 +197,9 @@ public class UserServiceImpl implements UserServices {
             recentSubmissionDTOList = userSubmissions.getRecentSubmissionsDTOList();
         }
         List<UpCommingContest> contestList = getUpCommingContests();
+        int rank = getRankOfUser(email);
         return new MainSectionDTO(
-                user.getProblems(), user.getContests(), 0, 0, progressDTOList,
+                user.getProblems(), user.getContests(), rank, 0, progressDTOList,
                 recentSubmissionDTOList, contestList
         );
     }

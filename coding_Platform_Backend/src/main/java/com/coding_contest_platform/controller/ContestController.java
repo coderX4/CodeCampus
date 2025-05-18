@@ -58,6 +58,14 @@ public class ContestController {
     @GetMapping({"/getResult/{email}/{id}"})
     public ResponseEntity<ContestResultDTO> getContestResult(@PathVariable("email") String email ,@PathVariable("id") String id) {
         ContestResultDTO contestResultDTO = contestResultService.sendResult(userServices.getIdByEmail(email),email,id);
+        if(contestResultDTO == null){
+            Map<String, Integer> points = new HashMap<>();
+            points.put("points", 0);
+            int[] arr = new int[]{0,0};
+            return ResponseEntity.ok(
+                    new ContestResultDTO(false,false,"null",points,0,0,0,0,arr,"null")
+            );
+        }
         return ResponseEntity.ok(contestResultDTO);
     }
 

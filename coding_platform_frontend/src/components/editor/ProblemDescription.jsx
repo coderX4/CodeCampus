@@ -136,7 +136,8 @@ export default function ProblemDescription({ problem, result, layout, subs }) {
 
                     <TabsContent value="solution" className="m-0">
                         <div className="p-6">
-                            {result?.status === "Accepted" || subs != null ? (
+                            {/* result?.status === "Accepted" || subs != null || */}
+                            {problem.solved || problem.attempted || result?.status === "Accepted" || subs != null? (
                                 <div className="mt-6 w-full max-w-xl">
                                     <div className="prose prose-sm dark:prose-invert max-w-none">
                                         {renderFormattedContent(problem.approach || "No approach available")}

@@ -456,8 +456,7 @@ export default function MainSection() {
                   </div>
                 </CardContent>
               </Card>
-
-              <Card>
+              {/*<Card>
                 <CardHeader>
                   <CardTitle>Past Contest Performance</CardTitle>
                   <CardDescription>Your results from previous contests</CardDescription>
@@ -505,7 +504,7 @@ export default function MainSection() {
                     ))}
                   </div>
                 </CardContent>
-              </Card>
+              </Card>*/}
             </TabsContent>
 
             {/* Submissions Tab */}
