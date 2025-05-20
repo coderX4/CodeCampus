@@ -1,18 +1,17 @@
 package com.coding_contest_platform.controller;
 
-import com.coding_contest_platform.dto.login_signup.AdminRegisterRequest;
+import com.coding_contest_platform.dto.login_signup.*;
 import com.coding_contest_platform.helper.Provider;
 import com.coding_contest_platform.helper.Role;
 import com.coding_contest_platform.entity.User;
 import com.coding_contest_platform.repository.UserRepository;
 import com.coding_contest_platform.security.JwtService;
-import com.coding_contest_platform.dto.login_signup.AuthRequest;
-import com.coding_contest_platform.dto.login_signup.AuthResponse;
-import com.coding_contest_platform.dto.login_signup.RegisterRequest;
+import com.coding_contest_platform.services.EmailService;
 import com.coding_contest_platform.services.UserServices;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 
 @CrossOrigin
@@ -34,7 +34,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserServices userServices;
-
+    private final EmailService emailService;
 
     /** REGISTER NEW USER */
     @PostMapping("/admin-register")
@@ -161,6 +161,22 @@ public class AuthController {
         cookie.setPath("/");
         cookie.setMaxAge(24 * 60 * 60); // 1 day expiration
         response.addCookie(cookie);
+    }
+
+    @PostMapping("/sendmail")
+    public ResponseEntity<?> sendEmail(@RequestBody ContactDTO contactDTO) {
+        String name = contactDTO.getName();
+        String to = contactDTO.getEmail();
+        String subject = contactDTO.getSubject();
+        String message = contactDTO.getMessage();
+
+        if (to == null || to.isEmpty() || subject == null || message == null) {
+            return ResponseEntity.badRequest().body("Invalid email data");
+        }
+
+        emailService.sendEmail(name, to, subject, message);
+
+        return ResponseEntity.ok("Emails sent successfully!");
     }
 }
 

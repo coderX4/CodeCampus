@@ -6,5 +6,7 @@ public interface EmailService {
     //email to single person
     void sendEmail(String to, String subject, String body);
 
+    void sendEmail(String name, String to, String subject, String body);
+
     void sendAllEmail(List<String> to, String subject, String body);
 }
