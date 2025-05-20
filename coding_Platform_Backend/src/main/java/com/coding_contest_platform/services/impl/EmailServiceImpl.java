@@ -21,11 +21,14 @@ public class EmailServiceImpl implements EmailService {
 
     @Value("${google.account}")
     private String googleAccount;
-
     @Value("${google.account.appPassword}")
     private String googleAccountAppPassword;
+    @Value("${dev.mailer.id}")
+    private String devMailerId;
+    @Value("${dev.mailer.key}")
+    private String devMailerKey;
 
-    //verification mailer from the scm app
+    //verification mailer from the app
     @Override
     public void sendEmail(String to, String subject, String body) {
 
@@ -36,6 +39,31 @@ public class EmailServiceImpl implements EmailService {
         SimpleMailMessage message = new SimpleMailMessage();
 
         message.setFrom(googleAccount);
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(body);
+        mailSender.send(message);
+    }
+
+    @Override
+    public void sendEmail(String name, String to, String subject, String body) {
+
+        JavaMailSender mailSender = dynamicMailSender.getMailSender(
+                devMailerId, devMailerKey
+        );
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        body = "Hi "+name+",\n" +
+                "\n" +
+                "We have received your message:\n" +
+                "\n" +
+                body + "\n"+
+                "\n"+
+                "Thank you for reaching out to us. We'll get back to you shortly.\n" +
+                "\n" +
+                "Best regards,\n" +
+                "Deep Ghosh\n";
+        message.setFrom(devMailerId);
         message.setTo(to);
         message.setSubject(subject);
         message.setText(body);

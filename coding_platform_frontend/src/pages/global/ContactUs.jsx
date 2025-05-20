@@ -4,8 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input.jsx"
 import { Textarea } from "@/components/ui/textarea.jsx"
 import { Mail, MapPin, Phone, MessageSquare } from "lucide-react"
+import {baseUrl} from "@/utils/index.js";
+import {useToast} from "@/hooks/use-toast.js";
 
 export default function ContactUs() {
+    const [isLoading, setIsLoading] = useState(false)
+    // Toast notifications
+    const { toast } = useToast()
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -18,17 +23,46 @@ export default function ContactUs() {
         setFormData((prev) => ({ ...prev, [name]: value }))
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
-        // Form submission logic will be implemented later
-        console.log("Form submitted:", formData)
-        alert("Thank you for your message! We'll get back to you soon.")
-        setFormData({
-            name: "",
-            email: "",
-            subject: "",
-            message: "",
-        })
+        setIsLoading(true)
+
+        const storedUser = sessionStorage.getItem("user")
+        const loggeduser = storedUser ? JSON.parse(storedUser) : null
+
+        try {
+            // Send the email
+            const response = await fetch(baseUrl+"/api/auth/sendmail", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(errorData.message || "Failed to send email")
+            }
+            // Success
+            toast({
+                title: "Email sent successfully!",
+                description: "Email is sent to "+formData.email+" .",
+            })
+            setFormData({
+                name: "",
+                email: "",
+                subject: "",
+                message: "",
+            })
+        } catch (err) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to send email",
+            })
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (
