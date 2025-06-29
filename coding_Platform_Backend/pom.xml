@@ -26,17 +26,17 @@
 
     <developers>
         <developer>
-            <id>coderX4</id>
+            <id>deepghosh146</id>
             <name>Deep_Ghosh</name>
             <email>deepghosh146@gmail.com</email>
         </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/coderX4/CodeCampus.git</connection>
-        <developerConnection>scm:git:ssh://github.com:coderX4/CodeCampus.git</developerConnection>
+        <connection>scm:git:git://github.com/deepghosh146/CodeCampus.git</connection>
+        <developerConnection>scm:git:ssh://github.com:deepghosh146/CodeCampus.git</developerConnection>
         <tag>HEAD</tag>
-        <url>https://github.com/coderX4/CodeCampus</url>
+        <url>https://github.comdeepghosh146/CodeCampus</url>
     </scm>
 
     <properties>
